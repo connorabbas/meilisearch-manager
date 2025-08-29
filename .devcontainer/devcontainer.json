@@ -1,0 +1,41 @@
+// https://aka.ms/devcontainer.json
+{
+    "name": "Meilisearch UI - Vue",
+    "dockerComposeFile": [
+        "../docker-compose.dev.yml"
+    ],
+    "service": "web",
+    "workspaceFolder": "/workspace",
+    "mounts": [
+        "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "eamodio.gitlens",
+                "esbenp.prettier-vscode",
+                "mikestead.dotenv",
+                "streetsidesoftware.code-spell-checker",
+                "hollowtree.vue-snippets",
+                "Vue.volar",
+                "bradlc.vscode-tailwindcss",
+                "shd101wyy.markdown-preview-enhanced",
+                "formulahendry.auto-rename-tag",
+                "pmneo.tsimporter"
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/sh",
+                "html.format.wrapAttributes": "force-expand-multiline",
+                "[vue]": {
+                    "editor.defaultFormatter": "Vue.volar",
+                    "editor.tabSize": 4
+                }
+            }
+        }
+    },
+    "postCreateCommand": "chown -R 1000:1000 /workspace && npm install",
+    "remoteUser": "node"
+    // "forwardPorts": [],
+    // "runServices": [],
+    // "shutdownAction": "none",
+}

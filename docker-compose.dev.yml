@@ -1,0 +1,22 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meili-ui-vue
+    entrypoint: /bin/sh
+    working_dir: /workspace
+    volumes:
+      - '.:/workspace'
+    tty: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.meili-vue.rule=Host(`meili-vue.localhost`)"
+      - "traefik.http.services.meili-vue.loadbalancer.server.port=${APP_PORT}"
+    networks:
+      - proxy
+
+networks:
+  proxy: # setup in separate container
+    name: "traefik_network"
+    external: true
