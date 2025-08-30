@@ -23,21 +23,31 @@ const router = createRouter({
         },
         {
             path: '/indexes/:indexUID',
-            name: 'index-details',
-            component: () => import('@/views/IndexDetails.vue'),
+            component: () => import('@/layouts/IndexLayout.vue'),
             props: true,
-        },
-        {
-            path: '/indexes/:indexUID/documents',
-            name: 'index-documents',
-            component: () => import('@/views/IndexDocuments.vue'),
-            props: true,
-        },
-        {
-            path: '/indexes/:indexUID/settings',
-            name: 'index-settings',
-            component: () => import('@/views/IndexSettings.vue'),
-            props: true,
+            children: [
+                {
+                    path: '',
+                    name: 'index-details',
+                    component: () => import('@/views/IndexDetails.vue'),
+                    props: true,
+                    meta: { breadcrumbLabel: 'Details' },
+                },
+                {
+                    path: 'documents',
+                    name: 'index-documents',
+                    component: () => import('@/views/IndexDocuments.vue'),
+                    props: true,
+                    meta: { breadcrumbLabel: 'Documents' },
+                },
+                {
+                    path: 'settings',
+                    name: 'index-settings',
+                    component: () => import('@/views/IndexSettings.vue'),
+                    props: true,
+                    meta: { breadcrumbLabel: 'Settings' },
+                },
+            ],
         },
         {
             path: '/tasks/:indexUI?',
