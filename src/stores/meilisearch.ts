@@ -46,6 +46,7 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         isConnecting.value = true;
         connectionError.value = null;
         try {
+            // TODO: fetch stats every time?
             const config = getConnectionConfig();
             const conn = new MeiliSearch(config);
             const stats = await conn.getStats();

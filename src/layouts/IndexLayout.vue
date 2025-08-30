@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, provide, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useRoute } from 'vue-router';
-import { Home } from 'lucide-vue-next';
+import { Home, Pencil, RefreshCw, Trash2 } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import IndexTabMenu from '@/components/IndexTabMenu.vue';
+import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
 import Tag from 'primevue/tag';
@@ -20,6 +21,11 @@ const route = useRoute();
 const meiliStore = useMeilisearchStore();
 const { currentIndex, currentIndexError, isLoading } = storeToRefs(meiliStore);
 
+const fetchData = async () => {
+    await meiliStore.fetchCurrentIndex(props.indexUID);
+    await meiliStore.fetchStats();
+};
+
 const breadcrumbs = computed(() => {
     const dynamicBreadcrumbs: MenuItem[] = [
         { route: { name: 'dashboard' }, lucideIcon: Home },
@@ -27,7 +33,7 @@ const breadcrumbs = computed(() => {
         { label: props.indexUID, route: { name: 'index-details', params: { indexUID: props.indexUID } } },
     ];
     if (route.meta.breadcrumbLabel) {
-        let breadcrumbLabel = route.meta.breadcrumbLabel as string;
+        const breadcrumbLabel = route.meta.breadcrumbLabel as string;
         dynamicBreadcrumbs.push({ label: breadcrumbLabel });
     }
 
@@ -41,7 +47,7 @@ watch(() => props.indexUID, () => {
 });
 
 onMounted(async () => {
-    await meiliStore.fetchCurrentIndex(props.indexUID);
+    fetchData();
 });
 </script>
 
@@ -59,7 +65,36 @@ onMounted(async () => {
                 </div>
             </template>
             <template #end>
-                <div id="index-page-actions"></div>
+                <div class="flex gap-4">
+                    <Button
+                        label="Refresh"
+                        severity="secondary"
+                        :loading="isLoading"
+                        @click="fetchData"
+                    >
+                        <template #icon>
+                            <RefreshCw />
+                        </template>
+                    </Button>
+                    <Button
+                        v-tooltip.top="'Edit Index Primary Key'"
+                        severity="secondary"
+                        outlined
+                    >
+                        <template #icon>
+                            <Pencil />
+                        </template>
+                    </Button>
+                    <Button
+                        v-tooltip.top="'Delete Index Data'"
+                        severity="danger"
+                        outlined
+                    >
+                        <template #icon>
+                            <Trash2 />
+                        </template>
+                    </Button>
+                </div>
             </template>
         </PageTitleSection>
 
@@ -80,8 +115,8 @@ onMounted(async () => {
 
         <!-- Content slot for child components -->
         <router-view
-            v-slot="{ Component }"
             v-if="currentIndex"
+            v-slot="{ Component }"
         >
             <component :is="Component" />
         </router-view>
@@ -89,7 +124,9 @@ onMounted(async () => {
         <!-- Loading state -->
         <Card v-else-if="isLoading">
             <template #content>
-                <div class="text-center p-4">Loading index data...</div>
+                <div class="text-center p-4">
+                    Loading index data...
+                </div>
             </template>
         </Card>
     </AppLayout>

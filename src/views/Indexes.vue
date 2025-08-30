@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { storeToRefs } from 'pinia';
-import { ArrowRight, Home, Inbox, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import Card from 'primevue/card';
@@ -30,13 +30,6 @@ const indexesData = computed(() => {
         };
     });
 });
-
-// TODO: confirm dialog, abstract
-const deleteIndex = async (uid: string) => {
-    if (confirm(`Delete index "${uid}"?`)) {
-        await meiliStore.deleteIndex(uid);
-    }
-};
 
 /* const formatBytes = (bytes: number) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -117,6 +110,7 @@ const deleteIndex = async (uid: string) => {
                                 <Tag
                                     v-if="data.primaryKey"
                                     :value="data.primaryKey"
+                                    severity="info"
                                 />
                                 <Tag
                                     v-else
@@ -129,42 +123,21 @@ const deleteIndex = async (uid: string) => {
                             field="numberOfDocuments"
                             header="Documents"
                         />
-                        <Column header="Actions">
+                        <Column header="Action">
                             <template #body="{ data }">
-                                <div class="flex gap-4">
-                                    <Button
-                                        v-slot="slotProps"
-                                        asChild
-                                        outlined
+                                <Button
+                                    v-slot="slotProps"
+                                    asChild
+                                    outlined
+                                >
+                                    <RouterLink
+                                        :to="{ name: 'index-details', params: { indexUID: data.uid } }"
+                                        :class="[slotProps.class, 'no-underline']"
                                     >
-                                        <RouterLink
-                                            :to="{ name: 'index-details', params: { indexUID: data.uid} }"
-                                            :class="[slotProps.class, 'no-underline']"
-                                        >
-                                            View
-                                            <ArrowRight />
-                                        </RouterLink>
-                                    </Button>
-                                    <Button
-                                        v-tooltip.top="'Edit'"
-                                        severity="secondary"
-                                        outlined
-                                    >
-                                        <template #icon>
-                                            <Pencil />
-                                        </template>
-                                    </Button>
-                                    <Button
-                                        v-tooltip.top="'Delete'"
-                                        severity="danger"
-                                        outlined
-                                        @click.stop="deleteIndex(data.uid)"
-                                    >
-                                        <template #icon>
-                                            <Trash2 />
-                                        </template>
-                                    </Button>
-                                </div>
+                                        View
+                                        <ArrowRight />
+                                    </RouterLink>
+                                </Button>
                             </template>
                         </Column>
                     </DataTable>

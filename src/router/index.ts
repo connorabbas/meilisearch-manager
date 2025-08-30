@@ -27,7 +27,7 @@ const router = createRouter({
             props: true,
             children: [
                 {
-                    path: '',
+                    path: 'details',
                     name: 'index-details',
                     component: () => import('@/views/IndexDetails.vue'),
                     props: true,
@@ -50,7 +50,7 @@ const router = createRouter({
             ],
         },
         {
-            path: '/tasks/:indexUI?',
+            path: '/tasks',
             name: 'tasks',
             component: () => import('../views/Tasks.vue'),
         },
