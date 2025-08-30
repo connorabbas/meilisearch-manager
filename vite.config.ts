@@ -36,5 +36,5 @@ export default defineConfig(({ mode }) => {
         preview: {
             port: devPort,
         },
-    }
-})
+    };
+});

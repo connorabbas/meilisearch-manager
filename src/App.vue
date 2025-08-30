@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router';
+import Toast from 'primevue/toast';
+import ProgressSpinner from 'primevue/progressspinner';
 </script>
 
 <template>
-    <header>
-        <div>
-            <nav class="flex gap-4">
-                <RouterLink to="/">Home</RouterLink>
-                <RouterLink to="/about">About</RouterLink>
-            </nav>
-        </div>
-    </header>
-
-    <RouterView />
+    <div>
+        <Toast position="bottom-right" />
+        <RouterView v-slot="{ Component }">
+            <template v-if="Component">
+                <Suspense>
+                    <component :is="Component" />
+                    <template #fallback>
+                        <div class="h-screen flex items-center justify-center">
+                            <ProgressSpinner />
+                        </div>
+                    </template>
+                </Suspense>
+            </template>
+        </RouterView>
+    </div>
 </template>
