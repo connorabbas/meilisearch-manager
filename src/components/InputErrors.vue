@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Message from 'primevue/message';
 
-defineProps < {
+defineProps<{
     errors: string[],
-} > ();
+}>();
 </script>
 
 <template>

@@ -37,7 +37,9 @@ const jsonEditorDarkModeClass = computed(() => {
 const meiliStore = useMeilisearchStore();
 const settings = ref<Settings | null>(null);
 async function getSettings() {
-    settings.value = await meiliStore.client?.index(props.indexUID).getSettings() || null;
+    const client = meiliStore.getClient();
+    if (!client) return;
+    settings.value = await client.index(props.indexUID).getSettings() || null;
 }
 
 const editMode = ref(false);
@@ -63,7 +65,7 @@ const updateSettings = async () => {
     if (settings.value) {
         updating.value = true;
         try {
-            await meiliStore.client?.index(props.indexUID).updateSettings(settings.value);
+            await client.index(props.indexUID).updateSettings(settings.value);
             getSettings();
             editMode.value = false;
             toast.add({
