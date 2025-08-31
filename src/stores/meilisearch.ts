@@ -1,7 +1,7 @@
 // stores/meilisearch.ts
 import { defineStore } from 'pinia';
 import { ref, shallowRef, computed, readonly } from 'vue';
-import { MeiliSearch, type Stats } from 'meilisearch';
+import { MeiliSearch, type Stats, type Version } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 
 export const useMeilisearchStore = defineStore('meilisearch', () => {
@@ -9,6 +9,7 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
 
     // State
     const client = shallowRef<MeiliSearch | null>(null);
+    const version = ref<Version | null>(null);
     const serverStats = ref<Stats | null>(null);
     const isConnecting = ref(false);
     const isLoadingStats = ref(false);
@@ -50,6 +51,22 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         }
     }
 
+    // Helper to get client with validation
+    function getClient() {
+        if (!client.value) {
+            console.error('MeiliSearch client is null');
+            toast.add({
+                severity: 'error',
+                summary: 'Connection Error',
+                detail: 'MeiliSearch client not connected or invalid',
+                life: 5000,
+            });
+            return null;
+        }
+
+        return client.value;
+    }
+
     // Fetch stats
     async function fetchStats() {
         if (!client.value) return;
@@ -69,13 +86,28 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         }
     }
 
-    // Computed to get the raw client (not readonly)
-    const rawClient = computed(() => client.value);
+    // Fetch Meilisearch version
+    async function fetchVersion() {
+        if (!client.value) return;
+        isLoadingStats.value = true;
+        try {
+            version.value = await client.value.getVersion();
+        } catch (err) {
+            version.value = null;
+            toast.add({
+                severity: 'error',
+                summary: 'Stats Error',
+                detail: (err as Error).message,
+                life: 5000,
+            });
+        } finally {
+            isLoadingStats.value = false;
+        }
+    }
 
     return {
         // State
-        client: readonly(client),
-        rawClient, // for composables/stores to use
+        version: readonly(version),
         serverStats: readonly(serverStats),
         
         // Loading states
@@ -90,6 +122,8 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         
         // Actions
         connect,
+        getClient,
         fetchStats,
+        fetchVersion,
     };
 });

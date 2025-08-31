@@ -25,7 +25,7 @@ watchEffect(() => colorMode.value = selectedColorMode.value);
         optionValue="value"
     >
         <template #option="{ option }">
-            <component :is="option.icon" /> {{ option.label }}
+            <component :is="option.icon" /><!--  {{ option.label }} -->
         </template>
     </SelectButton>
 </template>

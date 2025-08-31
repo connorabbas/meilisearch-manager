@@ -7,6 +7,7 @@ import { useMeilisearchStore } from '@/stores/meilisearch';
 
 export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () => {
     const toast = useToast();
+    const meilisearchStore = useMeilisearchStore();
 
     // State
     const indexes = ref<Index[]>([]);
@@ -22,28 +23,9 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
     const hasIndexes = computed(() => indexes.value.length > 0);
     const isLoading = computed(() => isLoadingIndexes.value || isLoadingCurrentIndex.value);
 
-    // Helper to get client with validation
-    function getValidClient() {
-        const meilisearchStore = useMeilisearchStore();
-        const client = meilisearchStore.rawClient;
-
-        if (!client) {
-            console.error('MeiliSearch client is null');
-            toast.add({
-                severity: 'error',
-                summary: 'Connection Error',
-                detail: 'MeiliSearch client not connected or invalid',
-                life: 5000,
-            });
-            return null;
-        }
-
-        return client;
-    }
-
     // Fetch indexes
     async function fetchIndexes(params?: IndexesQuery) {
-        const client = getValidClient();
+        const client = meilisearchStore.getClient();
         if (!client) return;
 
         isLoadingIndexes.value = true;
@@ -70,7 +52,7 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
 
     // Fetch one index
     async function fetchCurrentIndex(uid: string) {
-        const client = getValidClient();
+        const client = meilisearchStore.getClient();
         if (!client) return;
 
         isLoadingCurrentIndex.value = true;
@@ -96,7 +78,7 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
 
     // Create index
     async function createIndex(uid: string, primaryKey?: string) {
-        const client = getValidClient();
+        const client = meilisearchStore.getClient();
         if (!client) return;
 
         try {
@@ -126,7 +108,7 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
 
     // Delete index
     async function deleteIndex(uid: string) {
-        const client = getValidClient();
+        const client = meilisearchStore.getClient();
         if (!client) return;
 
         try {
@@ -150,43 +132,6 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
             toast.add({
                 severity: 'error',
                 summary: 'Delete Index Error',
-                detail: (err as Error).message,
-                life: 5000,
-            });
-            throw err;
-        }
-    }
-
-    // Update index
-    async function updateIndex(uid: string, primaryKey: string) {
-        const client = getValidClient();
-        if (!client) return;
-
-        try {
-            console.log('Updating index:', uid, 'with client:', client.constructor.name);
-            const index = await client.updateIndex(uid, { primaryKey });
-
-            // Refresh current index if it's the one being updated
-            if (currentIndex.value?.uid === uid) {
-                await fetchCurrentIndex(uid);
-            }
-
-            // Also refresh indexes list to get updated info
-            await fetchIndexes();
-
-            toast.add({
-                severity: 'success',
-                summary: 'Index Updated',
-                detail: `Index ${uid} updated successfully`,
-                life: 3000,
-            });
-
-            return index;
-        } catch (err) {
-            console.error('Error updating index:', err);
-            toast.add({
-                severity: 'error',
-                summary: 'Update Index Error',
                 detail: (err as Error).message,
                 life: 5000,
             });
@@ -234,7 +179,6 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
         fetchCurrentIndex,
         createIndex,
         deleteIndex,
-        updateIndex,
 
         // Utility actions
         clearCurrentIndex,

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, inject, computed } from 'vue';
+import { ref, inject, computed, onMounted } from 'vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
+import { useToast } from 'primevue';
 import type { Settings } from 'meilisearch';
 import type { UseColorModeReturn } from '@vueuse/core';
-import { AlertCircle, CircleQuestionMark, Pencil, Save, X } from 'lucide-vue-next';
+import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
 
 import JsonEditorVue from 'json-editor-vue';
 import { Mode } from 'vanilla-jsoneditor';
@@ -16,36 +17,74 @@ const props = defineProps<{
     indexUID: string
 }>();
 
+const toast = useToast();
+
+const prefersDarkColorScheme = () => {
+    if (window && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+};
 const colorMode = inject<UseColorModeReturn>('colorMode')!;
 const jsonEditorDarkModeClass = computed(() => {
-    return colorMode.value == 'dark' ? 'jse-theme-dark' : '';
+    let editorClass = '';
+    if (colorMode.value === 'dark' || (prefersDarkColorScheme() && colorMode.value === 'auto')) {
+        editorClass = 'jse-theme-dark';
+    }
+    return editorClass;
 });
 
 const meiliStore = useMeilisearchStore();
 const settings = ref<Settings | null>(null);
-settings.value = await meiliStore.client?.index(props.indexUID).getSettings() || null;
+async function getSettings() {
+    settings.value = await meiliStore.client?.index(props.indexUID).getSettings() || null;
+}
 
 const editMode = ref(false);
 const toggleEditMode = () => {
     editMode.value = !editMode.value;
 };
 
-const jsonSettingsError = ref(false);
-const saveSettings = async () => {
-    jsonSettingsError.value = false;
+const updating = ref(false);
+const updateSettingsError = ref('');
+const updateSettings = async () => {
+    const client = meiliStore.getClient();
+    if (!client) return;
+
+    updateSettingsError.value = '';
     try {
         const jsonString = JSON.stringify(settings.value);
         JSON.parse(jsonString);
     } catch (error) {
-        jsonSettingsError.value = true;
+        updateSettingsError.value = 'Please correct the invalid JSON within the editor.';
         console.error("Error parsing JSON:", error);
         return;
     }
     if (settings.value) {
-        // TODO: try catch, turn off editMode, show toast
-        meiliStore.client?.index(props.indexUID).updateSettings(settings.value);
+        updating.value = true;
+        try {
+            await meiliStore.client?.index(props.indexUID).updateSettings(settings.value);
+            getSettings();
+            editMode.value = false;
+            toast.add({
+                severity: 'success',
+                summary: 'Saved',
+                detail: 'Index settings have been updated',
+                life: 5000,
+            });
+        } catch (error) {
+            updateSettingsError.value = `There was an issue updating the index settings: ${(error as Error).message}`;
+            console.error("Error updating index settings:", (error as Error).message);
+            return;
+        } finally {
+            updating.value = false;
+        }
     }
 };
+
+onMounted(async () => {
+    getSettings();
+});
 </script>
 
 <template>
@@ -90,27 +129,23 @@ const saveSettings = async () => {
                             </Button>
                             <Button
                                 label="Save"
-                                severity="success"
-                                @click="saveSettings"
-                            >
-                                <template #icon>
-                                    <Save />
-                                </template>
-                            </Button>
+                                :loading="updating"
+                                @click="updateSettings"
+                            />
                         </div>
                     </div>
                 </div>
             </template>
             <template #content>
                 <Message
-                    v-if="jsonSettingsError"
+                    v-if="updateSettingsError"
                     class="mb-4"
                     severity="error"
                 >
                     <template #icon>
-                        <AlertCircle />
+                        <AlertCircle class="size-5!" />
                     </template>
-                    Please correct the invalid JSON within the editor.
+                    {{ updateSettingsError }}
                 </Message>
                 <JsonEditorVue
                     v-model="settings"

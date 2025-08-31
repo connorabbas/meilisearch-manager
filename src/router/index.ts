@@ -47,6 +47,13 @@ const router = createRouter({
                     props: true,
                     meta: { breadcrumbLabel: 'Settings' },
                 },
+                {
+                    path: 'edit',
+                    name: 'edit-index',
+                    component: () => import('@/views/EditIndex.vue'),
+                    props: true,
+                    meta: { breadcrumbLabel: 'Edit' },
+                },
             ],
         },
         {

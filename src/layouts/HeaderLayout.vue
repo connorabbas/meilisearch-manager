@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAppLayout } from '@/composables/useAppLayout';
+import SelectColorModeButton from '@/components/SelectColorModeButton.vue';
 import { Menu as MenuIcon } from 'lucide-vue-next';
 import Button from 'primevue/button';
 import Drawer from 'primevue/drawer';
@@ -40,7 +41,7 @@ const {
                 </div>
                 <template #footer>
                     <div class="flex flex-col">
-                        <!-- TODO: color mode toggle here -->
+                        <SelectColorModeButton />
                     </div>
                 </template>
             </Drawer>
@@ -65,7 +66,7 @@ const {
                         </template>
                         <template #end>
                             <div class="hidden lg:flex items-center ms-6 space-x-3">
-                                <!-- TODO: color mode toggle here -->
+                                <SelectColorModeButton />
                             </div>
 
                             <!-- Mobile Menu Toggle -->

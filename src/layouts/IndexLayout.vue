@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import { useRoute } from 'vue-router';
-import { Home, Pencil, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { Home, RefreshCw } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import IndexTabMenu from '@/components/IndexTabMenu.vue';
@@ -67,7 +67,10 @@ onMounted(async () => {
                 </div>
             </template>
             <template #end>
-                <div class="flex gap-4">
+                <div
+                    v-if="route.meta?.breadcrumbLabel === 'Details'"
+                    class="flex gap-4"
+                >
                     <Button
                         label="Refresh"
                         severity="secondary"
@@ -76,23 +79,6 @@ onMounted(async () => {
                     >
                         <template #icon>
                             <RefreshCw />
-                        </template>
-                    </Button>
-                    <Button
-                        v-tooltip.top="'Edit Index Primary Key'"
-                        severity="secondary"
-                        outlined
-                    >
-                        <template #icon>
-                            <Pencil />
-                        </template>
-                    </Button>
-                    <Button
-                        v-tooltip.top="'Delete Index Data'"
-                        severity="danger"
-                    >
-                        <template #icon>
-                            <Trash2 />
                         </template>
                     </Button>
                 </div>
