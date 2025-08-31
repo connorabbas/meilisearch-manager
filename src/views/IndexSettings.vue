@@ -42,9 +42,10 @@ const saveSettings = async () => {
         return;
     }
     if (settings.value) {
+        // TODO: try catch, turn off editMode, show toast
         meiliStore.client?.index(props.indexUID).updateSettings(settings.value);
     }
-}
+};
 </script>
 
 <template>

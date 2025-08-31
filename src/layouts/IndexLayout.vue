@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import { useRoute } from 'vue-router';
 import { Home, Pencil, RefreshCw, Trash2 } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
@@ -19,10 +20,11 @@ const props = defineProps<{
 
 const route = useRoute();
 const meiliStore = useMeilisearchStore();
-const { currentIndex, currentIndexError, isLoading } = storeToRefs(meiliStore);
+const meilisearchIndexesStore = useMeilisearchIndexesStore();
+const { currentIndex, currentIndexError, isLoading } = storeToRefs(meilisearchIndexesStore);
 
 const fetchData = async () => {
-    await meiliStore.fetchCurrentIndex(props.indexUID);
+    await meilisearchIndexesStore.fetchCurrentIndex(props.indexUID);
     await meiliStore.fetchStats();
 };
 
@@ -43,7 +45,7 @@ const breadcrumbs = computed(() => {
 const currentRouteName = computed(() => route.name as string);
 
 watch(() => props.indexUID, () => {
-    meiliStore.fetchCurrentIndex(props.indexUID);
+    meilisearchIndexesStore.fetchCurrentIndex(props.indexUID);
 });
 
 onMounted(async () => {
@@ -88,7 +90,6 @@ onMounted(async () => {
                     <Button
                         v-tooltip.top="'Delete Index Data'"
                         severity="danger"
-                        outlined
                     >
                         <template #icon>
                             <Trash2 />
@@ -104,7 +105,7 @@ onMounted(async () => {
             severity="error"
             :closable="false"
         >
-            <span class="font-bold">Error loading index</span> {{ currentIndexError }}
+            <span class="font-bold">Error loading index:</span> {{ currentIndexError }}
         </Message>
 
         <!-- Tab Navigation -->

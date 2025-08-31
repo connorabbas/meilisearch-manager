@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useMeilisearchStore } from '@/stores/meilisearch';
 import { storeToRefs } from 'pinia';
+import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
@@ -13,14 +14,11 @@ import Column from 'primevue/column';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
-const meiliStore = useMeilisearchStore();
-const {
-    indexes,
-    isLoadingIndexes,
-    serverStats,
-} = storeToRefs(meiliStore);
-
-await meiliStore.fetchIndexes();
+const meilisearchStore = useMeilisearchStore();
+const { serverStats } = storeToRefs(meilisearchStore);
+const meilisearchIndexesStore = useMeilisearchIndexesStore();
+const { indexes, isLoadingIndexes } = storeToRefs(meilisearchIndexesStore);
+await meilisearchIndexesStore.fetchIndexes();
 
 const indexesData = computed(() => {
     return indexes.value.map((index) => {
@@ -51,7 +49,7 @@ const indexesData = computed(() => {
                         severity="secondary"
                         label="Refresh"
                         :loading="isLoadingIndexes"
-                        @click="meiliStore.fetchIndexes()"
+                        @click="meilisearchIndexesStore.fetchIndexes()"
                     >
                         <template #icon>
                             <RefreshCw />

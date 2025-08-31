@@ -2,14 +2,13 @@
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import Card from 'primevue/card';
 
-const props = defineProps<{
-    indexUID: string;
-}>();
-
-const meiliStore = useMeilisearchStore();
-const { currentIndex, serverStats } = storeToRefs(meiliStore);
+const meilisearchStore = useMeilisearchStore();
+const { serverStats } = storeToRefs(meilisearchStore);
+const meilisearchIndexesStore = useMeilisearchIndexesStore();
+const { currentIndex } = storeToRefs(meilisearchIndexesStore);
 
 const indexStats = computed(() => {
     if (!serverStats.value || !currentIndex.value) return null;
