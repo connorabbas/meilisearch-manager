@@ -3,9 +3,10 @@ import { ref, inject, computed } from 'vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
+import Message from 'primevue/message';
 import type { Settings } from 'meilisearch';
 import type { UseColorModeReturn } from '@vueuse/core';
-import { CircleQuestionMark, Pencil, Save, X } from 'lucide-vue-next';
+import { AlertCircle, CircleQuestionMark, Pencil, Save, X } from 'lucide-vue-next';
 
 import JsonEditorVue from 'json-editor-vue';
 import { Mode } from 'vanilla-jsoneditor';
@@ -24,11 +25,26 @@ const meiliStore = useMeilisearchStore();
 const settings = ref<Settings | null>(null);
 settings.value = await meiliStore.client?.index(props.indexUID).getSettings() || null;
 
-// TODO: toggle edit mode
 const editMode = ref(false);
 const toggleEditMode = () => {
     editMode.value = !editMode.value;
 };
+
+const jsonSettingsError = ref(false);
+const saveSettings = async () => {
+    jsonSettingsError.value = false;
+    try {
+        const jsonString = JSON.stringify(settings.value);
+        JSON.parse(jsonString);
+    } catch (error) {
+        jsonSettingsError.value = true;
+        console.error("Error parsing JSON:", error);
+        return;
+    }
+    if (settings.value) {
+        meiliStore.client?.index(props.indexUID).updateSettings(settings.value);
+    }
+}
 </script>
 
 <template>
@@ -74,6 +90,7 @@ const toggleEditMode = () => {
                             <Button
                                 label="Save"
                                 severity="success"
+                                @click="saveSettings"
                             >
                                 <template #icon>
                                     <Save />
@@ -84,10 +101,21 @@ const toggleEditMode = () => {
                 </div>
             </template>
             <template #content>
+                <Message
+                    v-if="jsonSettingsError"
+                    class="mb-4"
+                    severity="error"
+                >
+                    <template #icon>
+                        <AlertCircle />
+                    </template>
+                    Please correct the invalid JSON within the editor.
+                </Message>
                 <JsonEditorVue
                     v-model="settings"
                     :read-only="!editMode"
                     :mode="Mode.text"
+                    :stringified="false"
                     :class="jsonEditorDarkModeClass"
                 />
             </template>
