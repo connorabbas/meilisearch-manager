@@ -76,7 +76,7 @@ async function updatePrimaryKey() {
             // TODO: replace with Task enqueued toast, show task id
             const updateResponse = await client.updateIndex(props.indexUID, { primaryKey: primaryKey.value });
             await waitForTask(client, updateResponse.taskUid);
-            await meilisearchIndexesStore.fetchCurrentIndex(props.indexUID);
+            await meilisearchIndexesStore.fetchIndex(props.indexUID);
             toast.add({
                 severity: 'success',
                 summary: 'Index Updated',
@@ -136,6 +136,7 @@ async function deleteIndex() {
         }); */
         await client.deleteIndex(props.indexUID);
         router.push({ name: 'indexes' }).then(() => {
+            meilisearchIndexesStore.clearCurrentIndex();
             toast.add({
                 severity: 'info',
                 summary: 'Task Dispatched',
@@ -143,7 +144,6 @@ async function deleteIndex() {
                 life: 7500,
             });
         });
-        meilisearchIndexesStore.clearCurrentIndex();
     } catch (err) {
         console.error('Error deleting index:', err);
         toast.add({

@@ -15,16 +15,24 @@ import Column from 'primevue/column';
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
 const meilisearchStore = useMeilisearchStore();
-const { serverStats } = storeToRefs(meilisearchStore);
 const meilisearchIndexesStore = useMeilisearchIndexesStore();
+
+async function fetchData() {
+    await Promise.all([
+        meilisearchStore.fetchStats(),
+        meilisearchIndexesStore.fetchIndexes()
+    ]);
+}
+await fetchData();
+
+const { serverStats, isLoadingStats } = storeToRefs(meilisearchStore);
 const { indexes, isLoadingIndexes } = storeToRefs(meilisearchIndexesStore);
-await meilisearchIndexesStore.fetchIndexes();
 
 const indexesData = computed(() => {
     return indexes.value.map((index) => {
         return {
             ...index,
-            numberOfDocuments: serverStats.value?.indexes[index.uid].numberOfDocuments,
+            numberOfDocuments: serverStats.value?.indexes[index.uid]?.numberOfDocuments ?? 0,
         };
     });
 });
@@ -41,8 +49,8 @@ const indexesData = computed(() => {
                     <Button
                         severity="secondary"
                         label="Refresh"
-                        :loading="isLoadingIndexes"
-                        @click="meilisearchIndexesStore.fetchIndexes()"
+                        :loading="isLoadingIndexes || isLoadingStats"
+                        @click="fetchData"
                     >
                         <template #icon>
                             <RefreshCw />
@@ -56,28 +64,7 @@ const indexesData = computed(() => {
                 </div>
             </template>
         </PageTitleSection>
-
-        <!-- <pre>{{ indexes }}</pre>
-        <pre>{{ serverStats }}</pre> -->
-
         <div>
-            <!-- <Card
-                v-if="serverStats"
-                class="mb-4"
-            >
-                <template #title>Server Statistics</template>
-                <template #content>
-                    <div class="grid">
-                        <div class="col-3">
-                            Total Indexes:
-                            <pre>{{ serverStats.indexes }}</pre>
-                        </div>
-                        <div class="col-3">
-                            Database Size: {{ formatBytes(serverStats.databaseSize) }}
-                        </div>
-                    </div>
-                </template>
-            </Card> -->
             <Card>
                 <template #content>
                     <DataTable

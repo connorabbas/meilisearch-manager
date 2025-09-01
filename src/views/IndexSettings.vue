@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, computed, onMounted } from 'vue';
+import { ref, inject, computed } from 'vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -19,6 +19,15 @@ const props = defineProps<{
 
 const toast = useToast();
 
+const meiliStore = useMeilisearchStore();
+const settings = ref<Settings | null>(null);
+async function getSettings() {
+    const client = meiliStore.getClient();
+    if (!client) return;
+    settings.value = await client.index(props.indexUID).getSettings() || null;
+}
+await getSettings();
+
 const prefersDarkColorScheme = () => {
     if (window && window.matchMedia) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -33,14 +42,6 @@ const jsonEditorDarkModeClass = computed(() => {
     }
     return editorClass;
 });
-
-const meiliStore = useMeilisearchStore();
-const settings = ref<Settings | null>(null);
-async function getSettings() {
-    const client = meiliStore.getClient();
-    if (!client) return;
-    settings.value = await client.index(props.indexUID).getSettings() || null;
-}
 
 const editMode = ref(false);
 const toggleEditMode = () => {
@@ -66,7 +67,7 @@ const updateSettings = async () => {
         updating.value = true;
         try {
             await client.index(props.indexUID).updateSettings(settings.value);
-            getSettings();
+            await getSettings();
             editMode.value = false;
             toast.add({
                 severity: 'success',
@@ -83,10 +84,6 @@ const updateSettings = async () => {
         }
     }
 };
-
-onMounted(async () => {
-    getSettings();
-});
 </script>
 
 <template>

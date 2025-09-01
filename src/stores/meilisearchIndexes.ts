@@ -51,7 +51,7 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
     }
 
     // Fetch one index
-    async function fetchCurrentIndex(uid: string) {
+    async function fetchIndex(uid: string) {
         const client = meilisearchStore.getClient();
         if (!client) return;
 
@@ -176,7 +176,7 @@ export const useMeilisearchIndexesStore = defineStore('meilisearchIndexes', () =
 
         // Actions
         fetchIndexes,
-        fetchCurrentIndex,
+        fetchIndex,
         createIndex,
         deleteIndex,
 

@@ -10,7 +10,14 @@ const breadcrumbs = [{ label: 'Dashboard' }];
 
 const meilisearchStore = useMeilisearchStore();
 const { serverStats, version } = storeToRefs(meilisearchStore);
-await meilisearchStore.fetchVersion();
+
+async function fetchData() {
+    await Promise.all([
+        meilisearchStore.fetchStats(),
+        meilisearchStore.fetchVersion(),
+    ]);
+}
+await fetchData();
 </script>
 
 <template>

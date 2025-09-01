@@ -13,6 +13,7 @@ const props = defineProps<{
 
 const meilisearchStore = useMeilisearchStore();
 const { serverStats } = storeToRefs(meilisearchStore);
+await meilisearchStore.fetchStats();
 
 const indexStats = computed(() => {
     if (!serverStats.value || !props.index) return null;

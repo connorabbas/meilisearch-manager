@@ -33,12 +33,9 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         try {
             const config = getConnectionConfig();
             const conn = new MeiliSearch(config);
-            const stats = await conn.getStats();
             client.value = conn;
-            serverStats.value = stats;
         } catch (err) {
             client.value = null;
-            serverStats.value = null;
             connectionError.value = (err as Error).message;
             toast.add({
                 severity: 'error',

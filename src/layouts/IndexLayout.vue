@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import { useRoute } from 'vue-router';
 import { Home, RefreshCw } from 'lucide-vue-next';
@@ -19,14 +18,10 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const meiliStore = useMeilisearchStore();
 const meilisearchIndexesStore = useMeilisearchIndexesStore();
 const { currentIndex, currentIndexError, isLoading } = storeToRefs(meilisearchIndexesStore);
 
-const fetchData = async () => {
-    await meilisearchIndexesStore.fetchCurrentIndex(props.indexUID);
-    await meiliStore.fetchStats();
-};
+await meilisearchIndexesStore.fetchIndex(props.indexUID);
 
 const breadcrumbs = computed(() => {
     const dynamicBreadcrumbs: MenuItem[] = [
@@ -43,14 +38,6 @@ const breadcrumbs = computed(() => {
 });
 
 const currentRouteName = computed(() => route.name as string);
-
-watch(() => props.indexUID, () => {
-    meilisearchIndexesStore.fetchCurrentIndex(props.indexUID);
-});
-
-onMounted(async () => {
-    fetchData();
-});
 </script>
 
 <template>
@@ -75,7 +62,7 @@ onMounted(async () => {
                         label="Refresh"
                         severity="secondary"
                         :loading="isLoading"
-                        @click="fetchData"
+                        @click="meilisearchIndexesStore.fetchIndex(props.indexUID)"
                     >
                         <template #icon>
                             <RefreshCw />
@@ -101,7 +88,7 @@ onMounted(async () => {
         />
 
         <!-- Content slot for child components -->
-        <router-view
+        <RouterView
             v-if="currentIndex"
             v-slot="{ Component }"
         >
@@ -109,7 +96,7 @@ onMounted(async () => {
                 :is="Component"
                 :index="currentIndex"
             />
-        </router-view>
+        </RouterView>
 
         <!-- Loading state -->
         <Card v-else-if="isLoading">
