@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
-import { LayoutDashboard, ListCheck, KeyRound, Database } from 'lucide-vue-next';
+import { LayoutDashboard, ListCheck, KeyRound, FolderSearch } from 'lucide-vue-next';
 import { type MenuItem } from '@/types';
 
 export function useAppLayout() {
@@ -25,7 +25,7 @@ export function useAppLayout() {
         },
         {
             label: 'Indexes',
-            lucideIcon: Database,
+            lucideIcon: FolderSearch,
             route: { name: 'indexes' },
             active: isActiveRoute('indexes') || currentPath.value.startsWith('/indexes'),
         },

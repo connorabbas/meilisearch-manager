@@ -2,26 +2,28 @@
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
 import { Clock, Database, FileText } from 'lucide-vue-next';
+import type { Index } from 'meilisearch';
+
+const props = defineProps<{
+    index: Index,
+}>();
 
 const meilisearchStore = useMeilisearchStore();
 const { serverStats } = storeToRefs(meilisearchStore);
-const meilisearchIndexesStore = useMeilisearchIndexesStore();
-const { currentIndex } = storeToRefs(meilisearchIndexesStore);
 
 const indexStats = computed(() => {
-    if (!serverStats.value || !currentIndex.value) return null;
-    return serverStats.value.indexes[currentIndex.value.uid];
+    if (!serverStats.value || !props.index) return null;
+    return serverStats.value.indexes[props.index.uid];
 });
 </script>
 
 <template>
     <div>
         <div
-            v-if="currentIndex && indexStats"
+            v-if="props.index && indexStats"
             class="grid grid-cols-12 items-stretch gap-4"
         >
             <div class="col-span-12 sm:col-span-6 lg:col-span-3">
@@ -49,7 +51,7 @@ const indexStats = computed(() => {
                 </Card>
             </div>
             <div
-                v-if="currentIndex.updatedAt"
+                v-if="props.index.updatedAt"
                 class="col-span-12 sm:col-span-6 lg:col-span-3"
             >
                 <Card class="h-full">
@@ -58,13 +60,13 @@ const indexStats = computed(() => {
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-xl font-semibold">
-                            <Clock class="size-6!" /> {{ formatDate(currentIndex.updatedAt) }}
+                            <Clock class="size-6!" /> {{ formatDate(props.index.updatedAt) }}
                         </div>
                     </template>
                 </Card>
             </div>
             <div
-                v-if="currentIndex.createdAt"
+                v-if="props.index.createdAt"
                 class="col-span-12 sm:col-span-6 lg:col-span-3"
             >
                 <Card class="h-full">
@@ -73,7 +75,7 @@ const indexStats = computed(() => {
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-xl font-semibold">
-                            <Clock class="size-6!" /> {{ formatDate(currentIndex.createdAt) }}
+                            <Clock class="size-6!" /> {{ formatDate(props.index.createdAt) }}
                         </div>
                     </template>
                 </Card>

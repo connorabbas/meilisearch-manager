@@ -105,7 +105,10 @@ onMounted(async () => {
             v-if="currentIndex"
             v-slot="{ Component }"
         >
-            <component :is="Component" />
+            <component
+                :is="Component"
+                :index="currentIndex"
+            />
         </router-view>
 
         <!-- Loading state -->

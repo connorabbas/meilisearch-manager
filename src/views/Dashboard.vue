@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { Clock, Database, GitPullRequestArrow, HardDrive } from 'lucide-vue-next';
+import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next';
 
 const breadcrumbs = [{ label: 'Dashboard' }];
 
@@ -41,7 +41,7 @@ await meilisearchStore.fetchVersion();
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-2xl font-semibold">
-                            <HardDrive class="size-6!" /> {{ Object.keys(serverStats.indexes).length }}
+                            <FolderSearch class="size-6!" /> {{ Object.keys(serverStats.indexes).length }}
                         </div>
                     </template>
                 </Card>

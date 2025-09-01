@@ -7,6 +7,7 @@ import { createPinia } from 'pinia';
 
 import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 
 import { useColorMode } from '@vueuse/core';
@@ -36,6 +37,7 @@ app.use(PrimeVue, {
     },
     pt: globalPt,
 });
+app.use(ConfirmationService);
 app.use(ToastService);
 
 app.mount('#app');
