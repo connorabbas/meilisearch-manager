@@ -9,15 +9,15 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const meiliStore = useMeilisearchStore();
+const meilisearchStore = useMeilisearchStore();
 
 const error = computed(() => {
-    return meiliStore.connectionError || 'Unable to connect to to the configured Meilisearch instance...';
+    return meilisearchStore.connectionError || 'Unable to connect to to the configured Meilisearch instance...';
 });
 
 const retryConnection = async () => {
-    await meiliStore.connect();
-    if (meiliStore.isConnected) {
+    await meilisearchStore.connect();
+    if (meilisearchStore.isConnected) {
         router.push({ name: 'indexes' });
     }
 };
@@ -42,7 +42,7 @@ const retryConnection = async () => {
                             <Button
                                 severity="secondary"
                                 label="Retry Connection"
-                                :loading="meiliStore.isConnecting"
+                                :loading="meilisearchStore.isConnecting"
                                 @click="retryConnection"
                             >
                                 <template #icon>

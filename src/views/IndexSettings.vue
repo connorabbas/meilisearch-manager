@@ -19,14 +19,13 @@ const props = defineProps<{
 
 const toast = useToast();
 
-const meiliStore = useMeilisearchStore();
+const meilisearchStore = useMeilisearchStore();
 const settings = ref<Settings | null>(null);
 async function getSettings() {
-    const client = meiliStore.getClient();
+    const client = meilisearchStore.getClient();
     if (!client) return;
     settings.value = await client.index(props.indexUID).getSettings() || null;
 }
-//await new Promise(resolve => setTimeout(resolve, 1000)), // simluate long wait async component
 await getSettings();
 
 const prefersDarkColorScheme = () => {
@@ -52,7 +51,7 @@ const toggleEditMode = () => {
 const updating = ref(false);
 const updateSettingsError = ref('');
 const updateSettings = async () => {
-    const client = meiliStore.getClient();
+    const client = meilisearchStore.getClient();
     if (!client) return;
 
     updateSettingsError.value = '';

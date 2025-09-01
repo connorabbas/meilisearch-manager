@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { storeToRefs } from 'pinia';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -11,21 +9,22 @@ import Message from 'primevue/message';
 import Toast from 'primevue/toast';
 import { useConfirm, useToast } from 'primevue';
 import InputErrors from '@/components/InputErrors.vue';
-import type { MeiliSearch } from 'meilisearch';
+import type { Index, MeiliSearch } from 'meilisearch';
 import { useRouter } from 'vue-router';
 import { AlertCircle, LoaderCircle } from 'lucide-vue-next';
 
 const props = defineProps<{
-    indexUID: string
+    indexUID: string,
+    index: Index,
 }>();
+
+const emit = defineEmits(['refetch-index', 'nullify-index']);
 
 const toast = useToast();
 const confirm = useConfirm();
 const router = useRouter();
 
 const meilisearchStore = useMeilisearchStore();
-const meilisearchIndexesStore = useMeilisearchIndexesStore();
-const { currentIndex } = storeToRefs(meilisearchIndexesStore);
 
 // Helper function to wait for a task to complete
 // TODO: abstract to composable
@@ -61,7 +60,7 @@ async function waitForTask(client: MeiliSearch, taskUid: number, maxAttempts = 3
     }
 }
 
-const primaryKey = ref(currentIndex.value?.primaryKey);
+const primaryKey = ref(props.index.primaryKey);
 const updating = ref(false);
 const updatingError = ref('');
 const inputErrors = computed(() => updatingError.value ? [updatingError.value] : []);
@@ -76,7 +75,7 @@ async function updatePrimaryKey() {
             // TODO: replace with Task enqueued toast, show task id
             const updateResponse = await client.updateIndex(props.indexUID, { primaryKey: primaryKey.value });
             await waitForTask(client, updateResponse.taskUid);
-            await meilisearchIndexesStore.fetchIndex(props.indexUID);
+            emit('refetch-index');
             toast.add({
                 severity: 'success',
                 summary: 'Index Updated',
@@ -130,13 +129,12 @@ async function deleteIndex() {
             detail: 'Index is being deleted',
             group: 'loading',
         });
-        await new Promise(resolve => setTimeout(resolve, 3000));
         toast.remove({
             group: 'loading',
         }); */
         await client.deleteIndex(props.indexUID);
+        emit('nullify-index');
         router.push({ name: 'indexes' }).then(() => {
-            meilisearchIndexesStore.clearCurrentIndex();
             toast.add({
                 severity: 'info',
                 summary: 'Task Dispatched',

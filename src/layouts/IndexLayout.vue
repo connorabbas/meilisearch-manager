@@ -23,7 +23,6 @@ const route = useRoute();
 const meilisearchIndexesStore = useMeilisearchIndexesStore();
 const { currentIndex, currentIndexError, isLoading } = storeToRefs(meilisearchIndexesStore);
 
-await new Promise(resolve => setTimeout(resolve, 2000));
 await meilisearchIndexesStore.fetchIndex(props.indexUID);
 
 const breadcrumbs = computed(() => {
@@ -102,6 +101,8 @@ const currentRouteName = computed(() => route.name as string);
                     <component
                         :is="Component"
                         :index="currentIndex"
+                        @refetch-index="meilisearchIndexesStore.fetchIndex(props.indexUID)"
+                        @nullify-index="meilisearchIndexesStore.clearCurrentIndex()"
                     />
                     <template #fallback>
                         <div class="h-full flex items-center justify-center p-8">
