@@ -132,13 +132,13 @@ async function deleteIndex() {
         toast.remove({
             group: 'loading',
         }); */
-        await client.deleteIndex(props.indexUID);
+        const response = await client.deleteIndex(props.indexUID);
         emit('nullify-index');
-        router.push({ name: 'indexes' }).then(() => {
+        router.push({ name: 'dashboard' }).then(() => {
             toast.add({
                 severity: 'info',
-                summary: 'Task Dispatched',
-                detail: `The task to delete the index: ${props.indexUID} has been successfully dispatched`,
+                summary: 'Task Enqueued',
+                detail: `The delete index task for index: "${props.indexUID}" has been successfully enqueued (taskUid: ${response.taskUid})`,
                 life: 7500,
             });
         });

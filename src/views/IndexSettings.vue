@@ -66,14 +66,14 @@ const updateSettings = async () => {
     if (settings.value) {
         updating.value = true;
         try {
-            await client.index(props.indexUID).updateSettings(settings.value);
-            await getSettings();
+            const response = await client.index(props.indexUID).updateSettings(settings.value);
+            //await getSettings();
             editMode.value = false;
             toast.add({
-                severity: 'success',
-                summary: 'Saved',
-                detail: 'Index settings have been updated',
-                life: 5000,
+                severity: 'info',
+                summary: 'Task Enqueued',
+                detail: `The update settings task for index: "${props.indexUID}" has been successfully enqueued (taskUid: ${response.taskUid})`,
+                life: 7500,
             });
         } catch (error) {
             updateSettingsError.value = `There was an issue updating the index settings: ${(error as Error).message}`;
