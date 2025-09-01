@@ -72,8 +72,8 @@ const router = createRouter({
             name: 'connection-error',
             component: () => import('../views/ConnectionError.vue'),
             beforeEnter: () => {
-                const meiliStore = useMeilisearchStore();
-                if (meiliStore.isConnected) {
+                const meilisearchStore = useMeilisearchStore();
+                if (meilisearchStore.isConnected) {
                     return { name: 'indexes' };
                 }
             },
@@ -100,13 +100,13 @@ router.beforeEach(async (to, from) => {
         }, 100);
     }
 
-    const meiliStore = useMeilisearchStore();
-    await meiliStore.connect();
+    const meilisearchStore = useMeilisearchStore();
+    await meilisearchStore.connect();
 
     if (to.name === 'connection-error') {
         return;
     }
-    if (!meiliStore.isConnected || meiliStore.connectionError) {
+    if (!meilisearchStore.isConnected || meilisearchStore.connectionError) {
         return { name: 'connection-error' };
     }
 });
