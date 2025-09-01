@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import progress from '@/utils/progress';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import Welcome from '@/views/Welcome.vue';
 
@@ -81,9 +82,24 @@ const router = createRouter({
     ],
 });
 
-router.beforeEach(async (to) => {
-    // TODO: nprogress loader
-    //await new Promise(resolve => setTimeout(resolve, 2000));
+let progressTimer: number | null = null;
+let isAsyncComponentLoading = false;
+
+router.beforeEach(async (to, from) => {
+    if (progressTimer) {
+        clearTimeout(progressTimer);
+        progressTimer = null;
+    }
+    if (to.path !== from.path) {
+        isAsyncComponentLoading = true;
+        progressTimer = setTimeout(() => {
+            if (isAsyncComponentLoading) {
+                progress.start();
+            }
+            progressTimer = null;
+        }, 100);
+    }
+
     const meiliStore = useMeilisearchStore();
     await meiliStore.connect();
 
@@ -94,5 +110,23 @@ router.beforeEach(async (to) => {
         return { name: 'connection-error' };
     }
 });
+
+router.onError(() => {
+    isAsyncComponentLoading = false;
+    if (progressTimer) {
+        clearTimeout(progressTimer);
+        progressTimer = null;
+    }
+    progress.done();
+});
+
+export function completeAsyncLoading() {
+    isAsyncComponentLoading = false;
+    if (progressTimer) {
+        clearTimeout(progressTimer);
+        progressTimer = null;
+    }
+    progress.done();
+}
 
 export default router;

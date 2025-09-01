@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
 import { useRoute } from 'vue-router';
+import { completeAsyncLoading } from '@/router';
 import { Home, RefreshCw } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
@@ -10,6 +11,7 @@ import IndexTabMenu from '@/components/IndexTabMenu.vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
+import ProgressSpinner from 'primevue/progressspinner';
 import Tag from 'primevue/tag';
 import type { MenuItem } from '@/types';
 
@@ -21,6 +23,7 @@ const route = useRoute();
 const meilisearchIndexesStore = useMeilisearchIndexesStore();
 const { currentIndex, currentIndexError, isLoading } = storeToRefs(meilisearchIndexesStore);
 
+await new Promise(resolve => setTimeout(resolve, 2000));
 await meilisearchIndexesStore.fetchIndex(props.indexUID);
 
 const breadcrumbs = computed(() => {
@@ -33,7 +36,6 @@ const breadcrumbs = computed(() => {
         const breadcrumbLabel = route.meta.breadcrumbLabel as string;
         dynamicBreadcrumbs.push({ label: breadcrumbLabel });
     }
-
     return dynamicBreadcrumbs;
 });
 
@@ -87,15 +89,27 @@ const currentRouteName = computed(() => route.name as string);
             :indexUID="indexUID"
         />
 
-        <!-- Content slot for child components -->
         <RouterView
             v-if="currentIndex"
             v-slot="{ Component }"
         >
-            <component
-                :is="Component"
-                :index="currentIndex"
-            />
+            <template v-if="Component">
+                <!-- Another Suspense Layer becuase we have nested async components -->
+                <Suspense
+                    @resolve="completeAsyncLoading"
+                    @reject="completeAsyncLoading"
+                >
+                    <component
+                        :is="Component"
+                        :index="currentIndex"
+                    />
+                    <template #fallback>
+                        <div class="h-full flex items-center justify-center p-8">
+                            <ProgressSpinner />
+                        </div>
+                    </template>
+                </Suspense>
+            </template>
         </RouterView>
 
         <!-- Loading state -->

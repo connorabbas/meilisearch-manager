@@ -26,6 +26,7 @@ async function getSettings() {
     if (!client) return;
     settings.value = await client.index(props.indexUID).getSettings() || null;
 }
+//await new Promise(resolve => setTimeout(resolve, 1000)), // simluate long wait async component
 await getSettings();
 
 const prefersDarkColorScheme = () => {

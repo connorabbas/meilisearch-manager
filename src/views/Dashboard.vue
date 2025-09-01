@@ -13,6 +13,7 @@ const { serverStats, version } = storeToRefs(meilisearchStore);
 
 async function fetchData() {
     await Promise.all([
+        //new Promise(resolve => setTimeout(resolve, 1000)), // simluate long wait async component
         meilisearchStore.fetchStats(),
         meilisearchStore.fetchVersion(),
     ]);
