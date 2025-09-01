@@ -1,4 +1,3 @@
-// stores/meilisearch.ts
 import { defineStore } from 'pinia';
 import { ref, shallowRef, computed, readonly } from 'vue';
 import { MeiliSearch, type Stats, type Version } from 'meilisearch';
