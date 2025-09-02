@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, inject, computed } from 'vue';
-import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useSettings } from '../composables/meilisearch/useSettings';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
 import { useToast } from 'primevue';
-import type { Settings } from 'meilisearch';
 import type { UseColorModeReturn } from '@vueuse/core';
 import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
 
@@ -18,15 +17,9 @@ const props = defineProps<{
 }>();
 
 const toast = useToast();
+const { settings, isLoading, error, fetchSettings, updateSettings } = useSettings();
 
-const meilisearchStore = useMeilisearchStore();
-const settings = ref<Settings | null>(null);
-async function getSettings() {
-    const client = meilisearchStore.getClient();
-    if (!client) return;
-    settings.value = await client.index(props.indexUID).getSettings() || null;
-}
-await getSettings();
+await fetchSettings(props.indexUID);
 
 const prefersDarkColorScheme = () => {
     if (window && window.matchMedia) {
@@ -48,42 +41,23 @@ const toggleEditMode = () => {
     editMode.value = !editMode.value;
 };
 
-const updating = ref(false);
-const updateSettingsError = ref('');
-const updateSettings = async () => {
-    const client = meilisearchStore.getClient();
-    if (!client) return;
-
-    updateSettingsError.value = '';
+async function handleUpdateSettings() {
+    if (!settings.value) {
+        return;
+    }
     try {
         const jsonString = JSON.stringify(settings.value);
         JSON.parse(jsonString);
-    } catch (error) {
-        updateSettingsError.value = 'Please correct the invalid JSON within the editor.';
-        console.error("Error parsing JSON:", error);
+    } catch (err) {
+        error.value = 'Please correct the invalid JSON within the editor.';
+        console.error("Error parsing JSON:", err);
         return;
     }
-    if (settings.value) {
-        updating.value = true;
-        try {
-            const response = await client.index(props.indexUID).updateSettings(settings.value);
-            //await getSettings();
-            editMode.value = false;
-            toast.add({
-                severity: 'info',
-                summary: 'Task Enqueued',
-                detail: `The update settings task for index: "${props.indexUID}" has been successfully enqueued (taskUid: ${response.taskUid})`,
-                life: 7500,
-            });
-        } catch (error) {
-            updateSettingsError.value = `There was an issue updating the index settings: ${(error as Error).message}`;
-            console.error("Error updating index settings:", (error as Error).message);
-            return;
-        } finally {
-            updating.value = false;
-        }
-    }
-};
+
+    updateSettings(props.indexUID, settings.value).then(() => {
+        editMode.value = false;
+    });
+}
 </script>
 
 <template>
@@ -128,8 +102,8 @@ const updateSettings = async () => {
                             </Button>
                             <Button
                                 label="Save"
-                                :loading="updating"
-                                @click="updateSettings"
+                                :loading="isLoading"
+                                @click="handleUpdateSettings"
                             />
                         </div>
                     </div>
@@ -137,14 +111,14 @@ const updateSettings = async () => {
             </template>
             <template #content>
                 <Message
-                    v-if="updateSettingsError"
+                    v-if="error"
                     class="mb-4"
                     severity="error"
                 >
                     <template #icon>
                         <AlertCircle class="size-5!" />
                     </template>
-                    {{ updateSettingsError }}
+                    {{ error }}
                 </Message>
                 <JsonEditorVue
                     v-model="settings"

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
+import { useStats } from '@/composables/meilisearch/useStats';
 import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
@@ -11,28 +10,26 @@ import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { useIndexes } from '@/composables/meilisearch/useIndexes';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
-const meilisearchStore = useMeilisearchStore();
-const meilisearchIndexesStore = useMeilisearchIndexesStore();
+const { instanceStats, isLoading: isLoadingStats, fetchStats } = useStats();
+const { indexes, isLoading: isLoadingIndexes, fetchIndexes } = useIndexes();
 
 async function fetchData() {
     await Promise.all([
-        meilisearchStore.fetchStats(),
-        meilisearchIndexesStore.fetchIndexes()
+        fetchStats(),
+        fetchIndexes()
     ]);
 }
 await fetchData();
-
-const { serverStats, isLoadingStats } = storeToRefs(meilisearchStore);
-const { indexes, isLoadingIndexes } = storeToRefs(meilisearchIndexesStore);
 
 const indexesData = computed(() => {
     return indexes.value.map((index) => {
         return {
             ...index,
-            numberOfDocuments: serverStats.value?.indexes[index.uid]?.numberOfDocuments ?? 0,
+            numberOfDocuments: instanceStats.value?.indexes[index.uid]?.numberOfDocuments ?? 0,
         };
     });
 });

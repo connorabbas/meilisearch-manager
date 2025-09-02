@@ -1,28 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useStats } from '@/composables/meilisearch/useStats';
 import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
 import { Clock, Database, FileText } from 'lucide-vue-next';
 import type { Index } from 'meilisearch';
 
 const props = defineProps<{
+    indexUID: string,
     index: Index,
 }>();
 
-const meilisearchStore = useMeilisearchStore();
-const { serverStats } = storeToRefs(meilisearchStore);
-await meilisearchStore.fetchStats();
-
-const indexStats = computed(() => {
-    if (!serverStats.value || !props.index) return null;
-    return serverStats.value.indexes[props.index.uid];
-});
+const { indexStats, fetchIndexStats } = useStats();
+await fetchIndexStats(props.indexUID);
 </script>
 
 <template>
     <div>
+        <!-- TODO: more stat cards: avg doc size, number of embeddings/docs, field distribution -->
         <div
             v-if="props.index && indexStats"
             class="grid grid-cols-12 items-stretch gap-4"

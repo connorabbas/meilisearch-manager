@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useMeilisearchIndexesStore } from '@/stores/meilisearchIndexes';
+import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import { useRoute } from 'vue-router';
 import { completeAsyncLoading } from '@/router';
 import { Home, RefreshCw } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
-import IndexTabMenu from '@/components/IndexTabMenu.vue';
+import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
@@ -20,10 +19,9 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const meilisearchIndexesStore = useMeilisearchIndexesStore();
-const { currentIndex, currentIndexError, isLoading } = storeToRefs(meilisearchIndexesStore);
+const { currentIndex, isLoading, error, fetchIndex } = useIndexes();
 
-await meilisearchIndexesStore.fetchIndex(props.indexUID);
+await fetchIndex(props.indexUID);
 
 const breadcrumbs = computed(() => {
     const dynamicBreadcrumbs: MenuItem[] = [
@@ -63,7 +61,7 @@ const currentRouteName = computed(() => route.name as string);
                         label="Refresh"
                         severity="secondary"
                         :loading="isLoading"
-                        @click="meilisearchIndexesStore.fetchIndex(props.indexUID)"
+                        @click="fetchIndex(props.indexUID)"
                     >
                         <template #icon>
                             <RefreshCw />
@@ -75,11 +73,11 @@ const currentRouteName = computed(() => route.name as string);
 
         <!-- Error State -->
         <Message
-            v-if="currentIndexError"
+            v-if="error"
             severity="error"
             :closable="false"
         >
-            <span class="font-bold">Error loading index:</span> {{ currentIndexError }}
+            <span class="font-bold">Error loading index:</span> {{ error }}
         </Message>
 
         <!-- Tab Navigation -->
@@ -101,8 +99,8 @@ const currentRouteName = computed(() => route.name as string);
                     <component
                         :is="Component"
                         :index="currentIndex"
-                        @refetch-index="meilisearchIndexesStore.fetchIndex(props.indexUID)"
-                        @nullify-index="meilisearchIndexesStore.clearCurrentIndex()"
+                        @refetch-index="fetchIndex(props.indexUID)"
+                        @nullify-index="currentIndex = null"
                     />
                     <template #fallback>
                         <div class="h-full flex items-center justify-center p-8">

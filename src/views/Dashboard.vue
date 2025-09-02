@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
-import { useMeilisearchStore } from '@/stores/meilisearch';
 import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next';
+import { useStats } from '@/composables/meilisearch/useStats';
 
 const breadcrumbs = [{ label: 'Dashboard' }];
 
-const meilisearchStore = useMeilisearchStore();
-const { serverStats, version } = storeToRefs(meilisearchStore);
+const { instanceStats, version, fetchStats, fetchVersion } = useStats();
 
 async function fetchData() {
     await Promise.all([
-        //new Promise(resolve => setTimeout(resolve, 1000)), // simluate long wait async component
-        meilisearchStore.fetchStats(),
-        meilisearchStore.fetchVersion(),
+        fetchStats(),
+        fetchVersion(),
     ]);
 }
 await fetchData();
@@ -25,7 +22,7 @@ await fetchData();
     <AppLayout :breadcrumbs>
         <div class="grid grid-cols-12 items-stretch gap-4">
             <div
-                v-if="serverStats"
+                v-if="instanceStats"
                 class="col-span-12 sm:col-span-6 lg:col-span-3"
             >
                 <Card class="h-full">
@@ -34,13 +31,13 @@ await fetchData();
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-2xl font-semibold">
-                            <Database class="size-6!" /> {{ formatBytes(serverStats.databaseSize) }}
+                            <Database class="size-6!" /> {{ formatBytes(instanceStats.databaseSize) }}
                         </div>
                     </template>
                 </Card>
             </div>
             <div
-                v-if="serverStats"
+                v-if="instanceStats"
                 class="col-span-12 sm:col-span-6 lg:col-span-3"
             >
                 <Card class="h-full">
@@ -49,13 +46,13 @@ await fetchData();
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-2xl font-semibold">
-                            <FolderSearch class="size-6!" /> {{ Object.keys(serverStats.indexes).length }}
+                            <FolderSearch class="size-6!" /> {{ Object.keys(instanceStats.indexes).length }}
                         </div>
                     </template>
                 </Card>
             </div>
             <div
-                v-if="serverStats"
+                v-if="instanceStats"
                 class="col-span-12 sm:col-span-6 lg:col-span-3"
             >
                 <Card class="h-full">
@@ -64,7 +61,7 @@ await fetchData();
                     </template>
                     <template #content>
                         <div class="flex gap-3 items-center text-xl font-semibold">
-                            <Clock class="size-6!" /> {{ formatDate(serverStats.lastUpdate) }}
+                            <Clock class="size-6!" /> {{ formatDate(instanceStats.lastUpdate) }}
                         </div>
                     </template>
                 </Card>
