@@ -4,12 +4,20 @@ import { AlertCircle } from 'lucide-vue-next';
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Message from 'primevue/message';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{
     indexUID: string,
 }>();
 
+const router = useRouter();
 const { confirmDeleteIndex } = useIndexes();
+
+function handleDeleteIndex() {
+    confirmDeleteIndex(props.indexUID, () => {
+        router.push({ name: 'dashboard' });
+    });
+}
 </script>
 
 <template>
@@ -39,7 +47,7 @@ const { confirmDeleteIndex } = useIndexes();
                     <Button
                         label="Delete this index"
                         severity="danger"
-                        @click="confirmDeleteIndex(props.indexUID)"
+                        @click="handleDeleteIndex"
                     />
                     <!-- TODO -->
                     <!-- <Button

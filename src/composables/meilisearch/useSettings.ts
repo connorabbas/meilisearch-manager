@@ -1,15 +1,21 @@
-import { ref, watch } from 'vue';
-import { type EnqueuedTask, type Settings } from 'meilisearch';
+import { computed, ref, watch } from 'vue';
+import { type EnqueuedTask, type Settings, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useTasks } from './useTasks';
 
 export function useSettings() {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
+    const { pollTaskStatus } = useTasks();
 
     const settings = ref<Settings | null>(null);
-    const isLoading = ref(false);
+    const isFetching = ref(false);
+    const isSendingTask = ref(false);
+    const isPollingTask = ref(false);
     const error = ref<string | null>(null);
+
+    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
 
     async function fetchSettings(uid: string) {
         const client = meilisearchStore.getClient();
@@ -18,7 +24,7 @@ export function useSettings() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -27,33 +33,42 @@ export function useSettings() {
             settings.value = null;
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
-    async function updateSettings(uid: string, settings: Settings): Promise<EnqueuedTask | undefined> {
+    async function updateSettings(
+        uid: string,
+        settings: Settings,
+        onTaskEnqueued?: (task: EnqueuedTask) => void
+    ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
             return;
         }
 
-        isLoading.value = true;
+        isSendingTask.value = true;
         error.value = null;
 
         try {
-            const response = await client.index(uid).updateSettings(settings);
-            toast.add({
-                severity: 'info',
-                summary: 'Task Enqueued',
-                detail: `The update settings task for index: "${uid}" has been successfully enqueued (taskUid: ${response.taskUid})`,
-                life: 7500,
-            });
-            return response;
+            const enqueuedTask = await client.index(uid).updateSettings(settings);
+            isSendingTask.value = false;
+            onTaskEnqueued?.(enqueuedTask);
+
+            isPollingTask.value = true;
+            const result = await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `An update settings task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `The settings for index: "${uid}" have been successfully updated`,
+            );
+
+            return result;
         } catch (err) {
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isSendingTask.value = false;
+            isPollingTask.value = false;
         }
     }
 
@@ -70,7 +85,10 @@ export function useSettings() {
 
     return {
         settings,
-        isLoading,
+        isFetching,
+        isSendingTask,
+        isPollingTask,
+        isLoadingTask,
         error,
         fetchSettings,
         updateSettings,

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
 import { useStats } from '@/composables/meilisearch/useStats';
 import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -14,8 +13,8 @@ import { useIndexes } from '@/composables/meilisearch/useIndexes';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
-const { instanceStats, isLoading: isLoadingStats, fetchStats } = useStats();
-const { indexes, isLoading: isLoadingIndexes, fetchIndexes } = useIndexes();
+const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats();
+const { indexes, isFetching: isFetchingIndexes, fetchIndexes } = useIndexes();
 
 async function fetchData() {
     await Promise.all([
@@ -46,11 +45,14 @@ const indexesData = computed(() => {
                     <Button
                         severity="secondary"
                         label="Refresh"
-                        :loading="isLoadingIndexes || isLoadingStats"
+                        :loading="isFetchingIndexes || isFetchingStats"
                         @click="fetchData"
                     >
                         <template #icon>
                             <RefreshCw />
+                        </template>
+                        <template #loadingicon>
+                            <RefreshCw class="animate-spin" />
                         </template>
                     </Button>
                     <Button label="Create New Index">
@@ -66,7 +68,7 @@ const indexesData = computed(() => {
                 <template #content>
                     <DataTable
                         :value="indexesData"
-                        :loading="isLoadingIndexes"
+                        :loading="isFetchingIndexes"
                     >
                         <template #empty>
                             <div class="flex flex-col items-center p-5">

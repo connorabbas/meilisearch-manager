@@ -9,7 +9,7 @@ const props = defineProps<{
     index: Index,
 }>();
 
-const emit = defineEmits(['refetch-index']);
+defineEmits(['refetch-index']);
 </script>
 
 <template>

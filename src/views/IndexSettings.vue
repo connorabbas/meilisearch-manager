@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import { ref, inject, computed } from 'vue';
+import { ref, inject, computed, watch } from 'vue';
 import { useSettings } from '../composables/meilisearch/useSettings';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
-import { useToast } from 'primevue';
 import type { UseColorModeReturn } from '@vueuse/core';
 import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
-
 import JsonEditorVue from 'json-editor-vue';
 import { Mode } from 'vanilla-jsoneditor';
-import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
 
 const props = defineProps<{
     indexUID: string
 }>();
 
-const toast = useToast();
-const { settings, isLoading, error, fetchSettings, updateSettings } = useSettings();
+const { settings, isSendingTask, error, fetchSettings, updateSettings } = useSettings();
 
 await fetchSettings(props.indexUID);
 
+// Dark/Light theme for JSON Editor
 const prefersDarkColorScheme = () => {
     if (window && window.matchMedia) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -41,6 +38,8 @@ const toggleEditMode = () => {
     editMode.value = !editMode.value;
 };
 
+const invalidJsonMessage = 'Please correct the invalid settings JSON.';
+const jsonError = ref('');
 async function handleUpdateSettings() {
     if (!settings.value) {
         return;
@@ -49,15 +48,18 @@ async function handleUpdateSettings() {
         const jsonString = JSON.stringify(settings.value);
         JSON.parse(jsonString);
     } catch (err) {
-        error.value = 'Please correct the invalid JSON within the editor.';
+        jsonError.value = invalidJsonMessage;
         console.error("Error parsing JSON:", err);
         return;
     }
 
-    updateSettings(props.indexUID, settings.value).then(() => {
+    updateSettings(props.indexUID, settings.value, () => {
         editMode.value = false;
     });
 }
+watch(() => settings.value, (newVal) => {
+    jsonError.value = (newVal === undefined) ? invalidJsonMessage : '';
+});
 </script>
 
 <template>
@@ -102,7 +104,8 @@ async function handleUpdateSettings() {
                             </Button>
                             <Button
                                 label="Save"
-                                :loading="isLoading"
+                                :loading="isSendingTask"
+                                :disabled="Boolean(jsonError || error)"
                                 @click="handleUpdateSettings"
                             />
                         </div>
@@ -111,23 +114,30 @@ async function handleUpdateSettings() {
             </template>
             <template #content>
                 <Message
-                    v-if="error"
+                    v-if="jsonError"
                     class="mb-4"
                     severity="error"
                 >
                     <template #icon>
                         <AlertCircle class="size-5!" />
                     </template>
-                    {{ error }}
+                    {{ jsonError }}
                 </Message>
-                <JsonEditorVue
-                    v-model="settings"
-                    :read-only="!editMode"
-                    :mode="Mode.text"
-                    :stringified="false"
-                    :class="jsonEditorDarkModeClass"
-                />
+                <div class="json-editor">
+                    <JsonEditorVue
+                        v-model="settings"
+                        :read-only="!editMode"
+                        :mode="Mode.text"
+                        :main-menu-bar="false"
+                        :stringified="false"
+                        :class="jsonEditorDarkModeClass"
+                    />
+                </div>
             </template>
         </Card>
     </div>
 </template>
+
+<style>
+@import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
+</style>

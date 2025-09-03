@@ -13,9 +13,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['refetch-index']);
 
-const { error, isLoading, updateIndex } = useIndexes();
+const { error, isSendingTask, updateIndex } = useIndexes();
 
-const primaryKey = ref(props.index.primaryKey ?? 'id');
+const primaryKey = ref(props.index.primaryKey ?? '');
 const inputErrors = computed(() => error.value ? [error.value] : []);
 
 function handleUpdatePrimaryKey() {
@@ -55,7 +55,7 @@ function handleUpdatePrimaryKey() {
                 type="submit"
                 label="Save"
                 :disabled="!primaryKey"
-                :loading="isLoading"
+                :loading="isSendingTask"
             />
         </div>
     </form>

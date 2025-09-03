@@ -1,4 +1,4 @@
-import { ref, readonly, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { type IndexStats, type Stats, type Version } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
@@ -10,7 +10,7 @@ export function useStats() {
     const instanceStats = ref<Stats | null>(null);
     const indexStats = ref<IndexStats | null>(null);
     const version = ref<Version | null>(null);
-    const isLoading = ref(false);
+    const isFetching = ref(false);
     const error = ref<string | null>(null);
 
     async function fetchStats() {
@@ -20,7 +20,7 @@ export function useStats() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -29,7 +29,7 @@ export function useStats() {
             instanceStats.value = null;
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
@@ -40,7 +40,7 @@ export function useStats() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -49,7 +49,7 @@ export function useStats() {
             indexStats.value = null;
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
@@ -60,7 +60,7 @@ export function useStats() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -70,7 +70,7 @@ export function useStats() {
             version.value = null;
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
@@ -89,7 +89,7 @@ export function useStats() {
         instanceStats,
         indexStats,
         version,
-        isLoading,
+        isFetching,
         error,
         fetchStats,
         fetchIndexStats,

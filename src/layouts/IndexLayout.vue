@@ -8,7 +8,6 @@ import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
 import Button from 'primevue/button';
-import Card from 'primevue/card';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
 import Tag from 'primevue/tag';
@@ -19,7 +18,7 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const { currentIndex, isLoading, error, fetchIndex } = useIndexes();
+const { currentIndex, isFetching, error, fetchIndex } = useIndexes();
 
 await fetchIndex(props.indexUID);
 
@@ -60,18 +59,20 @@ const currentRouteName = computed(() => route.name as string);
                     <Button
                         label="Refresh"
                         severity="secondary"
-                        :loading="isLoading"
+                        :loading="isFetching"
                         @click="fetchIndex(props.indexUID)"
                     >
                         <template #icon>
                             <RefreshCw />
+                        </template>
+                        <template #loadingicon>
+                            <RefreshCw class="animate-spin" />
                         </template>
                     </Button>
                 </div>
             </template>
         </PageTitleSection>
 
-        <!-- Error State -->
         <Message
             v-if="error"
             severity="error"
@@ -80,7 +81,6 @@ const currentRouteName = computed(() => route.name as string);
             <span class="font-bold">Error loading index:</span> {{ error }}
         </Message>
 
-        <!-- Tab Navigation -->
         <IndexTabMenu
             :current-route-name="currentRouteName"
             :indexUID="indexUID"
@@ -91,7 +91,7 @@ const currentRouteName = computed(() => route.name as string);
             v-slot="{ Component }"
         >
             <template v-if="Component">
-                <!-- Another Suspense Layer becuase we have nested async components -->
+                <!-- Another Suspense Layer because we have nested async components -->
                 <Suspense
                     @resolve="completeAsyncLoading"
                     @reject="completeAsyncLoading"
@@ -110,14 +110,5 @@ const currentRouteName = computed(() => route.name as string);
                 </Suspense>
             </template>
         </RouterView>
-
-        <!-- Loading state -->
-        <Card v-else-if="isLoading">
-            <template #content>
-                <div class="text-center p-4">
-                    Loading index data...
-                </div>
-            </template>
-        </Card>
     </AppLayout>
 </template>

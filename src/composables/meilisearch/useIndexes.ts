@@ -1,20 +1,24 @@
-import { ref, readonly, watch } from 'vue';
-import { type EnqueuedTask, type Index, type IndexesQuery } from 'meilisearch';
+import { ref, watch, computed } from 'vue';
+import { type EnqueuedTask, type Index, type IndexesQuery, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useRouter } from 'vue-router';
+import { useTasks } from './useTasks';
 
 export function useIndexes() {
     const toast = useToast();
     const confirm = useConfirm();
-    const router = useRouter();
     const meilisearchStore = useMeilisearchStore();
+    const { pollTaskStatus } = useTasks();
 
     const indexes = ref<Index[]>([]);
     const currentIndex = ref<Index | null>(null);
-    const isLoading = ref(false);
+    const isFetching = ref(false);
+    const isSendingTask = ref(false);
+    const isPollingTask = ref(false);
     const error = ref<string | null>(null);
+
+    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
 
     async function fetchIndexes(params?: IndexesQuery) {
         const client = meilisearchStore.getClient();
@@ -23,7 +27,7 @@ export function useIndexes() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -33,7 +37,7 @@ export function useIndexes() {
             indexes.value = [];
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
@@ -44,7 +48,7 @@ export function useIndexes() {
             return;
         }
 
-        isLoading.value = true;
+        isFetching.value = true;
         error.value = null;
 
         try {
@@ -53,96 +57,119 @@ export function useIndexes() {
             currentIndex.value = null;
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isFetching.value = false;
         }
     }
 
-    async function createIndex(uid: string, primaryKey?: string): Promise<EnqueuedTask | undefined> {
+    async function createIndex(
+        uid: string,
+        primaryKey?: string,
+        onTaskEnqueued?: (task: EnqueuedTask) => void
+    ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
             return;
         }
 
-        isLoading.value = true;
+        isSendingTask.value = true;
         error.value = null;
 
         try {
-            const response = await client.createIndex(uid, { primaryKey });
-            toast.add({
-                severity: 'info',
-                summary: 'Task Enqueued',
-                detail: `A create task for index: "${uid}" has been enqueued (taskUid: ${response.taskUid})`,
-                life: 7500,
-            });
-            return response;
+            const enqueuedTask = await client.createIndex(uid, { primaryKey });
+            isSendingTask.value = false;
+            onTaskEnqueued?.(enqueuedTask);
+
+            isPollingTask.value = true;
+            const result = await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `A create task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `The new index: "${uid}" was successfully created`,
+            );
+
+            return result;
         } catch (err) {
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isSendingTask.value = false;
+            isPollingTask.value = false;
         }
     }
 
-    async function updateIndex(uid: string, primaryKey: string): Promise<EnqueuedTask | undefined> {
+    async function updateIndex(
+        uid: string,
+        primaryKey: string,
+        onTaskEnqueued?: (task: EnqueuedTask) => void
+    ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
             return;
         }
 
-        isLoading.value = true;
+        isSendingTask.value = true;
         error.value = null;
 
         try {
-            const response = await client.updateIndex(uid, { primaryKey });
-            toast.add({
-                severity: 'info',
-                summary: 'Task Enqueued',
-                detail: `An update task for index: "${uid}" has been enqueued (taskUid: ${response.taskUid})`,
-                life: 7500,
-            });
-            return response;
+            const enqueuedTask = await client.updateIndex(uid, { primaryKey });
+            isSendingTask.value = false;
+            onTaskEnqueued?.(enqueuedTask);
+
+            isPollingTask.value = true;
+            const result = await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `An update task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `The index primary key for index: "${uid}" was successfully updated to "${primaryKey}"`,
+            );
+
+            return result;
         } catch (err) {
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isSendingTask.value = false;
+            isPollingTask.value = false;
         }
     }
 
-    async function deleteIndex(uid: string): Promise<EnqueuedTask | undefined> {
+    async function deleteIndex(uid: string, onTaskEnqueued?: (task: EnqueuedTask) => void): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
             return;
         }
 
-        isLoading.value = true;
+        isSendingTask.value = true;
         error.value = null;
 
         try {
-            const response = await client.deleteIndex(uid);
-            currentIndex.value = null;
-            router.push({ name: 'dashboard' }).then(() => {
-                toast.add({
-                    severity: 'info',
-                    summary: 'Task Enqueued',
-                    detail: `A delete task for index: "${uid}" has been enqueued (taskUid: ${response.taskUid})`,
-                    life: 7500,
-                });
-            });
-            return response;
+            const enqueuedTask = await client.deleteIndex(uid);
+            isSendingTask.value = false;
+            onTaskEnqueued?.(enqueuedTask);
+
+            isPollingTask.value = true;
+            const result = await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `A delete task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `The index: "${uid}" has been successfully deleted`,
+            );
+
+            return result;
         } catch (err) {
             error.value = (err as Error).message;
         } finally {
-            isLoading.value = false;
+            isSendingTask.value = false;
+            isPollingTask.value = false;
         }
     }
 
-    function confirmDeleteIndex(uid: string) {
+    function confirmDeleteIndex(
+        uid: string,
+        onTaskEnqueued?: (task: EnqueuedTask) => void,
+        onDeletedCallback?: () => void
+    ) {
         confirm.require({
             message: 'Are you absolutely sure you want to delete this index?',
             header: 'Danger Zone',
-            icon: 'pi pi-info-circle',
             rejectLabel: 'Cancel',
             rejectProps: {
                 label: 'Cancel',
@@ -152,9 +179,14 @@ export function useIndexes() {
             acceptProps: {
                 label: 'Delete',
                 severity: 'danger',
-                loading: isLoading.value,
             },
-            accept: async () => await deleteIndex(uid),
+            accept: async () => {
+                await deleteIndex(uid, (task) => {
+                    onTaskEnqueued?.(task);
+                }).then(() => {
+                    onDeletedCallback?.();
+                });
+            },
         });
     }
 
@@ -172,7 +204,10 @@ export function useIndexes() {
     return {
         indexes,
         currentIndex,
-        isLoading,
+        isFetching,
+        isSendingTask,
+        isPollingTask,
+        isLoadingTask,
         error,
         fetchIndexes,
         fetchIndex,

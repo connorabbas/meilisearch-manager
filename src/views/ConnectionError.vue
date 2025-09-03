@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Container from '@/components/Container.vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { AlertCircle, RefreshCcw } from 'lucide-vue-next';
+import { AlertCircle, RefreshCw } from 'lucide-vue-next';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Card from 'primevue/card';
@@ -46,7 +46,10 @@ const retryConnection = async () => {
                                 @click="retryConnection"
                             >
                                 <template #icon>
-                                    <RefreshCcw />
+                                    <RefreshCw />
+                                </template>
+                                <template #loadingicon>
+                                    <RefreshCw class="animate-spin" />
                                 </template>
                             </Button>
                         </div>
