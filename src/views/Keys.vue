@@ -1,15 +1,170 @@
 <script setup lang="ts">
+import { computed, ref, useTemplateRef } from 'vue';
+import { useKeys } from '@/composables/meilisearch/useKeys';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from 'primevue/card';
+import Drawer from 'primevue/drawer';
+import Fieldset from 'primevue/fieldset';
+import Inplace from 'primevue/inplace';
+import InputText from 'primevue/inputtext';
+import InputGroup from 'primevue/inputgroup';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Button from 'primevue/button';
+import Tag from 'primevue/tag';
+import Menu from '@/components/primevue/Menu.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
-import { Home, Plus } from 'lucide-vue-next';
+import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import type { Key } from 'meilisearch';
+import { formatDate } from '@/utils';
+import { useClipboard } from '@vueuse/core';
+import { useToast } from 'primevue';
+import type { MenuItem } from '@/types';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }];
+
+const toast = useToast();
+const { isSupported: canCopy, copy } = useClipboard()
+const { keys, isFetching, fetchAllKeys } = useKeys();
+
+await fetchAllKeys();
+
+const keyContextMenu = useTemplateRef('key-context-menu');
+const keyContextMenuItems = ref<MenuItem[]>([]);
+function toggleKeyContextMenu(event: Event, key: Key) {
+    keyContextMenuItems.value = [
+        {
+            label: 'Details',
+            lucideIcon: Info,
+            command: () => showKey(key),
+        },
+        {
+            label: 'Edit',
+            lucideIcon: Pencil,
+            command: () => {
+                alert('Data: ' + JSON.stringify(key));
+            },
+        },
+        {
+            label: 'Delete',
+            lucideIcon: Trash2,
+            class: 'text-red-500 dark:text-red-400',
+            lucideIconClass: 'text-red-500 dark:text-red-400',
+            command: () => {
+                // TODO: confirm dialog
+            },
+        },
+    ];
+    // Show the menu
+    if (keyContextMenu.value && keyContextMenu.value?.$el) {
+        keyContextMenu.value.$el.toggle(event);
+    }
+}
+
+const showKeyDrawerOpen = ref(false);
+const currentKey = ref<Key | null>(null);
+const currentKeyName = computed(() => currentKey.value?.name ?? 'API Key Details');
+const currentKeyExpired = computed(() => {
+    if (!currentKey.value?.expiresAt) {
+        return false;
+    }
+    const today = new Date();
+    return currentKey.value.expiresAt < today;
+});
+function showKey(task: Key) {
+    currentKey.value = task;
+    showKeyDrawerOpen.value = true;
+}
+
+function copyApiKey(key: string) {
+    copy(key);
+    toast.add({
+        severity: 'success',
+        summary: 'API key copied to clipboard',
+        life: 3000,
+    });
+}
+
+function maskedApiKey(
+    key: string,
+    visibleStart: number = 8,
+    visibleEnd: number = 6
+): string {
+    if (!key || key.length <= visibleStart + visibleEnd) {
+        return '******************';
+    }
+    const start = key.slice(0, visibleStart);
+    const end = key.slice(-visibleEnd);
+
+    return `${start}****${end}`;
+}
 </script>
 
 <template>
     <AppLayout :breadcrumbs>
+        <Drawer
+            v-model:visible="showKeyDrawerOpen"
+            :header="currentKeyName"
+            class="w-full sm:w-[65rem]"
+            position="right"
+            blockScroll
+            @hide="currentKey = null"
+        >
+            <div
+                v-if="currentKey"
+                class="space-y-4"
+            >
+                <Fieldset legend="UID">
+                    {{ currentKey.uid }}
+                </Fieldset>
+                <Fieldset legend="Description">
+                    {{ currentKey.description }}
+                </Fieldset>
+                <Fieldset legend="Indexes">
+                    <div class="flex flex-wrap gap-2">
+                        <Tag
+                            v-for="index in currentKey.indexes"
+                            :key="index"
+                            :value="index"
+                            severity="secondary"
+                        />
+                    </div>
+                </Fieldset>
+                <Fieldset legend="Actions">
+                    <div class="flex flex-wrap gap-2">
+                        <Tag
+                            v-for="action in currentKey.actions"
+                            :key="action"
+                            :value="action"
+                            severity="secondary"
+                        />
+                    </div>
+                </Fieldset>
+                <Fieldset
+                    v-if="currentKey.expiresAt"
+                    legend="Expires"
+                >
+                    <div class="flex gap-2 items-center">
+                        <div>{{ formatDate(currentKey.expiresAt) }}</div>
+                        <Tag
+                            v-if="currentKeyExpired"
+                            value="Expired"
+                            severity="danger"
+                        />
+                    </div>
+                </Fieldset>
+                <Fieldset legend="Created">
+                    {{ formatDate(currentKey.createdAt) }}
+                </Fieldset>
+                <Fieldset
+                    v-if="currentKey.updatedAt"
+                    legend="Updated"
+                >
+                    {{ formatDate(currentKey.updatedAt) }}
+                </Fieldset>
+            </div>
+        </Drawer>
+
         <PageTitleSection>
             <template #title>
                 Keys
@@ -22,9 +177,120 @@ const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label
                 </Button>
             </template>
         </PageTitleSection>
+
         <Card>
             <template #content>
-                Keys
+                <Menu
+                    ref="key-context-menu"
+                    class="shadow-sm"
+                    :model="keyContextMenuItems"
+                    popup
+                />
+                <DataTable
+                    :value="keys"
+                    :loading="isFetching"
+                    scrollable
+                    columnResizeMode="fit"
+                >
+                    <Column
+                        field="name"
+                        header="Name"
+                    >
+                        <template #body="{ data }">
+                            <span v-tooltip.top="(data as Key).description">{{ (data as Key).name }}</span>
+                        </template>
+                    </Column>
+                    <Column
+                        field="key"
+                        header="Key"
+                    >
+                        <template #body="{ data }">
+                            <InputGroup v-if="canCopy">
+                                <InputText
+                                    class="w-[8rem]"
+                                    size="small"
+                                    :value="maskedApiKey(data.key)"
+                                    disabled
+                                />
+                                <Button
+                                    v-tooltip.right="'Copy'"
+                                    severity="secondary"
+                                    size="small"
+                                    outlined
+                                    @click="copyApiKey(data.key)"
+                                >
+                                    <Copy />
+                                </Button>
+                            </InputGroup>
+                            <Inplace v-else>
+                                <template #display>
+                                    <Button
+                                        label="View API Key"
+                                        severity="secondary"
+                                        size="small"
+                                    />
+                                </template>
+                                <template #content>
+                                    {{ data.key }}
+                                </template>
+                            </Inplace>
+                        </template>
+                    </Column>
+                    <Column
+                        field="indexes"
+                        header="Indexes"
+                    >
+                        <template #body="{ data }">
+                            <div class="flex flex-wrap gap-2">
+                                <Tag
+                                    v-for="index in (data as Key).indexes"
+                                    :key="index"
+                                    :value="index"
+                                    severity="secondary"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                    <Column
+                        field="actions"
+                        header="Actions"
+                    >
+                        <template #body="{ data }">
+                            <div class="flex flex-wrap gap-2">
+                                <Tag
+                                    v-for="action in (data as Key).actions"
+                                    :key="action"
+                                    :value="action"
+                                    severity="secondary"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                    <Column
+                        field="createdAt"
+                        header="Created"
+                    >
+                        <template #body="{ data }">
+                            {{ formatDate((data as Key).createdAt) }}
+                        </template>
+                    </Column>
+                    <Column header="Action">
+                        <template #body="{ data }">
+                            <Button
+                                v-tooltip.top="'Show Key Actions'"
+                                type="button"
+                                severity="secondary"
+                                rounded
+                                text
+                                @click="toggleKeyContextMenu($event, (data as Key))"
+                            >
+                                <template #icon>
+                                    <EllipsisVertical class="size-5!" />
+                                </template>
+                            </Button>
+                        </template>
+                    </Column>
+                </DataTable>
             </template>
         </Card>
     </AppLayout>

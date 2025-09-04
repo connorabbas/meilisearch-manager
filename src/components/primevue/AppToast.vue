@@ -43,6 +43,7 @@ import { Check, CircleX, Info, LoaderCircle, TriangleAlert } from 'lucide-vue-ne
                         {{ message.summary }}
                     </span>
                     <div
+                        v-if="message.detail"
                         class="p-toast-detail"
                         data-p="info"
                         data-pc-section="detail"

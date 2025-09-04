@@ -35,7 +35,7 @@ const indexUids = computed(() => indexes.value.map((index) => index.uid));
 
 const showTaskDrawerOpen = ref(false);
 const currentTask = ref<Task | null>(null);
-const taskHeaderTitle = computed(() => `Task ${currentTask.value?.uid} Details`);
+const taskHeaderTitle = computed(() => `Task ${currentTask.value?.uid}`);
 function showTask(task: Task) {
     currentTask.value = task;
     showTaskDrawerOpen.value = true;
