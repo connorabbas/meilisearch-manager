@@ -14,12 +14,12 @@ import { useIndexes } from '@/composables/meilisearch/useIndexes';
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
 const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats();
-const { indexes, isFetching: isFetchingIndexes, fetchIndexes } = useIndexes();
+const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
 
 async function fetchData() {
     await Promise.all([
         fetchStats(),
-        fetchIndexes()
+        fetchAllIndexes(),
     ]);
 }
 await fetchData();
@@ -66,6 +66,7 @@ const indexesData = computed(() => {
         <div>
             <Card>
                 <template #content>
+                    <!-- TODO: pagination -->
                     <DataTable
                         :value="indexesData"
                         :loading="isFetchingIndexes"

@@ -1,14 +1,53 @@
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import type { Task } from 'meilisearch';
+import type { Task, TasksOrBatchesQuery, TasksResults } from 'meilisearch';
 
 export function useTasks() {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
 
+    const tasksResults = ref<TasksResults | null>(null);
+    const tasks = ref<Task[]>([]);
+    const isFetching = ref(false);
     const checkingTaskStatus = ref(false);
     const error = ref<string | null>(null);
+    const hasMore = ref(false);
+
+    async function fetchTasks(params?: TasksOrBatchesQuery, append = false) {
+        const client = meilisearchStore.getClient();
+        if (!client) {
+            error.value = 'MeiliSearch client not connected';
+            return;
+        }
+
+        isFetching.value = true;
+        error.value = null;
+
+        try {
+            const results = await client.tasks.getTasks(params);
+            tasksResults.value = results;
+
+            if (append) {
+                tasks.value = [...tasks.value, ...results.results];
+            } else {
+                tasks.value = results.results;
+            }
+
+            hasMore.value = !!results.next;
+        } catch (err) {
+            if (!append) tasks.value = [];
+            error.value = (err as Error).message;
+        } finally {
+            isFetching.value = false;
+        }
+    }
+
+    async function fetchAndAppendTasks(params: TasksOrBatchesQuery) {
+        if (!tasksResults.value?.next) return;
+        params.from = tasksResults.value.next;
+        await fetchTasks(params, true);
+    }
 
     async function pollTaskStatus(
         taskUid: number,
@@ -33,7 +72,7 @@ export function useTasks() {
         let attempts = 0;
         try {
             toast.add(taskToastOptions);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // wait to show the task toast spin for a bit
+            await new Promise(resolve => setTimeout(resolve, 2000));
             while (attempts < maxAttempts) {
                 const taskResponse = await client.tasks.getTask(taskUid);
                 if (!taskResponse || typeof taskResponse.status === 'undefined') {
@@ -68,8 +107,26 @@ export function useTasks() {
         }
     }
 
+    watch(() => error.value, (newError) => {
+        if (newError) {
+            toast.add({
+                severity: 'error',
+                summary: 'Task Error',
+                detail: newError,
+                life: 5000,
+            });
+        }
+    });
+
     return {
         error,
-        pollTaskStatus
+        tasksResults,
+        tasks,
+        isFetching,
+        hasMore,
+        checkingTaskStatus,
+        fetchTasks,
+        fetchAndAppendTasks,
+        pollTaskStatus,
     };
 }

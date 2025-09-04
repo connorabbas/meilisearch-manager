@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { ref, inject, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useSettings } from '../composables/meilisearch/useSettings';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
-import type { UseColorModeReturn } from '@vueuse/core';
 import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
-import JsonEditorVue from 'json-editor-vue';
 import { Mode } from 'vanilla-jsoneditor';
+import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
 
 const props = defineProps<{
     indexUID: string
@@ -16,22 +15,6 @@ const props = defineProps<{
 const { settings, isSendingTask, error, fetchSettings, updateSettings } = useSettings();
 
 await fetchSettings(props.indexUID);
-
-// Dark/Light theme for JSON Editor
-const prefersDarkColorScheme = () => {
-    if (window && window.matchMedia) {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-};
-const colorMode = inject<UseColorModeReturn>('colorMode')!;
-const jsonEditorDarkModeClass = computed(() => {
-    let editorClass = '';
-    if (colorMode.value === 'dark' || (prefersDarkColorScheme() && colorMode.value === 'auto')) {
-        editorClass = 'jse-theme-dark';
-    }
-    return editorClass;
-});
 
 const editMode = ref(false);
 const toggleEditMode = () => {
@@ -123,21 +106,14 @@ watch(() => settings.value, (newVal) => {
                     </template>
                     {{ jsonError }}
                 </Message>
-                <div class="json-editor">
-                    <JsonEditorVue
-                        v-model="settings"
-                        :read-only="!editMode"
-                        :mode="Mode.text"
-                        :main-menu-bar="false"
-                        :stringified="false"
-                        :class="jsonEditorDarkModeClass"
-                    />
-                </div>
+                <ThemedJsonEditor
+                    v-model="settings"
+                    :read-only="!editMode"
+                    :mode="Mode.text"
+                    :main-menu-bar="false"
+                    :stringified="false"
+                />
             </template>
         </Card>
     </div>
 </template>
-
-<style>
-@import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
-</style>

@@ -1,5 +1,5 @@
 import { ref, watch, computed } from 'vue';
-import { type EnqueuedTask, type Index, type IndexesQuery, type Task } from 'meilisearch';
+import { type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useMeilisearchStore } from '@/stores/meilisearch';
@@ -11,6 +11,7 @@ export function useIndexes() {
     const meilisearchStore = useMeilisearchStore();
     const { pollTaskStatus } = useTasks();
 
+    const indexesResults = ref<IndexesResults<Index[]> | null>(null);
     const indexes = ref<Index[]>([]);
     const currentIndex = ref<Index | null>(null);
     const isFetching = ref(false);
@@ -31,14 +32,24 @@ export function useIndexes() {
         error.value = null;
 
         try {
-            const result = await client.getIndexes(params);
-            indexes.value = result.results;
+            indexesResults.value = await client.getIndexes(params);
+            indexes.value = indexesResults.value.results;
         } catch (err) {
+            indexesResults.value = null;
             indexes.value = [];
             error.value = (err as Error).message;
         } finally {
             isFetching.value = false;
         }
+    }
+
+    async function fetchAllIndexes() {
+        await fetchIndexes({
+            limit: 1 // Load in just one, so we can get the total amount for the actual dataset
+        });
+        await fetchIndexes({
+            limit: indexesResults.value?.total // Hacky way to load all the indexes
+        });
     }
 
     async function fetchIndex(uid: string) {
@@ -202,6 +213,7 @@ export function useIndexes() {
     });
 
     return {
+        indexesResults,
         indexes,
         currentIndex,
         isFetching,
@@ -210,6 +222,7 @@ export function useIndexes() {
         isLoadingTask,
         error,
         fetchIndexes,
+        fetchAllIndexes,
         fetchIndex,
         createIndex,
         updateIndex,
