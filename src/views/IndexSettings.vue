@@ -12,7 +12,7 @@ const props = defineProps<{
     indexUID: string
 }>();
 
-const { settings, isSendingTask, error, fetchSettings, updateSettings } = useSettings();
+const { settings, isSendingTask, fetchSettings, updateSettings } = useSettings();
 
 await fetchSettings(props.indexUID);
 
@@ -88,7 +88,6 @@ watch(() => settings.value, (newVal) => {
                             <Button
                                 label="Save"
                                 :loading="isSendingTask"
-                                :disabled="Boolean(jsonError || error)"
                                 @click="handleUpdateSettings"
                             />
                         </div>

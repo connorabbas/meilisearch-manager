@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import { useKeys } from '@/composables/meilisearch/useKeys';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from 'primevue/card';
-import Drawer from 'primevue/drawer';
-import Fieldset from 'primevue/fieldset';
 import Inplace from 'primevue/inplace';
 import InputText from 'primevue/inputtext';
 import InputGroup from 'primevue/inputgroup';
@@ -16,18 +14,31 @@ import Menu from '@/components/primevue/Menu.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import type { Key } from 'meilisearch';
-import { formatDate } from '@/utils';
+import { formatDate, maskedApiKey } from '@/utils';
 import { useClipboard } from '@vueuse/core';
 import { useToast } from 'primevue';
 import type { MenuItem } from '@/types';
+import CreateNewKeyDrawer from '@/components/meilisearch/CreateNewKeyDrawer.vue';
+import EditKeyDrawer from '@/components/meilisearch/EditKeyDrawer.vue';
+import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }];
 
 const toast = useToast();
-const { isSupported: canCopy, copy } = useClipboard()
-const { keys, isFetching, fetchAllKeys } = useKeys();
+const { isSupported: canCopy, copy } = useClipboard();
+const { keys, isFetching: isFetchingKeys, fetchAllKeys } = useKeys();
 
 await fetchAllKeys();
+
+const newKeyDrawerOpen = ref(false);
+const editKeyDrawerOpen = ref(false);
+const keyDetailsDrawerOpen = ref(false);
+
+const currentKey = ref<Key | null>(null);
+function showKeyDetails(key: Key) {
+    currentKey.value = key;
+    keyDetailsDrawerOpen.value = true;
+}
 
 const keyContextMenu = useTemplateRef('key-context-menu');
 const keyContextMenuItems = ref<MenuItem[]>([]);
@@ -36,7 +47,7 @@ function toggleKeyContextMenu(event: Event, key: Key) {
         {
             label: 'Details',
             lucideIcon: Info,
-            command: () => showKey(key),
+            command: () => showKeyDetails(key),
         },
         {
             label: 'Edit',
@@ -55,25 +66,16 @@ function toggleKeyContextMenu(event: Event, key: Key) {
             },
         },
     ];
-    // Show the menu
     if (keyContextMenu.value && keyContextMenu.value?.$el) {
         keyContextMenu.value.$el.toggle(event);
     }
 }
 
-const showKeyDrawerOpen = ref(false);
-const currentKey = ref<Key | null>(null);
-const currentKeyName = computed(() => currentKey.value?.name ?? 'API Key Details');
-const currentKeyExpired = computed(() => {
-    if (!currentKey.value?.expiresAt) {
-        return false;
-    }
-    const today = new Date();
-    return currentKey.value.expiresAt < today;
-});
-function showKey(task: Key) {
-    currentKey.value = task;
-    showKeyDrawerOpen.value = true;
+function resetCurrentKey() {
+    // delayed null reset to allow the drawer close animation to complete
+    setTimeout(() => {
+        currentKey.value = null;
+    }, 250);
 }
 
 function copyApiKey(key: string) {
@@ -84,93 +86,32 @@ function copyApiKey(key: string) {
         life: 3000,
     });
 }
-
-function maskedApiKey(
-    key: string,
-    visibleStart: number = 8,
-    visibleEnd: number = 6
-): string {
-    if (!key || key.length <= visibleStart + visibleEnd) {
-        return '******************';
-    }
-    const start = key.slice(0, visibleStart);
-    const end = key.slice(-visibleEnd);
-
-    return `${start}****${end}`;
-}
 </script>
 
 <template>
     <AppLayout :breadcrumbs>
-        <Drawer
-            v-model:visible="showKeyDrawerOpen"
-            :header="currentKeyName"
-            class="w-full sm:w-[65rem]"
-            position="right"
-            blockScroll
-            @hide="currentKey = null"
-        >
-            <div
-                v-if="currentKey"
-                class="space-y-4"
-            >
-                <Fieldset legend="UID">
-                    {{ currentKey.uid }}
-                </Fieldset>
-                <Fieldset legend="Description">
-                    {{ currentKey.description }}
-                </Fieldset>
-                <Fieldset legend="Indexes">
-                    <div class="flex flex-wrap gap-2">
-                        <Tag
-                            v-for="index in currentKey.indexes"
-                            :key="index"
-                            :value="index"
-                            severity="secondary"
-                        />
-                    </div>
-                </Fieldset>
-                <Fieldset legend="Actions">
-                    <div class="flex flex-wrap gap-2">
-                        <Tag
-                            v-for="action in currentKey.actions"
-                            :key="action"
-                            :value="action"
-                            severity="secondary"
-                        />
-                    </div>
-                </Fieldset>
-                <Fieldset
-                    v-if="currentKey.expiresAt"
-                    legend="Expires"
-                >
-                    <div class="flex gap-2 items-center">
-                        <div>{{ formatDate(currentKey.expiresAt) }}</div>
-                        <Tag
-                            v-if="currentKeyExpired"
-                            value="Expired"
-                            severity="danger"
-                        />
-                    </div>
-                </Fieldset>
-                <Fieldset legend="Created">
-                    {{ formatDate(currentKey.createdAt) }}
-                </Fieldset>
-                <Fieldset
-                    v-if="currentKey.updatedAt"
-                    legend="Updated"
-                >
-                    {{ formatDate(currentKey.updatedAt) }}
-                </Fieldset>
-            </div>
-        </Drawer>
+        <KeyDetailsDrawer
+            v-if="currentKey"
+            v-model="keyDetailsDrawerOpen"
+            :api-key="currentKey"
+            @hide="resetCurrentKey"
+            @copy-key="copyApiKey"
+        />
+        <CreateNewKeyDrawer
+            v-model="newKeyDrawerOpen"
+            @key-created="fetchAllKeys"
+        />
+        <EditKeyDrawer v-model="editKeyDrawerOpen" />
 
         <PageTitleSection>
             <template #title>
                 Keys
             </template>
             <template #end>
-                <Button label="Create New Key">
+                <Button
+                    label="New Key"
+                    @click="newKeyDrawerOpen = true"
+                >
                     <template #icon>
                         <Plus />
                     </template>
@@ -188,7 +129,7 @@ function maskedApiKey(
                 />
                 <DataTable
                     :value="keys"
-                    :loading="isFetching"
+                    :loading="isFetchingKeys"
                     scrollable
                     columnResizeMode="fit"
                 >
@@ -224,11 +165,7 @@ function maskedApiKey(
                             </InputGroup>
                             <Inplace v-else>
                                 <template #display>
-                                    <Button
-                                        label="View API Key"
-                                        severity="secondary"
-                                        size="small"
-                                    />
+                                    Reveal API Key
                                 </template>
                                 <template #content>
                                     {{ data.key }}

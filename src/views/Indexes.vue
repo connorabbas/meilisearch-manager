@@ -55,7 +55,8 @@ const indexesData = computed(() => {
                             <RefreshCw class="animate-spin" />
                         </template>
                     </Button>
-                    <Button label="Create New Index">
+                    <!-- TODO -->
+                    <Button label="New Index">
                         <template #icon>
                             <Plus />
                         </template>

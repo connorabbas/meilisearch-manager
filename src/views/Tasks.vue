@@ -23,7 +23,7 @@ import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }];
 
 const { tasks, isFetching: isFetchingTasks, hasMore, fetchTasks, fetchAndAppendTasks } = useTasks();
-const { indexes, fetchAllIndexes } = useIndexes();
+const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
 
 const tasksParams = reactive<TasksOrBatchesQuery>({
     limit: 50,
@@ -84,7 +84,7 @@ onMounted(() => {
         <Drawer
             v-model:visible="showTaskDrawerOpen"
             :header="taskHeaderTitle"
-            class="w-full sm:w-[65rem]"
+            class="w-full sm:w-[60rem]"
             position="right"
             blockScroll
             @hide="currentTask = null"
@@ -152,8 +152,8 @@ onMounted(() => {
                                 ]"
                                 display="chip"
                                 placeholder="Filter by status"
+                                :showToggleAll="false"
                                 showClear
-                                filter
                                 fluid
                             />
                         </template>
@@ -191,6 +191,7 @@ onMounted(() => {
                                 ]"
                                 display="chip"
                                 placeholder="Filter by type"
+                                :showToggleAll="false"
                                 showClear
                                 filter
                                 fluid
@@ -209,6 +210,8 @@ onMounted(() => {
                                 :options="indexUids"
                                 display="chip"
                                 placeholder="Filter by index"
+                                :showToggleAll="false"
+                                :loading="isFetchingIndexes"
                                 showClear
                                 filter
                                 fluid

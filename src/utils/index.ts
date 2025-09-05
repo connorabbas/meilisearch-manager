@@ -34,3 +34,17 @@ export const formatBytes = (bytes: number): string => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+export function maskedApiKey(
+    key: string,
+    visibleStart: number = 8,
+    visibleEnd: number = 6
+): string {
+    if (!key || key.length <= visibleStart + visibleEnd) {
+        return '******************';
+    }
+    const start = key.slice(0, visibleStart);
+    const end = key.slice(-visibleEnd);
+
+    return `${start}****${end}`;
+}

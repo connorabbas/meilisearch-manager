@@ -72,13 +72,13 @@ export function useSettings() {
         }
     }
 
-    watch(() => error.value, (newError) => {
+    watch(error, (newError) => {
         if (newError) {
             toast.add({
                 severity: 'error',
                 summary: 'Meilisearch Settings Error',
                 detail: newError,
-                life: 5000,
+                life: 7500,
             });
         }
     });

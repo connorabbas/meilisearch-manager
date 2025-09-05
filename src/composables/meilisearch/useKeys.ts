@@ -1,8 +1,8 @@
 import { computed, ref, watch } from 'vue';
-import { type EnqueuedTask, type Key, type KeysQuery, type KeysResults, type Settings, type Task } from 'meilisearch';
+import { type Key, type KeyCreation, type KeysQuery, type KeysResults } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useTasks } from './useTasks';
+//import { useTasks } from './useTasks';
 
 export function useKeys() {
     const toast = useToast();
@@ -12,6 +12,7 @@ export function useKeys() {
     const keysResults = ref<KeysResults | null>(null);
     const keys = ref<Key[] | null>(null);
     const isFetching = ref(false);
+    const isLoading = ref(false);
     const isSendingTask = ref(false);
     const isPollingTask = ref(false);
     const error = ref<string | null>(null);
@@ -49,13 +50,34 @@ export function useKeys() {
         });
     }
 
-    watch(() => error.value, (newError) => {
+    async function createKey(params: KeyCreation): Promise<Key | undefined> {
+        const client = meilisearchStore.getClient();
+        if (!client) {
+            error.value = 'MeiliSearch client not connected';
+            return;
+        }
+
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await client.createKey(params);
+        } catch (err) {
+            // TODO: evaluate other crud actions and add throw
+            error.value = (err as Error).message;
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
+    watch(error, (newError) => {
         if (newError) {
             toast.add({
                 severity: 'error',
                 summary: 'Meilisearch Keys Error',
                 detail: newError,
-                life: 5000,
+                life: 7500,
             });
         }
     });
@@ -64,11 +86,13 @@ export function useKeys() {
         keys,
         keysResults,
         isFetching,
+        isLoading,
         isSendingTask,
         isPollingTask,
         isLoadingTask,
         error,
         fetchKeys,
         fetchAllKeys,
+        createKey,
     };
 }

@@ -42,7 +42,7 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
                 severity: 'error',
                 summary: 'Connection Failed',
                 detail: connectionError.value,
-                life: 5000,
+                life: 7500,
             });
             throw err;
         } finally {
