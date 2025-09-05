@@ -248,6 +248,7 @@ watch(allActions, (newVal) => {
                     showTime
                     showButtonBar
                     fluid
+                    @clear-click="newKey.expiresAt = null"
                 />
             </div>
             <div>
