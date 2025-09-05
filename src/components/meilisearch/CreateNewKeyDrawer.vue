@@ -242,6 +242,7 @@ watch(allActions, (newVal) => {
                 <DatePicker
                     id="new-key-expires"
                     v-model="newKey.expiresAt"
+                    :minDate="new Date()"
                     placeholder="optional - select date & time"
                     hourFormat="12"
                     showTime
