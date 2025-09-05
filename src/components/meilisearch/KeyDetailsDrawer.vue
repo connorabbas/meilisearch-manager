@@ -97,11 +97,11 @@ const keyExpired = computed(() => {
                     />
                 </div>
             </Fieldset>
-            <Fieldset
-                v-if="props.apiKey.expiresAt"
-                legend="Expires"
-            >
-                <div class="flex gap-2 items-center">
+            <Fieldset legend="Expires">
+                <div
+                    v-if="props.apiKey.expiresAt"
+                    class="flex gap-2 items-center"
+                >
                     <div>{{ formatDate(props.apiKey.expiresAt) }}</div>
                     <Tag
                         v-if="keyExpired"
@@ -109,6 +109,11 @@ const keyExpired = computed(() => {
                         severity="danger"
                     />
                 </div>
+                <Tag
+                    v-else
+                    value="never"
+                    severity="info"
+                />
             </Fieldset>
             <Fieldset legend="Created">
                 {{ formatDate(props.apiKey.createdAt) }}

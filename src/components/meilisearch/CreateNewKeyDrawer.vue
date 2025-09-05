@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useKeys } from '@/composables/meilisearch/useKeys';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import DatePicker from 'primevue/datepicker';
 import Drawer from 'primevue/drawer';
 import InputText from 'primevue/inputtext';
@@ -12,6 +13,7 @@ import MultiSelect from 'primevue/multiselect';
 import type { KeyCreation } from 'meilisearch';
 import { useToast } from 'primevue';
 import { CircleQuestionMark, Info } from 'lucide-vue-next';
+import { toRaw } from 'vue';
 
 const drawerOpen = defineModel<boolean>({ default: false });
 
@@ -21,7 +23,44 @@ const toast = useToast();
 const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
 const { isLoading, createKey } = useKeys();
 
-const indexOptions = computed(() => ['*', ...indexes.value.map((index) => index.uid)]);
+const indexOptions = computed(() => {
+    return (allIndexes.value) ? ['*'] : indexes.value.map((index) => index.uid);
+});
+const actionsOptions = computed(() => {
+    let actions = [
+        'search',
+        'documents.add',
+        'documents.get',
+        'documents.delete',
+        'indexes.create',
+        'indexes.get',
+        'indexes.update',
+        'indexes.delete',
+        'indexes.swap',
+        'tasks.get',
+        'tasks.cancel',
+        'tasks.delete',
+        'settings.get',
+        'settings.update',
+        'stats.get',
+        'dumps.create',
+        'snapshots.create',
+        'version',
+        'keys.get',
+        'keys.create',
+        'keys.update',
+        'keys.delete',
+        'network.get',
+        'network.update',
+        'chatCompletions',
+        'webhooks.get',
+        'webhooks.create',
+        'webhooks.update',
+        'webhooks.delete',
+    ];
+    return (allActions.value) ? ['*'] : actions;
+});
+
 const emptyKey = {
     uid: undefined,
     name: undefined,
@@ -30,7 +69,9 @@ const emptyKey = {
     indexes: [],
     expiresAt: null,
 };
-const newKey = ref<KeyCreation>(emptyKey);
+const newKey = ref<KeyCreation>(structuredClone(toRaw(emptyKey)));
+const allIndexes = ref(false);
+const allActions = ref(false);
 function saveNewKey() {
     createKey(newKey.value).then(() => {
         toast.add({
@@ -47,8 +88,14 @@ function saveNewKey() {
 
     });
 }
+
+function reset() {
+    newKey.value = structuredClone(toRaw(emptyKey));
+    allIndexes.value = false;
+    allActions.value = false;
+}
+
 watch(newKey, (newVal) => {
-    console.log('changed');
     if (newVal.uid === '') {
         delete newKey.value.uid;
     }
@@ -59,6 +106,12 @@ watch(newKey, (newVal) => {
         delete newKey.value.description;
     }
 }, { deep: true });
+watch(allIndexes, (newVal) => {
+    newKey.value.indexes = (newVal) ? ['*'] : [];
+});
+watch(allActions, (newVal) => {
+    newKey.value.actions = (newVal) ? ['*'] : [];
+});
 </script>
 
 <template>
@@ -69,6 +122,7 @@ watch(newKey, (newVal) => {
         position="right"
         blockScroll
         @show="fetchAllIndexes"
+        @hide="reset"
     >
         <form
             class="space-y-6 sm:space-y-8"
@@ -123,21 +177,29 @@ watch(newKey, (newVal) => {
             </div>
             <div class="flex flex-col gap-2">
                 <label for="new-key-indexes">Indexes</label>
-                <!-- TODO: watcher to see if * is selected, if so remove all other options -->
                 <!-- TODO: wildcard index selected via input https://www.meilisearch.com/docs/reference/api/keys#indexes -->
                 <MultiSelect
                     v-model="newKey.indexes"
                     pt:label:class="flex flex-wrap"
                     :options="indexOptions"
-                    display="chip"
+                    :display="allIndexes ? 'comma' : 'chip'"
                     placeholder="select permitted indexes"
                     inputId="new-key-indexes"
                     :loading="isFetchingIndexes"
                     :showToggleAll="false"
+                    :disabled="allIndexes"
                     showClear
                     filter
                     fluid
                 />
+                <div class="flex items-center gap-2">
+                    <Checkbox
+                        v-model="allIndexes"
+                        inputId="new-key-all-indexes"
+                        binary
+                    />
+                    <label for="new-key-all-indexes">All indexes</label>
+                </div>
             </div>
             <div class="flex flex-col gap-2">
                 <label
@@ -153,54 +215,30 @@ watch(newKey, (newVal) => {
                         <CircleQuestionMark />
                     </a>
                 </label>
-                <!-- TODO: watcher to see if * is selected, if so remove all other options -->
                 <MultiSelect
-                    v-model="newKey.indexes"
+                    v-model="newKey.actions"
                     pt:label:class="flex flex-wrap"
-                    :options="[
-                        '*',
-                        'search',
-                        'documents.add',
-                        'documents.get',
-                        'documents.delete',
-                        'indexes.create',
-                        'indexes.get',
-                        'indexes.update',
-                        'indexes.delete',
-                        'indexes.swap',
-                        'tasks.get',
-                        'tasks.cancel',
-                        'tasks.delete',
-                        'settings.get',
-                        'settings.update',
-                        'stats.get',
-                        'dumps.create',
-                        'snapshots.create',
-                        'version',
-                        'keys.get',
-                        'keys.create',
-                        'keys.update',
-                        'keys.delete',
-                        'network.get',
-                        'network.update',
-                        'chatCompletions',
-                        'webhooks.get',
-                        'webhooks.create',
-                        'webhooks.update',
-                        'webhooks.delete',
-                    ]"
-                    display="chip"
+                    :options="actionsOptions"
+                    :display="allActions ? 'comma' : 'chip'"
                     placeholder="select permitted actions"
                     inputId="new-key-actions"
                     :showToggleAll="false"
+                    :disabled="allActions"
                     showClear
                     filter
                     fluid
                 />
+                <div class="flex items-center gap-2">
+                    <Checkbox
+                        v-model="allActions"
+                        inputId="new-key-all-actions"
+                        binary
+                    />
+                    <label for="new-key-all-actions">All actions</label>
+                </div>
             </div>
             <div class="flex flex-col gap-2">
                 <label for="new-key-expires">Expires At</label>
-                <!-- TODO: normalize data to RFC 3339 format https://www.meilisearch.com/docs/reference/api/keys#expiresat -->
                 <DatePicker
                     id="new-key-expires"
                     v-model="newKey.expiresAt"
