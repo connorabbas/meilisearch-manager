@@ -5,7 +5,7 @@ import type { Index } from 'meilisearch';
 import InputErrors from '@/components/InputErrors.vue';
 
 const props = defineProps<{
-    indexUID: string,
+    indexUid: string,
     index: Index,
 }>();
 
@@ -17,7 +17,7 @@ const primaryKey = ref(props.index.primaryKey ?? '');
 const inputErrors = computed(() => error.value ? [error.value] : []);
 
 function handleUpdatePrimaryKey() {
-    updateIndex(props.indexUID, primaryKey.value).then(() => {
+    updateIndex(props.indexUid, primaryKey.value).then(() => {
         emit('refetch-index');
     });
 }

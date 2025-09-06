@@ -10,19 +10,19 @@ import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
 import type { MenuItem } from '@/types';
 
 const props = defineProps<{
-    indexUID: string;
+    indexUid: string;
 }>();
 
 const route = useRoute();
 const { currentIndex, isFetching, error, fetchIndex } = useIndexes();
 
-await fetchIndex(props.indexUID);
+await fetchIndex(props.indexUid);
 
 const breadcrumbs = computed(() => {
     const dynamicBreadcrumbs: MenuItem[] = [
         { route: { name: 'dashboard' }, lucideIcon: Home },
         { label: 'Indexes', route: { name: 'indexes' } },
-        { label: props.indexUID, route: { name: 'index-details', params: { indexUID: props.indexUID } } },
+        { label: props.indexUid, route: { name: 'index-details', params: { indexUid: props.indexUid } } },
     ];
     if (route.meta.breadcrumbLabel) {
         const breadcrumbLabel = route.meta.breadcrumbLabel as string;
@@ -39,7 +39,7 @@ const currentRouteName = computed(() => route.name as string);
         <PageTitleSection>
             <template #title>
                 <div class="flex items-center gap-4">
-                    <span>Index: {{ indexUID }}</span>
+                    <span>Index: {{ indexUid }}</span>
                     <Tag
                         v-if="currentIndex?.primaryKey"
                         :value="`Primary Key: ${currentIndex.primaryKey}`"
@@ -52,11 +52,13 @@ const currentRouteName = computed(() => route.name as string);
                     v-if="route.meta?.breadcrumbLabel === 'Details'"
                     class="flex gap-4"
                 >
+                    <!-- TODO: refresh stats (total docs data, etc.) -->
+                    <!-- TODO: re-explore having this slot data in the child component  -->
                     <Button
                         label="Refresh"
                         severity="secondary"
                         :loading="isFetching"
-                        @click="fetchIndex(props.indexUID)"
+                        @click="fetchIndex(props.indexUid)"
                     >
                         <template #icon>
                             <RefreshCw />
@@ -79,7 +81,7 @@ const currentRouteName = computed(() => route.name as string);
 
         <IndexTabMenu
             :current-route-name="currentRouteName"
-            :indexUID="indexUID"
+            :indexUid="indexUid"
         />
 
         <RouterView
@@ -95,7 +97,7 @@ const currentRouteName = computed(() => route.name as string);
                     <component
                         :is="Component"
                         :index="currentIndex"
-                        @refetch-index="fetchIndex(props.indexUID)"
+                        @refetch-index="fetchIndex(props.indexUid)"
                         @nullify-index="currentIndex = null"
                     />
                     <template #fallback>

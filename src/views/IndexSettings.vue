@@ -6,12 +6,12 @@ import { Mode } from 'vanilla-jsoneditor';
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
 
 const props = defineProps<{
-    indexUID: string
+    indexUid: string
 }>();
 
 const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings();
 
-await fetchSettings(props.indexUID);
+await fetchSettings(props.indexUid);
 
 const editMode = ref(false);
 const toggleEditMode = () => {
@@ -33,9 +33,9 @@ async function handleUpdateSettings() {
         return;
     }
 
-    updateSettings(props.indexUID, settings.value).then(() => {
+    updateSettings(props.indexUid, settings.value).then(() => {
         editMode.value = false;
-        fetchSettings(props.indexUID);
+        fetchSettings(props.indexUid);
     });
 }
 watch(() => settings.value, (newVal) => {

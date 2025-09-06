@@ -4,14 +4,14 @@ import { FileText, Info, Pencil, Settings } from "lucide-vue-next";
 
 const props = defineProps<{
     currentRouteName: string,
-    indexUID: string,
+    indexUid: string,
 }>();
 
 const items = ref([
-    { route: { name: 'index-details', params: { indexUID: props.indexUID } }, label: 'Details', icon: Info },
-    { route: { name: 'index-documents', params: { indexUID: props.indexUID } }, label: 'Documents', icon: FileText },
-    { route: { name: 'index-settings', params: { indexUID: props.indexUID } }, label: 'Settings', icon: Settings },
-    { route: { name: 'edit-index', params: { indexUID: props.indexUID } }, label: 'Edit', icon: Pencil },
+    { route: { name: 'index-details', params: { indexUid: props.indexUid } }, label: 'Details', icon: Info },
+    { route: { name: 'index-documents', params: { indexUid: props.indexUid } }, label: 'Documents', icon: FileText },
+    { route: { name: 'index-settings', params: { indexUid: props.indexUid } }, label: 'Settings', icon: Settings },
+    { route: { name: 'edit-index', params: { indexUid: props.indexUid } }, label: 'Edit', icon: Pencil },
 
 ]);
 </script>

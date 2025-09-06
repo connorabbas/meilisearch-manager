@@ -108,7 +108,7 @@ const indexesData = computed(() => {
                                     outlined
                                 >
                                     <RouterLink
-                                        :to="{ name: 'index-details', params: { indexUID: data.uid } }"
+                                        :to="{ name: 'index-details', params: { indexUid: data.uid } }"
                                         :class="[slotProps.class, 'no-underline']"
                                     >
                                         View

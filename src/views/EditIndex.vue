@@ -4,7 +4,7 @@ import DeleteIndexDataDangerZone from '@/components/meilisearch/DeleteIndexDataD
 import UpdateIndexPrimaryKeyForm from '@/components/meilisearch/UpdateIndexPrimaryKeyForm.vue';
 
 const props = defineProps<{
-    indexUID: string,
+    indexUid: string,
     index: Index,
 }>();
 
@@ -22,7 +22,7 @@ defineEmits(['refetch-index']);
             </template>
             <template #content>
                 <UpdateIndexPrimaryKeyForm
-                    :indexUID="props.indexUID"
+                    :indexUid="props.indexUid"
                     :index="props.index"
                     @refetch-index="$emit('refetch-index')"
                 />
@@ -36,7 +36,7 @@ defineEmits(['refetch-index']);
                 Delete
             </template>
             <template #content>
-                <DeleteIndexDataDangerZone :indexUID="props.indexUID" />
+                <DeleteIndexDataDangerZone :indexUid="props.indexUid" />
             </template>
         </Card>
     </div>

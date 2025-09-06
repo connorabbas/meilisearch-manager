@@ -5,12 +5,12 @@ import { Clock, Database, FileText } from 'lucide-vue-next';
 import type { Index } from 'meilisearch';
 
 const props = defineProps<{
-    indexUID: string,
+    indexUid: string,
     index: Index,
 }>();
 
 const { indexStats, fetchIndexStats } = useStats();
-await fetchIndexStats(props.indexUID);
+await fetchIndexStats(props.indexUid);
 </script>
 
 <template>

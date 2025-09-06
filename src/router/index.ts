@@ -23,7 +23,7 @@ const router = createRouter({
             component: () => import('../views/Indexes.vue'),
         },
         {
-            path: '/indexes/:indexUID',
+            path: '/indexes/:indexUid',
             component: () => import('@/layouts/IndexLayout.vue'),
             props: true,
             children: [
@@ -101,7 +101,11 @@ router.beforeEach(async (to, from) => {
     }
 
     const meilisearchStore = useMeilisearchStore();
-    await meilisearchStore.connect();
+    try {
+        await meilisearchStore.connect();
+    } catch (err) {
+        console.error(err);
+    }
 
     if (to.name === 'connection-error') {
         return;

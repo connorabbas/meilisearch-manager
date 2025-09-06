@@ -4,7 +4,7 @@ import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{
-    indexUID: string,
+    indexUid: string,
 }>();
 
 const router = useRouter();
@@ -12,12 +12,12 @@ const { confirmDeleteIndex } = useIndexes();
 const { confirmDeleteAllDocuments } = useDocuments();
 
 function handleDeleteIndex() {
-    confirmDeleteIndex(props.indexUID, () => {
+    confirmDeleteIndex(props.indexUid, () => {
         router.push({ name: 'dashboard' });
     });
 }
 function handleDeleteAllDocuments() {
-    confirmDeleteAllDocuments(props.indexUID);
+    confirmDeleteAllDocuments(props.indexUid);
 }
 </script>
 
