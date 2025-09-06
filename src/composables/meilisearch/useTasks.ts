@@ -88,6 +88,7 @@ export function useTasks() {
                     return taskResponse;
                 }
                 if (taskResponse.status === 'failed') {
+                    console.error('Task Failed', taskResponse.error?.message);
                     throw new Error(taskResponse.error?.message ? `Task Failed: ${taskResponse.error.message}` : 'Task failed.');
                 }
                 if (taskResponse.status === 'canceled') {

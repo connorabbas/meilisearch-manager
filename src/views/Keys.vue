@@ -10,7 +10,7 @@ import { formatDate, maskedApiKey } from '@/utils';
 import { useClipboard } from '@vueuse/core';
 import { useToast } from 'primevue';
 import type { MenuItem } from '@/types';
-import CreateNewKeyDrawer from '@/components/meilisearch/CreateNewKeyDrawer.vue';
+import CreateKeyDrawer from '@/components/meilisearch/CreateKeyDrawer.vue';
 import EditKeyDrawer from '@/components/meilisearch/EditKeyDrawer.vue';
 import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue';
 
@@ -101,7 +101,7 @@ function copyApiKey(key: string) {
             @hide="resetCurrentKey"
             @copy-key="copyApiKey"
         />
-        <CreateNewKeyDrawer
+        <CreateKeyDrawer
             v-model="newKeyDrawerOpen"
             @key-created="fetchAllKeys"
         />

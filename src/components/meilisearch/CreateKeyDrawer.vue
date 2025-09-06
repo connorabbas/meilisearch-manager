@@ -10,7 +10,7 @@ import { keyActions } from '@/utils/data';
 
 const drawerOpen = defineModel<boolean>({ default: false });
 
-const emit = defineEmits(['key-created']);
+const emit = defineEmits(['hide', 'key-created']);
 
 const toast = useToast();
 const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
@@ -34,7 +34,7 @@ const emptyKey = {
 const newKey = ref<KeyCreation>(structuredClone(toRaw(emptyKey)));
 const allIndexes = ref(false);
 const allActions = ref(false);
-function saveNewKey() {
+function submitNewKey() {
     createKey(newKey.value).then(() => {
         toast.add({
             severity: 'success',
@@ -55,6 +55,11 @@ function reset() {
     newKey.value = structuredClone(toRaw(emptyKey));
     allIndexes.value = false;
     allActions.value = false;
+}
+
+function handleHideDrawer() {
+    reset();
+    emit('hide');
 }
 
 watch(newKey, (newVal) => {
@@ -84,17 +89,16 @@ watch(allActions, (newVal) => {
         position="right"
         blockScroll
         @show="fetchAllIndexes"
-        @hide="reset"
+        @hide="handleHideDrawer"
     >
         <form
             class="space-y-6 sm:space-y-8"
-            @submit.prevent="saveNewKey"
+            @submit.prevent="submitNewKey"
         >
             <div class="flex flex-col gap-2">
                 <label for="new-key-uid">UID</label>
                 <InputText
                     id="new-key-uid"
-                    ref="name-input"
                     v-model="newKey.uid"
                     placeholder="optional - set UID"
                     type="text"
@@ -115,10 +119,9 @@ watch(allActions, (newVal) => {
                 </Message>
             </div>
             <div class="flex flex-col gap-2">
-                <label for="name">Name</label>
+                <label for="new-key-name">Name</label>
                 <InputText
                     id="new-key-name"
-                    ref="name-input"
                     v-model="newKey.name"
                     placeholder="name your key"
                     type="text"
@@ -129,7 +132,6 @@ watch(allActions, (newVal) => {
                 <label for="new-key-desc">Description</label>
                 <Textarea
                     id="new-key-desc"
-                    ref="name-input"
                     v-model="newKey.description"
                     placeholder="optional - set description"
                     rows="2"

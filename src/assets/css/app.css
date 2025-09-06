@@ -11,6 +11,7 @@ body {
 #nprogress .bar {
     background: var(--p-primary-500) !important;
     z-index: 9999999 !important;
+    height: 3px !important;
 }
 
 .lucide {

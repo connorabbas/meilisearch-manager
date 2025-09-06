@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useStats } from '@/composables/meilisearch/useStats';
 import { AlertCircle, ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
+import CreateIndexDrawer from '@/components/meilisearch/CreateIndexDrawer.vue';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
@@ -19,6 +20,8 @@ async function fetchData() {
 }
 await fetchData();
 
+const createIndexDrawerOpen = ref(false);
+
 const indexesData = computed(() => {
     return indexes.value.map((index) => {
         return {
@@ -31,6 +34,11 @@ const indexesData = computed(() => {
 
 <template>
     <AppLayout :breadcrumbs>
+        <CreateIndexDrawer
+            v-model="createIndexDrawerOpen"
+            @index-created="fetchData"
+        />
+
         <PageTitleSection>
             <template #title>
                 Indexes
@@ -50,8 +58,10 @@ const indexesData = computed(() => {
                             <RefreshCw class="animate-spin" />
                         </template>
                     </Button>
-                    <!-- TODO -->
-                    <Button label="New Index">
+                    <Button
+                        label="New Index"
+                        @click="createIndexDrawerOpen = true"
+                    >
                         <template #icon>
                             <Plus />
                         </template>

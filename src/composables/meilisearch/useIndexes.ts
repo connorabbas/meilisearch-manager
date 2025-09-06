@@ -1,5 +1,5 @@
 import { ref, watch, computed } from 'vue';
-import { type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type Task } from 'meilisearch';
+import { type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useMeilisearchStore } from '@/stores/meilisearch';
@@ -78,7 +78,7 @@ export function useIndexes() {
 
     async function createIndex(
         uid: string,
-        primaryKey?: string,
+        options?: IndexOptions,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
@@ -91,7 +91,7 @@ export function useIndexes() {
         error.value = null;
 
         try {
-            const enqueuedTask = await client.createIndex(uid, { primaryKey });
+            const enqueuedTask = await client.createIndex(uid, options);
             isSendingTask.value = false;
             onTaskEnqueued?.(enqueuedTask);
 
@@ -105,6 +105,7 @@ export function useIndexes() {
             return result;
         } catch (err) {
             error.value = (err as Error).message;
+            throw err;
         } finally {
             isSendingTask.value = false;
             isPollingTask.value = false;
@@ -140,6 +141,7 @@ export function useIndexes() {
             return result;
         } catch (err) {
             error.value = (err as Error).message;
+            throw err;
         } finally {
             isSendingTask.value = false;
             isPollingTask.value = false;

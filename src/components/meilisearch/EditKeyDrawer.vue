@@ -71,7 +71,6 @@ watch(keyToUpdate, (newVal) => {
                 <label for="new-key-uid">UID</label>
                 <InputText
                     id="edit-key-uid"
-                    ref="name-input"
                     :value="props.apiKey?.uid"
                     placeholder="optional - set UID"
                     type="text"
@@ -80,10 +79,9 @@ watch(keyToUpdate, (newVal) => {
                 />
             </div>
             <div class="flex flex-col gap-2">
-                <label for="name">Name</label>
+                <label for="edit-key-name">Name</label>
                 <InputText
                     id="edit-key-name"
-                    ref="name-input"
                     v-model="keyToUpdate.name"
                     placeholder="name your key"
                     type="text"
@@ -94,7 +92,6 @@ watch(keyToUpdate, (newVal) => {
                 <label for="new-key-desc">Description</label>
                 <Textarea
                     id="edit-key-desc"
-                    ref="name-input"
                     v-model="keyToUpdate.description"
                     placeholder="optional - set description"
                     rows="2"
