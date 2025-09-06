@@ -90,6 +90,9 @@ let progressTimer: number | null = null;
 let isAsyncComponentLoading = false;
 
 router.beforeEach(async (to, from) => {
+    if (progress.isStarted()) {
+        progress.done();
+    }
     if (progressTimer) {
         clearTimeout(progressTimer);
         progressTimer = null;

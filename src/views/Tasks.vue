@@ -2,10 +2,10 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useTasks } from '@/composables/meilisearch/useTasks';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { Home, Info } from 'lucide-vue-next';
+import { AlertCircle, Home, Info } from 'lucide-vue-next';
 import type { Task, TasksOrBatchesQuery } from 'meilisearch';
 import { Mode } from 'vanilla-jsoneditor';
-import { formatDate } from '@/utils';
+import { formatDate, getStatusSeverity } from '@/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
@@ -29,23 +29,6 @@ const taskHeaderTitle = computed(() => `Task ${currentTask.value?.uid}`);
 function showTask(task: Task) {
     currentTask.value = task;
     showTaskDrawerOpen.value = true;
-}
-
-function getStatusSeverity(status: string) {
-    switch (status) {
-    case 'succeeded':
-        return 'success';
-    case 'processing':
-        return 'info';
-    case 'enqueued':
-        return 'secondary';
-    case 'failed':
-        return 'danger';
-    case 'canceled':
-        return 'warning';
-    default:
-        return 'secondary';
-    }
 }
 
 // TODO: https://vueuse.org/core/useUrlSearchParams/
@@ -119,6 +102,14 @@ onMounted(() => {
                     columnResizeMode="fit"
                     filterDisplay="row"
                 >
+                    <template #empty>
+                        <div class="flex justify-center items-center gap-2 p-5">
+                            <AlertCircle />
+                            <div class="text-muted-color">
+                                No Tasks found
+                            </div>
+                        </div>
+                    </template>
                     <Column
                         field="uid"
                         header="UID"
@@ -129,7 +120,6 @@ onMounted(() => {
                         :showFilterMenu="false"
                     >
                         <template #filter>
-                            <!-- TODO: template with colored icons -->
                             <MultiSelect
                                 v-model="tasksParams.statuses"
                                 pt:label:class="flex flex-wrap"
@@ -145,7 +135,14 @@ onMounted(() => {
                                 :showToggleAll="false"
                                 showClear
                                 fluid
-                            />
+                            >
+                                <template #option="{ option }">
+                                    <Tag
+                                        :value="option"
+                                        :severity="getStatusSeverity(option)"
+                                    />
+                                </template>
+                            </MultiSelect>
                         </template>
                         <template #body="{ data }">
                             <Tag

@@ -48,3 +48,20 @@ export function maskedApiKey(
 
     return `${start}****${end}`;
 }
+
+export function getStatusSeverity(status: string) {
+    switch (status) {
+    case 'succeeded':
+        return 'success';
+    case 'processing':
+        return 'info';
+    case 'enqueued':
+        return 'secondary';
+    case 'failed':
+        return 'danger';
+    case 'canceled':
+        return 'warn';
+    default:
+        return 'secondary';
+    }
+}

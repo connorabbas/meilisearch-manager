@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useStats } from '@/composables/meilisearch/useStats';
-import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
+import { AlertCircle, ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
@@ -68,11 +68,11 @@ const indexesData = computed(() => {
                         :loading="isFetchingIndexes"
                     >
                         <template #empty>
-                            <div class="flex flex-col items-center p-5">
-                                <Inbox />
-                                <p class="mt-3 text-muted-color">
-                                    No indexes found
-                                </p>
+                            <div class="flex justify-center items-center gap-2 p-5">
+                                <AlertCircle />
+                                <div class="text-muted-color">
+                                    No Indexes found
+                                </div>
                             </div>
                         </template>
                         <Column
