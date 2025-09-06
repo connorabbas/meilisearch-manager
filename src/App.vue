@@ -13,6 +13,7 @@ import { AlertCircle } from 'lucide-vue-next';
             :draggable="false"
             blockScroll
         >
+            <!-- TODO: research why icon grows/shrinks on page size change... -->
             <template #icon>
                 <AlertCircle class="size-5!" />
             </template>
