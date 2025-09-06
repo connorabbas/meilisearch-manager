@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDocuments } from '@/composables/meilisearch/useDocuments';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import { useRouter } from 'vue-router';
 
@@ -8,11 +9,15 @@ const props = defineProps<{
 
 const router = useRouter();
 const { confirmDeleteIndex } = useIndexes();
+const { confirmDeleteAllDocuments } = useDocuments();
 
 function handleDeleteIndex() {
     confirmDeleteIndex(props.indexUID, () => {
         router.push({ name: 'dashboard' });
     });
+}
+function handleDeleteAllDocuments() {
+    confirmDeleteAllDocuments(props.indexUID);
 }
 </script>
 
@@ -37,11 +42,12 @@ function handleDeleteIndex() {
                         severity="danger"
                         @click="handleDeleteIndex"
                     />
-                    <!-- TODO -->
-                    <!-- <Button
-                                label="Delete all documents"
-                                severity="danger"
-                            /> -->
+                    <!-- TODO: maybe move to documents tab? -->
+                    <Button
+                        label="Delete all documents"
+                        severity="danger"
+                        @click="handleDeleteAllDocuments"
+                    />
                 </div>
             </div>
         </Message>
