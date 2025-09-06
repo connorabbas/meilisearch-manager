@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { Menu as MenuIcon } from 'lucide-vue-next';
-import Button from 'primevue/button';
-import Drawer from 'primevue/drawer';
-import ScrollTop from 'primevue/scrolltop';
 import { useAppLayout } from '@/composables/useAppLayout';
 import Container from '@/components/Container.vue';
 import NavLogoLink from '@/components/NavLogoLink.vue';

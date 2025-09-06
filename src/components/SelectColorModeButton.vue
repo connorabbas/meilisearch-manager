@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watchEffect, inject } from 'vue';
-import SelectButton from 'primevue/selectbutton';
 import { Sun, Moon, Monitor } from 'lucide-vue-next';
 import type { UseColorModeReturn } from '@vueuse/core';
 

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import type { Index } from 'meilisearch';
 import InputErrors from '@/components/InputErrors.vue';
 

@@ -2,15 +2,9 @@
 import { computed, ref, watch } from 'vue';
 import { useKeys } from '@/composables/meilisearch/useKeys';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import Button from 'primevue/button';
-import DatePicker from 'primevue/datepicker';
-import Drawer from 'primevue/drawer';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import MultiSelect from 'primevue/multiselect';
 import type { Key, KeyUpdate } from 'meilisearch';
 import { useToast } from 'primevue';
-import { CircleQuestionMark, Info } from 'lucide-vue-next';
+import { CircleQuestionMark } from 'lucide-vue-next';
 import { keyActions } from '@/utils/data';
 
 const props = defineProps<{
@@ -42,8 +36,8 @@ function saveNewKey() {
         });
         drawerOpen.value = false;
         emit('key-updated');
-    }).catch((err) => {
-        //.error(err);
+    }).catch(() => {
+        //
     }).finally(() => {
         //
     });

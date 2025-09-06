@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Card from 'primevue/card';
 import type { Index } from 'meilisearch';
 import DeleteIndexDataDangerZone from '@/components/meilisearch/DeleteIndexDataDangerZone.vue';
 import UpdateIndexPrimaryKeyForm from '@/components/meilisearch/UpdateIndexPrimaryKeyForm.vue';

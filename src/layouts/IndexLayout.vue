@@ -7,10 +7,6 @@ import { Home, RefreshCw } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
-import ProgressSpinner from 'primevue/progressspinner';
-import Tag from 'primevue/tag';
 import type { MenuItem } from '@/types';
 
 const props = defineProps<{

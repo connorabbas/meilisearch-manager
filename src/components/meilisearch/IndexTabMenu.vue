@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import Tabs from 'primevue/tabs';
-import TabList from 'primevue/tablist';
-import Tab from 'primevue/tab';
 import { FileText, Info, Pencil, Settings } from "lucide-vue-next";
 
 const props = defineProps<{

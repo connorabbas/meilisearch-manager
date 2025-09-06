@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Toast from 'primevue/toast';
 import { Check, CircleX, Info, LoaderCircle, TriangleAlert } from 'lucide-vue-next';
 </script>
 

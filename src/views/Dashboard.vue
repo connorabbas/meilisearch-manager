@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
 import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next';
 import { useStats } from '@/composables/meilisearch/useStats';

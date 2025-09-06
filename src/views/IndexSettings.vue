@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useSettings } from '../composables/meilisearch/useSettings';
-import Button from 'primevue/button';
-import Card from 'primevue/card';
-import Message from 'primevue/message';
 import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
 import { Mode } from 'vanilla-jsoneditor';
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
@@ -36,7 +33,7 @@ async function handleUpdateSettings() {
         return;
     }
 
-    updateSettings(props.indexUID, settings.value).then((task) => {
+    updateSettings(props.indexUID, settings.value).then(() => {
         editMode.value = false;
         fetchSettings(props.indexUID);
     });

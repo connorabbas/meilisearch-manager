@@ -2,9 +2,6 @@
 import Container from '@/components/Container.vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { AlertCircle, RefreshCw } from 'lucide-vue-next';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
-import Card from 'primevue/card';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 

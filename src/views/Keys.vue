@@ -2,14 +2,6 @@
 import { ref, useTemplateRef } from 'vue';
 import { useKeys } from '@/composables/meilisearch/useKeys';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Card from 'primevue/card';
-import Inplace from 'primevue/inplace';
-import InputText from 'primevue/inputtext';
-import InputGroup from 'primevue/inputgroup';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
 import Menu from '@/components/primevue/Menu.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next';

@@ -2,14 +2,6 @@
 import { computed, ref, watch } from 'vue';
 import { useKeys } from '@/composables/meilisearch/useKeys';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
-import DatePicker from 'primevue/datepicker';
-import Drawer from 'primevue/drawer';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Message from 'primevue/message';
-import MultiSelect from 'primevue/multiselect';
 import type { KeyCreation } from 'meilisearch';
 import { useToast } from 'primevue';
 import { CircleQuestionMark, Info } from 'lucide-vue-next';
@@ -52,8 +44,8 @@ function saveNewKey() {
         });
         drawerOpen.value = false;
         emit('key-created');
-    }).catch((err) => {
-        //console.error(err);
+    }).catch(() => {
+        //
     }).finally(() => {
         //
     });

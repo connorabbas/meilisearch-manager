@@ -4,11 +4,6 @@ import { useStats } from '@/composables/meilisearch/useStats';
 import { ArrowRight, Home, Inbox, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
-import Card from 'primevue/card';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];

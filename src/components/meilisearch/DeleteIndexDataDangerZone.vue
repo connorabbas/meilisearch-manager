@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{

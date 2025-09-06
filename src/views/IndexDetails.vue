@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useStats } from '@/composables/meilisearch/useStats';
-import Card from 'primevue/card';
 import { formatDate, formatBytes } from '@/utils';
 import { Clock, Database, FileText } from 'lucide-vue-next';
 import type { Index } from 'meilisearch';

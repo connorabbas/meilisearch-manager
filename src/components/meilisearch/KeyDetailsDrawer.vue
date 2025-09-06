@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Button from 'primevue/button';
-import Drawer from 'primevue/drawer';
-import Inplace from 'primevue/inplace';
-import Fieldset from 'primevue/fieldset';
-import Tag from 'primevue/tag';
 import type { Key } from 'meilisearch';
 import { formatDate, maskedApiKey } from '@/utils';
 import { useClipboard } from '@vueuse/core';
