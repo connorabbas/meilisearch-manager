@@ -1,13 +1,24 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import { completeAsyncLoading } from '@/router';
+import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
 import AppToast from './components/primevue/AppToast.vue';
+import { AlertCircle } from 'lucide-vue-next';
 </script>
 
 <template>
     <div>
         <AppToast />
+        <ConfirmDialog
+            group="delete"
+            :draggable="false"
+            blockScroll
+        >
+            <template #icon>
+                <AlertCircle class="size-5!" />
+            </template>
+        </ConfirmDialog>
         <RouterView v-slot="{ Component }">
             <template v-if="Component">
                 <Suspense

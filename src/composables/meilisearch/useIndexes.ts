@@ -179,6 +179,7 @@ export function useIndexes() {
         onDeletedCallback?: () => void
     ) {
         confirm.require({
+            group: 'delete',
             message: 'Are you absolutely sure you want to delete this index?',
             header: 'Danger Zone',
             rejectLabel: 'Cancel',

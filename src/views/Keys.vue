@@ -26,7 +26,7 @@ const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label
 
 const toast = useToast();
 const { isSupported: canCopy, copy } = useClipboard();
-const { keys, isFetching: isFetchingKeys, fetchAllKeys } = useKeys();
+const { keys, isFetching: isFetchingKeys, fetchAllKeys, confirmDeleteKey } = useKeys();
 
 await fetchAllKeys();
 
@@ -66,7 +66,15 @@ function toggleKeyContextMenu(event: Event, key: Key) {
             class: 'text-red-500 dark:text-red-400',
             lucideIconClass: 'text-red-500 dark:text-red-400',
             command: () => {
-                // TODO: confirm dialog
+                confirmDeleteKey(key.uid, () => {
+                    toast.add({
+                        severity: 'success',
+                        summary: 'API Key Deleted',
+                        detail: `THe API Key: "${key.name}" was successfully deleted`,
+                        life: 3000,
+                    });
+                    fetchAllKeys();
+                });
             },
         },
     ];

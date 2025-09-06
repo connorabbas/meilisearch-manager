@@ -2,12 +2,12 @@ import { computed, ref, watch } from 'vue';
 import { type Key, type KeyCreation, type KeysQuery, type KeysResults, type KeyUpdate } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-//import { useTasks } from './useTasks';
+import { useConfirm } from 'primevue';
 
 export function useKeys() {
     const toast = useToast();
+    const confirm = useConfirm();
     const meilisearchStore = useMeilisearchStore();
-    //const { pollTaskStatus } = useTasks();
 
     const keysResults = ref<KeysResults | null>(null);
     const keys = ref<Key[] | null>(null);
@@ -91,6 +91,51 @@ export function useKeys() {
         }
     }
 
+    async function deleteKey(id: string): Promise<void | undefined> {
+        const client = meilisearchStore.getClient();
+        if (!client) {
+            error.value = 'MeiliSearch client not connected';
+            return;
+        }
+
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await client.deleteKey(id);
+        } catch (err) {
+            error.value = (err as Error).message;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
+    function confirmDeleteKey(
+        id: string,
+        onDeletedCallback?: () => void
+    ) {
+        confirm.require({
+            group: 'delete',
+            message: 'Are you absolutely sure you want to delete this key?',
+            header: 'Danger Zone',
+            rejectLabel: 'Cancel',
+            rejectProps: {
+                label: 'Cancel',
+                severity: 'secondary',
+                outlined: true
+            },
+            acceptProps: {
+                label: 'Delete',
+                severity: 'danger',
+            },
+            accept: async () => {
+                await deleteKey(id).then(() => {
+                    onDeletedCallback?.();
+                });
+            },
+        });
+    }
+
     watch(error, (newError) => {
         if (newError) {
             toast.add({
@@ -115,5 +160,6 @@ export function useKeys() {
         fetchAllKeys,
         createKey,
         updateKey,
+        confirmDeleteKey,
     };
 }

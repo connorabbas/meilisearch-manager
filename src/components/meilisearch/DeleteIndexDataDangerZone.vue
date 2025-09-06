@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { AlertCircle } from 'lucide-vue-next';
 import Button from 'primevue/button';
-import ConfirmDialog from 'primevue/confirmdialog';
 import Message from 'primevue/message';
 import { useRouter } from 'vue-router';
 
@@ -22,14 +20,6 @@ function handleDeleteIndex() {
 
 <template>
     <div>
-        <ConfirmDialog
-            :draggable="false"
-            blockScroll
-        >
-            <template #icon>
-                <AlertCircle class="size-5!" />
-            </template>
-        </ConfirmDialog>
         <Message
             severity="error"
             pt:root:class="p-2"
