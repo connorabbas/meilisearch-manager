@@ -21,7 +21,7 @@ export function useIndexes() {
 
     const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
 
-    async function fetchIndexes(params?: IndexesQuery) {
+    async function fetchIndexes(params?: IndexesQuery): Promise<IndexesResults<Index[]> | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -32,8 +32,11 @@ export function useIndexes() {
         error.value = null;
 
         try {
-            indexesResults.value = await client.getIndexes(params);
-            indexes.value = indexesResults.value.results;
+            const results = await client.getIndexes(params);
+            indexesResults.value = results;
+            indexes.value = results.results;
+
+            return results;
         } catch (err) {
             indexesResults.value = null;
             indexes.value = [];
@@ -46,7 +49,7 @@ export function useIndexes() {
     async function fetchAllIndexes() {
         await fetchIndexes({
             limit: 1 // Load in just one, so we can get the total amount for the actual dataset
-        });
+        }).then(() => indexes.value = []);
         await fetchIndexes({
             limit: indexesResults.value?.total // Hacky way to load all the indexes
         });
@@ -60,6 +63,7 @@ export function useIndexes() {
         }
 
         isFetching.value = true;
+        await new Promise(resolve => setTimeout(resolve, 1000));
         error.value = null;
 
         try {
