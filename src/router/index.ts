@@ -70,7 +70,7 @@ const router = createRouter({
         {
             path: '/connection-error',
             name: 'connection-error',
-            component: () => import('../views/ConnectionError.vue'),
+            component: () => import('../views/error/MeilisearchConnection.vue'),
             beforeEnter: () => {
                 const meilisearchStore = useMeilisearchStore();
                 if (meilisearchStore.isConnected) {
@@ -78,7 +78,11 @@ const router = createRouter({
                 }
             },
         },
-        // TODO: 404
+        {
+            path: '/:pathMatch(.*)*', // 404 route not found
+            name: 'NotFound',
+            component: () => import('../views/error/NotFound.vue'),
+        },
     ],
 });
 
@@ -97,7 +101,7 @@ router.beforeEach(async (to, from) => {
                 progress.start();
             }
             progressTimer = null;
-        }, 100);
+        }, 150);
     }
 
     const meilisearchStore = useMeilisearchStore();
@@ -123,6 +127,10 @@ router.onError(() => {
     }
     progress.done();
 });
+
+router.afterEach(() => {
+    console.log('test')
+})
 
 export function completeAsyncLoading() {
     isAsyncComponentLoading = false;

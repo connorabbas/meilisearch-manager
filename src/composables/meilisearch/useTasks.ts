@@ -54,7 +54,7 @@ export function useTasks() {
         taskEnqueuedMessage: string,
         successMessage: string,
         maxAttempts = 30,
-        delayMs = 500
+        delayMs = 250
     ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
@@ -72,7 +72,7 @@ export function useTasks() {
         let attempts = 0;
         try {
             toast.add(taskToastOptions);
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
             while (attempts < maxAttempts) {
                 const taskResponse = await client.tasks.getTask(taskUid);
                 if (!taskResponse || typeof taskResponse.status === 'undefined') {
