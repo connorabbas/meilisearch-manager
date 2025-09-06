@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import { type Key, type KeyCreation, type KeysQuery, type KeysResults } from 'meilisearch';
+import { type Key, type KeyCreation, type KeysQuery, type KeysResults, type KeyUpdate } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 //import { useTasks } from './useTasks';
@@ -71,6 +71,26 @@ export function useKeys() {
         }
     }
 
+    async function updateKey(keyOrUid: string, options: KeyUpdate): Promise<Key | undefined> {
+        const client = meilisearchStore.getClient();
+        if (!client) {
+            error.value = 'MeiliSearch client not connected';
+            return;
+        }
+
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await client.updateKey(keyOrUid, options);
+        } catch (err) {
+            error.value = (err as Error).message;
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
     watch(error, (newError) => {
         if (newError) {
             toast.add({
@@ -94,5 +114,6 @@ export function useKeys() {
         fetchKeys,
         fetchAllKeys,
         createKey,
+        updateKey,
     };
 }

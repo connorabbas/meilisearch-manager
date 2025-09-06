@@ -14,6 +14,7 @@ import type { KeyCreation } from 'meilisearch';
 import { useToast } from 'primevue';
 import { CircleQuestionMark, Info } from 'lucide-vue-next';
 import { toRaw } from 'vue';
+import { keyActions } from '@/utils/data';
 
 const drawerOpen = defineModel<boolean>({ default: false });
 
@@ -27,38 +28,7 @@ const indexOptions = computed(() => {
     return (allIndexes.value) ? ['*'] : indexes.value.map((index) => index.uid);
 });
 const actionsOptions = computed(() => {
-    let actions = [
-        'search',
-        'documents.add',
-        'documents.get',
-        'documents.delete',
-        'indexes.create',
-        'indexes.get',
-        'indexes.update',
-        'indexes.delete',
-        'indexes.swap',
-        'tasks.get',
-        'tasks.cancel',
-        'tasks.delete',
-        'settings.get',
-        'settings.update',
-        'stats.get',
-        'dumps.create',
-        'snapshots.create',
-        'version',
-        'keys.get',
-        'keys.create',
-        'keys.update',
-        'keys.delete',
-        'network.get',
-        'network.update',
-        'chatCompletions',
-        'webhooks.get',
-        'webhooks.create',
-        'webhooks.update',
-        'webhooks.delete',
-    ];
-    return (allActions.value) ? ['*'] : actions;
+    return (allActions.value) ? ['*'] : keyActions;
 });
 
 const emptyKey = {
@@ -83,9 +53,9 @@ function saveNewKey() {
         drawerOpen.value = false;
         emit('key-created');
     }).catch((err) => {
-        console.error(err);
+        //console.error(err);
     }).finally(() => {
-
+        //
     });
 }
 
@@ -177,7 +147,6 @@ watch(allActions, (newVal) => {
             </div>
             <div class="flex flex-col gap-2">
                 <label for="new-key-indexes">Indexes</label>
-                <!-- TODO: wildcard index selected via input https://www.meilisearch.com/docs/reference/api/keys#indexes -->
                 <MultiSelect
                     v-model="newKey.indexes"
                     pt:label:class="flex flex-wrap"
@@ -188,7 +157,7 @@ watch(allActions, (newVal) => {
                     :loading="isFetchingIndexes"
                     :showToggleAll="false"
                     :disabled="allIndexes"
-                    showClear
+                    :showClear="!allIndexes"
                     filter
                     fluid
                 />
@@ -224,7 +193,7 @@ watch(allActions, (newVal) => {
                     inputId="new-key-actions"
                     :showToggleAll="false"
                     :disabled="allActions"
-                    showClear
+                    :showClear="!allActions"
                     filter
                     fluid
                 />

@@ -12,7 +12,7 @@ const props = defineProps<{
     indexUID: string
 }>();
 
-const { settings, isSendingTask, fetchSettings, updateSettings } = useSettings();
+const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings();
 
 await fetchSettings(props.indexUID);
 
@@ -36,8 +36,9 @@ async function handleUpdateSettings() {
         return;
     }
 
-    updateSettings(props.indexUID, settings.value, () => {
+    updateSettings(props.indexUID, settings.value).then((task) => {
         editMode.value = false;
+        fetchSettings(props.indexUID);
     });
 }
 watch(() => settings.value, (newVal) => {
@@ -87,7 +88,7 @@ watch(() => settings.value, (newVal) => {
                             </Button>
                             <Button
                                 label="Save"
-                                :loading="isSendingTask"
+                                :loading="isLoadingTask"
                                 @click="handleUpdateSettings"
                             />
                         </div>

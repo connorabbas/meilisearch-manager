@@ -36,8 +36,14 @@ const keyDetailsDrawerOpen = ref(false);
 
 const currentKey = ref<Key | null>(null);
 function showKeyDetails(key: Key) {
+    // TODO: fetch single key before to make sure its the latest data
     currentKey.value = key;
     keyDetailsDrawerOpen.value = true;
+}
+function editKey(key: Key) {
+    // TODO: fetch single key before to make sure its the latest data
+    currentKey.value = key;
+    editKeyDrawerOpen.value = true;
 }
 
 const keyContextMenu = useTemplateRef('key-context-menu');
@@ -52,9 +58,7 @@ function toggleKeyContextMenu(event: Event, key: Key) {
         {
             label: 'Edit',
             lucideIcon: Pencil,
-            command: () => {
-                alert('Data: ' + JSON.stringify(key));
-            },
+            command: () => editKey(key),
         },
         {
             label: 'Delete',
@@ -101,11 +105,17 @@ function copyApiKey(key: string) {
             v-model="newKeyDrawerOpen"
             @key-created="fetchAllKeys"
         />
-        <EditKeyDrawer v-model="editKeyDrawerOpen" />
+        <EditKeyDrawer
+            v-if="currentKey"
+            v-model="editKeyDrawerOpen"
+            :api-key="currentKey"
+            @hide="resetCurrentKey"
+            @key-updated="fetchAllKeys"
+        />
 
         <PageTitleSection>
             <template #title>
-                Keys
+                API Keys
             </template>
             <template #end>
                 <Button
