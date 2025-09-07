@@ -53,7 +53,6 @@ function paginate(event: PageState) {
             v-if="searchResults?.hits.length"
             class="grid grid-cols-1 sm:grid-cols-12 gap-4"
         >
-            <!-- TODO: primary key value as key -->
             <div
                 v-for="hit, hitIndex in searchResults.hits"
                 :key="(primaryKey && hit[primaryKey]) ?? hitIndex"

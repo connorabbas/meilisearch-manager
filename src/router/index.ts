@@ -131,10 +131,6 @@ router.onError(() => {
     progress.done();
 });
 
-router.afterEach(() => {
-    console.log('test');
-});
-
 export function completeAsyncLoading() {
     isAsyncComponentLoading = false;
     if (progressTimer) {
