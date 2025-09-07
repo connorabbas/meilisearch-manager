@@ -56,8 +56,8 @@ watch(primaryKey, (newVal) => {
             <div class="flex flex-col gap-2">
                 <label for="new-index-uid">UID</label>
                 <InputText
-                    ref="uid-input"
                     id="new-index-uid"
+                    ref="uid-input"
                     v-model="uid"
                     placeholder="uid of the requested index"
                     type="text"

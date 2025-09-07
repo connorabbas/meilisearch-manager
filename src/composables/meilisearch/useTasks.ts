@@ -1,4 +1,4 @@
-import { nextTick, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import type { Task, TasksOrBatchesQuery, TasksResults } from 'meilisearch';

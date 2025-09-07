@@ -1,4 +1,4 @@
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, AlertTriangle, ArrowLeft } from 'lucide-vue-next';
+import { AlertTriangle, ArrowLeft } from 'lucide-vue-next';
 import Container from '@/components/Container.vue';
 </script>
 

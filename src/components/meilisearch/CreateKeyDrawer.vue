@@ -24,7 +24,7 @@ const actionsOptions = computed(() => {
 });
 
 const defaultDate = new Date();
-defaultDate.setDate(defaultDate.getDate() + 1)
+defaultDate.setDate(defaultDate.getDate() + 1);
 defaultDate.setHours(0, 0, 0, 0);
 
 const emptyKey = {

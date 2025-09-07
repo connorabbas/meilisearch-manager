@@ -2,13 +2,14 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useTasks } from '@/composables/meilisearch/useTasks';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { AlertCircle, Home, Info } from 'lucide-vue-next';
+import { Home, Info } from 'lucide-vue-next';
 import type { Task, TasksOrBatchesQuery } from 'meilisearch';
 import { Mode } from 'vanilla-jsoneditor';
 import { formatDate, getStatusSeverity } from '@/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
+import NotFoundMessage from '@/components/NotFoundMessage.vue';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }];
 
@@ -103,12 +104,7 @@ onMounted(() => {
                     filterDisplay="row"
                 >
                     <template #empty>
-                        <div class="flex justify-center items-center gap-2 p-5">
-                            <AlertCircle />
-                            <div class="text-muted-color">
-                                No Tasks found
-                            </div>
-                        </div>
+                        <NotFoundMessage subject="Task" />
                     </template>
                     <Column
                         field="uid"

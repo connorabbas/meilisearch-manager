@@ -18,3 +18,28 @@ body {
     width: 16px;
     height: 16px;
 }
+
+.shiki-wrapper pre.shiki {
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+}
+
+.shiki-wrapper pre.shiki code {
+    display: block;
+    white-space: pre;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[class*="dark"] {
+
+        .shiki,
+        .shiki span {
+            color: var(--shiki-dark) !important;
+            background-color: var(--shiki-dark-bg) !important;
+            font-style: var(--shiki-dark-font-style) !important;
+            font-weight: var(--shiki-dark-font-weight) !important;
+            text-decoration: var(--shiki-dark-text-decoration) !important;
+        }
+    }
+}

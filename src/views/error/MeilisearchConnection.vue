@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Container from '@/components/Container.vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { AlertCircle, CircleX, RefreshCw } from 'lucide-vue-next';
+import { CircleX, RefreshCw } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 

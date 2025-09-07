@@ -13,6 +13,7 @@ import type { MenuItem } from '@/types';
 import CreateKeyDrawer from '@/components/meilisearch/CreateKeyDrawer.vue';
 import EditKeyDrawer from '@/components/meilisearch/EditKeyDrawer.vue';
 import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue';
+import NotFoundMessage from '@/components/NotFoundMessage.vue';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }];
 
@@ -143,6 +144,9 @@ function copyApiKey(key: string) {
                     scrollable
                     columnResizeMode="fit"
                 >
+                    <template #empty>
+                        <NotFoundMessage subject="Key" />
+                    </template>
                     <Column
                         field="name"
                         header="Name"

@@ -132,8 +132,8 @@ router.onError(() => {
 });
 
 router.afterEach(() => {
-    console.log('test')
-})
+    console.log('test');
+});
 
 export function completeAsyncLoading() {
     isAsyncComponentLoading = false;
