@@ -1,16 +1,30 @@
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
+import type { PageState } from 'primevue';
 
 export function useSearch() {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
 
     const searchResults = ref<SearchResponse | null>(null);
-    const searchParams = ref<SearchParams>();
+    const searchQuery = ref('');
+    const currentPage = ref(1);
+    const perPage = ref(20);
+
     const isFetching = ref(false);
     const error = ref<string | null>(null);
+
+    const firstDatasetIndex = computed(() => {
+        return (currentPage.value - 1) * perPage.value;
+    });
+    const searchParams = computed<SearchParams>(() => {
+        return {
+            limit: perPage.value,
+            offset: (perPage.value * currentPage.value) - perPage.value,
+        }
+    });
 
     async function search(indexUid: string, query?: string, params?: SearchParams) {
         const client = meilisearchStore.getClient();
@@ -32,6 +46,22 @@ export function useSearch() {
         }
     }
 
+    function handlePageEvent(indexUid: string, event: PageState) {
+        if (event.rows !== perPage.value) {
+            currentPage.value = 1;
+        } else {
+            currentPage.value = event.page + 1;
+        }
+        perPage.value = event.rows;
+
+        search(indexUid, searchQuery.value, searchParams.value).then(() => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+            });
+        });
+    }
+
     watch(error, (newError) => {
         if (newError) {
             toast.add({
@@ -45,8 +75,14 @@ export function useSearch() {
 
     return {
         searchResults,
+        searchQuery,
+        currentPage,
+        perPage,
         isFetching,
         error,
+        firstDatasetIndex,
+        searchParams,
         search,
+        handlePageEvent,
     };
 }

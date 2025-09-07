@@ -13,38 +13,14 @@ const props = defineProps<{
 
 const primaryKey = computed(() => props.index?.primaryKey);
 
-const { searchResults, search } = useSearch();
+const {
+    searchResults,
+    perPage,
+    firstDatasetIndex,
+    search,
+    handlePageEvent,
+} = useSearch();
 await search(props.indexUid);
-
-// Filtering / Sorting / Pagination
-const currentPage = ref(1);
-const perPage = ref(20);
-const firstDatasetIndex = computed(() => {
-    return (currentPage.value - 1) * perPage.value;
-});
-
-const searchQuery = ref('');
-
-function paginate(event: PageState) {
-    console.log(event);
-    if (event.rows !== perPage.value) {
-        currentPage.value = 1;
-    } else {
-        currentPage.value = event.page + 1;
-    }
-    perPage.value = event.rows;
-
-    const filterParams: SearchParams = {
-        limit: perPage.value,
-        offset: (perPage.value * currentPage.value) - perPage.value,
-    };
-    search(props.indexUid, searchQuery.value, filterParams).then(() => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    });
-}
 </script>
 
 <template>
@@ -72,7 +48,7 @@ function paginate(event: PageState) {
                 :rowsPerPageOptions="[20, 50, 100]"
                 template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                @page="paginate"
+                @page="(event) => handlePageEvent(props.indexUid, event)"
             />
         </div>
     </div>
