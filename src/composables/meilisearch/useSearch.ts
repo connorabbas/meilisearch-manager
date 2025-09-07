@@ -4,14 +4,14 @@ import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import type { PageState } from 'primevue';
 
-export function useSearch() {
+export function useSearch(initialPerPage: number = 20) {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
 
     const searchResults = ref<SearchResponse | null>(null);
     const searchQuery = ref('');
     const currentPage = ref(1);
-    const perPage = ref(20);
+    const perPage = ref(initialPerPage);
 
     const isFetching = ref(false);
     const error = ref<string | null>(null);
@@ -23,7 +23,7 @@ export function useSearch() {
         return {
             limit: perPage.value,
             offset: (perPage.value * currentPage.value) - perPage.value,
-        }
+        };
     });
 
     async function search(indexUid: string, query?: string, params?: SearchParams) {

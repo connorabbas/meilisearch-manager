@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useSearch } from '@/composables/meilisearch/useSearch';
-import type { Index, SearchParams } from 'meilisearch';
-import type { PageState } from 'primevue';
+import type { Index } from 'meilisearch';
 import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
 import NotFoundMessage from '@/components/NotFoundMessage.vue';
 
