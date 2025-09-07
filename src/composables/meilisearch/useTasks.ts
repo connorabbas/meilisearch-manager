@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import type { Task, TasksOrBatchesQuery, TasksResults } from 'meilisearch';
@@ -72,7 +72,7 @@ export function useTasks() {
         let attempts = 0;
         try {
             toast.add(taskToastOptions);
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             while (attempts < maxAttempts) {
                 const taskResponse = await client.tasks.getTask(taskUid);
                 if (!taskResponse || typeof taskResponse.status === 'undefined') {
@@ -104,7 +104,10 @@ export function useTasks() {
             throw new Error(`Task did not complete after ${maxAttempts} attempts`);
         } finally {
             checkingTaskStatus.value = false;
-            toast.remove(taskToastOptions);
+            // Add slight delay as not to clash with potential error toasts
+            setTimeout(() => {
+                toast.remove(taskToastOptions);
+            }, 100);
         }
     }
 

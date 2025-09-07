@@ -85,6 +85,7 @@ watch(keyToUpdate, (newVal) => {
                     v-model="keyToUpdate.name"
                     placeholder="name your key"
                     type="text"
+                    autofocus
                     fluid
                 />
             </div>

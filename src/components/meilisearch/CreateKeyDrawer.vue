@@ -23,6 +23,10 @@ const actionsOptions = computed(() => {
     return (allActions.value) ? ['*'] : keyActions;
 });
 
+const defaultDate = new Date();
+defaultDate.setDate(defaultDate.getDate() + 1)
+defaultDate.setHours(0, 0, 0, 0);
+
 const emptyKey = {
     uid: undefined,
     name: undefined,
@@ -125,6 +129,7 @@ watch(allActions, (newVal) => {
                     v-model="newKey.name"
                     placeholder="name your key"
                     type="text"
+                    autofocus
                     fluid
                 />
             </div>
@@ -140,6 +145,7 @@ watch(allActions, (newVal) => {
                 />
             </div>
             <div class="flex flex-col gap-2">
+                <!-- TODO: required validation -->
                 <label for="new-key-indexes">Indexes</label>
                 <MultiSelect
                     v-model="newKey.indexes"
@@ -165,6 +171,7 @@ watch(allActions, (newVal) => {
                 </div>
             </div>
             <div class="flex flex-col gap-2">
+                <!-- TODO: required validation -->
                 <label
                     for="new-key-actions"
                     class="flex items-center gap-2"
@@ -205,6 +212,7 @@ watch(allActions, (newVal) => {
                 <DatePicker
                     id="new-key-expires"
                     v-model="newKey.expiresAt"
+                    :defaultValue="defaultDate"
                     :minDate="new Date()"
                     placeholder="optional - select date & time"
                     hourFormat="12"

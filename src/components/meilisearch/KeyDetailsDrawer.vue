@@ -73,7 +73,10 @@ const keyExpired = computed(() => {
                 {{ props.apiKey.description }}
             </Fieldset>
             <Fieldset legend="Indexes">
-                <div class="flex flex-wrap gap-2">
+                <div
+                    v-if="props.apiKey.indexes.length"
+                    class="flex flex-wrap gap-2"
+                >
                     <Tag
                         v-for="index in props.apiKey.indexes"
                         :key="index"
@@ -81,9 +84,17 @@ const keyExpired = computed(() => {
                         severity="secondary"
                     />
                 </div>
+                <Tag
+                    v-else
+                    value="none"
+                    severity="danger"
+                />
             </Fieldset>
             <Fieldset legend="Actions">
-                <div class="flex flex-wrap gap-2">
+                <div
+                    v-if="props.apiKey.actions.length"
+                    class="flex flex-wrap gap-2"
+                >
                     <Tag
                         v-for="action in props.apiKey.actions"
                         :key="action"
@@ -91,6 +102,11 @@ const keyExpired = computed(() => {
                         severity="secondary"
                     />
                 </div>
+                <Tag
+                    v-else
+                    value="none"
+                    severity="danger"
+                />
             </Fieldset>
             <Fieldset legend="Expires">
                 <div

@@ -36,6 +36,7 @@ function handleUpdatePrimaryKey() {
                 v-model="primaryKey"
                 type="text"
                 :invalid="Boolean(error)"
+                autofocus
                 required
                 fluid
             />

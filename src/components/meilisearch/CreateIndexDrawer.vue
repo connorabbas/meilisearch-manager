@@ -12,7 +12,6 @@ const { isSendingTask, createIndex } = useIndexes();
 const uid = ref<string>('');
 const primaryKey = ref<string>();
 function submitNewIndex() {
-    // TODO: investigate why error toast disappears right away...
     createIndex(uid.value, { primaryKey: primaryKey.value } as IndexOptions).then(() => {
         drawerOpen.value = false;
         emit('index-created');
@@ -41,7 +40,6 @@ watch(primaryKey, (newVal) => {
 </script>
 
 <template>
-    <!-- TODO: Toast/Drawer x-indexing -->
     <Drawer
         v-model:visible="drawerOpen"
         header="New Index"
@@ -58,10 +56,12 @@ watch(primaryKey, (newVal) => {
             <div class="flex flex-col gap-2">
                 <label for="new-index-uid">UID</label>
                 <InputText
+                    ref="uid-input"
                     id="new-index-uid"
                     v-model="uid"
                     placeholder="uid of the requested index"
                     type="text"
+                    autofocus
                     fluid
                 />
             </div>
