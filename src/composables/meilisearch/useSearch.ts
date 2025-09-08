@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue';
 import { type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import type { PageState } from 'primevue';
+import type { DataTablePageEvent, PageState } from 'primevue';
 
 export function useSearch(initialPerPage: number = 20) {
     const toast = useToast();
@@ -34,6 +34,7 @@ export function useSearch(initialPerPage: number = 20) {
         }
 
         isFetching.value = true;
+        //await new Promise(resolve => setTimeout(resolve, 1000));
         error.value = null;
 
         try {
@@ -46,7 +47,12 @@ export function useSearch(initialPerPage: number = 20) {
         }
     }
 
-    function handlePageEvent(indexUid: string, event: PageState) {
+    function statefulSearch(indexUid: string) {
+        currentPage.value = 1;
+        search(indexUid, searchQuery.value, searchParams.value);
+    }
+
+    function handlePageEvent(indexUid: string, event: PageState | DataTablePageEvent, scrollTop: boolean = true) {
         if (event.rows !== perPage.value) {
             currentPage.value = 1;
         } else {
@@ -55,10 +61,9 @@ export function useSearch(initialPerPage: number = 20) {
         perPage.value = event.rows;
 
         search(indexUid, searchQuery.value, searchParams.value).then(() => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-            });
+            if (scrollTop) {
+                window.scrollTo({ top: 0 });
+            }
         });
     }
 
@@ -83,6 +88,7 @@ export function useSearch(initialPerPage: number = 20) {
         firstDatasetIndex,
         searchParams,
         search,
+        statefulSearch,
         handlePageEvent,
     };
 }

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useStats } from '@/composables/meilisearch/useStats';
-import { AlertCircle, ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next';
+import { ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import CreateIndexDrawer from '@/components/meilisearch/CreateIndexDrawer.vue';
+import NotFoundMessage from '@/components/NotFoundMessage.vue';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
@@ -78,12 +79,7 @@ const indexesData = computed(() => {
                         :loading="isFetchingIndexes"
                     >
                         <template #empty>
-                            <div class="flex justify-center items-center gap-2 p-5">
-                                <AlertCircle />
-                                <div class="text-muted-color">
-                                    No Indexes found
-                                </div>
-                            </div>
+                            <NotFoundMessage subject="Index" />
                         </template>
                         <Column
                             field="uid"

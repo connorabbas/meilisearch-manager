@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppToast: typeof import('./src/components/primevue/AppToast.vue')['default']
+    BlockUI: typeof import('primevue/blockui')['default']
     Breadcrumb: typeof import('./src/components/primevue/Breadcrumb.vue')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
@@ -25,6 +26,7 @@ declare module 'vue' {
     Drawer: typeof import('primevue/drawer')['default']
     EditKeyDrawer: typeof import('./src/components/meilisearch/EditKeyDrawer.vue')['default']
     Fieldset: typeof import('primevue/fieldset')['default']
+    Image: typeof import('primevue/image')['default']
     IndexTabMenu: typeof import('./src/components/meilisearch/IndexTabMenu.vue')['default']
     Inplace: typeof import('primevue/inplace')['default']
     InputErrors: typeof import('./src/components/InputErrors.vue')['default']
