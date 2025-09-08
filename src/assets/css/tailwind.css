@@ -1,7 +1,8 @@
 @layer theme, base, primevue, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
-@import './custom-preflight.css' layer(base); /* Custom Preflight implementation that plays nice with PrimeVue component styling */
+/* Custom Preflight implementation that plays nice with PrimeVue component styling */
+@import './custom-preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import 'tailwindcss-primeui';
 
@@ -9,6 +10,19 @@
 
 @theme {
     --font-sans: Inter, sans-serif;
+    --meili-theme-50: rgb(247, 247, 252);
+    --meili-theme-100: rgb(229, 227, 243);
+    --meili-theme-200: rgb(203, 199, 230);
+    --meili-theme-300: rgb(172, 166, 212);
+    --meili-theme-400: rgb(140, 130, 190);
+    --meili-theme-500: rgb(104, 90, 160);
+    --meili-theme-600: rgb(73, 55, 125);
+    --meili-theme-700: rgb(51, 33, 95);
+    --meili-theme-800: rgb(39, 20, 75);
+    --meili-theme-900: rgb(31, 10, 65);
+    --meili-theme-950: rgb(26, 0, 59);
+
+    --header-height: 4rem;
 }
 
 @utility dynamic-bg {

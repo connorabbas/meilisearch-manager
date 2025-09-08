@@ -3,6 +3,11 @@
  * https://primevue.org/passthrough/#global
  */
 export default {
+    card: {
+        root: {
+            class: ['border', 'dynamic-border'],
+        },
+    },
     dialog: {
         root: {
             class: 'm-4 sm:m-0'

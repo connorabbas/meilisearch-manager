@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useAppLayout } from '@/composables/useAppLayout';
 import SelectColorModeButton from '@/components/SelectColorModeButton.vue';
 import { Menu as MenuIcon } from 'lucide-vue-next';
@@ -20,6 +21,19 @@ const {
     mobileMenuOpen,
     menuItems,
 } = useAppLayout();
+
+const isOpaque = ref(false);
+const onScroll = () => {
+    isOpaque.value = window.scrollY > 10; // 10px scroll threshold
+};
+
+onMounted(() => {
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // run once in case the page is already scrolled
+});
+onUnmounted(() => {
+    window.removeEventListener('scroll', onScroll);
+});
 </script>
 
 <template>
@@ -48,55 +62,60 @@ const {
         </Teleport>
         <div class="min-h-screen">
             <!-- Primary Navigation Menu -->
-            <nav class="dynamic-bg shadow-sm">
-                <Container>
-                    <Menubar
-                        :key="currentRoute"
-                        :model="menuItems"
-                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg"
-                        pt:button:class="hidden"
-                    >
-                        <template #start>
-                            <div class="shrink-0 flex items-center mr-5">
-                                <NavLogoLink />
-                            </div>
-                        </template>
-                        <template #end>
-                            <div class="hidden lg:flex items-center ms-6 space-x-3">
-                                <SelectColorModeButton />
-                            </div>
-
-                            <!-- Mobile Menu Toggle -->
-                            <div class="flex items-center lg:hidden">
-                                <div class="relative">
-                                    <Button
-                                        severity="secondary"
-                                        class="p-1!"
-                                        text
-                                        @click="mobileMenuOpen = true"
-                                    >
-                                        <template #icon>
-                                            <MenuIcon class="size-6!" />
-                                        </template>
-                                    </Button>
+            <header class="block lg:fixed top-0 left-0 right-0 z-50">
+                <nav
+                    class="backdrop-blur transition-colors duration-500 border-b dynamic-border data-[is-opaque=true]:bg-surface-0 data-[is-opaque=true]:supports-backdrop-blur:bg-surface-0/95 data-[is-opaque=true]:dark:bg-surface-900/75 data-[is-opaque=false]:bg-surface-0 data-[is-opaque=false]:dark:bg-surface-900"
+                    :data-is-opaque="isOpaque"
+                >
+                    <Container>
+                        <Menubar
+                            :key="currentRoute"
+                            :model="menuItems"
+                            pt:root:class="px-0 py-0 border-0 rounded-none bg-transparent h-[var(--header-height)]!"
+                            pt:button:class="hidden"
+                        >
+                            <template #start>
+                                <div class="shrink-0 flex items-center mr-5">
+                                    <NavLogoLink />
                                 </div>
-                            </div>
-                        </template>
-                    </Menubar>
-                </Container>
-            </nav>
+                            </template>
+                            <template #end>
+                                <div class="hidden lg:flex items-center ms-6 space-x-3">
+                                    <SelectColorModeButton />
+                                </div>
+                                <!-- Mobile Menu Toggle -->
+                                <div class="flex items-center lg:hidden">
+                                    <div class="relative">
+                                        <Button
+                                            severity="secondary"
+                                            class="p-1!"
+                                            text
+                                            @click="mobileMenuOpen = true"
+                                        >
+                                            <template #icon>
+                                                <MenuIcon class="size-6!" />
+                                            </template>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </template>
+                        </Menubar>
+                    </Container>
+                </nav>
+            </header>
 
             <main>
-                <Container vertical>
-                    <!-- Breadcrumbs -->
-                    <Breadcrumb
-                        v-if="props.breadcrumbs.length"
-                        :model="props.breadcrumbs"
-                    />
-
-                    <!-- Page Content -->
-                    <slot />
-                </Container>
+                <div class="lg:pt-[var(--header-height)]">
+                    <Container vertical>
+                        <!-- Breadcrumbs -->
+                        <Breadcrumb
+                            v-if="props.breadcrumbs.length"
+                            :model="props.breadcrumbs"
+                        />
+                        <!-- Page Content -->
+                        <slot />
+                    </Container>
+                </div>
             </main>
         </div>
     </div>
