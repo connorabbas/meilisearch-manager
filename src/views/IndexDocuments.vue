@@ -133,8 +133,14 @@ function handleClearSearchQuery() {
         >
             <div class="space-y-4">
                 <div v-if="!searchResults?.hits.length && isFetching">
-                    <div class="h-full flex items-center justify-center p-8">
-                        <ProgressSpinner />
+                    <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
+                        <ProgressSpinner
+                            pt:root:class="h-15"
+                            strokeWidth="4"
+                        />
+                        <div class="text-sm text-muted-color">
+                            Loading Documents...
+                        </div>
                     </div>
                 </div>
                 <div
@@ -158,6 +164,7 @@ function handleClearSearchQuery() {
                         :first="firstDatasetIndex"
                         :totalRecords="searchResults?.estimatedTotalHits"
                         :rowsPerPageOptions="[20, 50, 100]"
+                        pt:root:class="shadow-sm"
                         template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
                         @page="(event) => handlePageEvent(props.indexUid, event)"
