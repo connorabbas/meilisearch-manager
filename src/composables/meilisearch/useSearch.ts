@@ -34,7 +34,7 @@ export function useSearch(initialPerPage: number = 20) {
         }
 
         isFetching.value = true;
-        //await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         error.value = null;
 
         try {

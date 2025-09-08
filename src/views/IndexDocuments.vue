@@ -132,8 +132,13 @@ function handleClearSearchQuery() {
             :blocked="isFetching"
         >
             <div class="space-y-4">
+                <div v-if="!searchResults?.hits.length && isFetching">
+                    <div class="h-full flex items-center justify-center p-8">
+                        <ProgressSpinner />
+                    </div>
+                </div>
                 <div
-                    v-if="searchResults?.hits.length"
+                    v-else-if="searchResults?.hits.length"
                     class="grid grid-cols-1 sm:grid-cols-12 gap-4"
                 >
                     <div
@@ -144,7 +149,7 @@ function handleClearSearchQuery() {
                         <DocumentHitCard :hit />
                     </div>
                 </div>
-                <div v-else>
+                <div v-else-if="!searchResults?.hits.length && !isFetching">
                     <NotFoundMessage subject="Document" />
                 </div>
                 <div v-if="searchResults?.hits.length">
