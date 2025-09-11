@@ -4,10 +4,7 @@ import { Check, CircleX, Info, LoaderCircle, TriangleAlert } from 'lucide-vue-ne
 
 <template>
     <!-- Custom Toast, to show spinner icon for Tasks -->
-    <Toast
-        position="bottom-right"
-        pt:message:class="z-[1200]"
-    >
+    <Toast position="bottom-right">
         <template #message="{ message }">
             <div class="flex items-start flex-auto gap-3">
                 <div class="flex items-center">

@@ -82,9 +82,6 @@ function editDocument(document: RecordAny) {
     currentDocument.value = document;
     showDocumentDrawerOpen.value = true;
 }
-function handleEditDrawerClose() {
-    currentDocument.value = null;
-}
 
 // Context Menu
 const documentContextMenu = useTemplateRef('document-context-menu');
@@ -148,7 +145,6 @@ function handleFieldPopoverHidden() {
             :primary-key="props.index?.primaryKey"
             :document="currentDocument"
             @document-updated="fetchData"
-            @hide="handleEditDrawerClose"
         />
         <Card>
             <template #content>
@@ -300,13 +296,14 @@ function handleFieldPopoverHidden() {
         </Card>
 
         <!-- Grid View -->
-        <!-- TODO: toast z-index issue -->
-        <!-- pt:root:class="z-[1000]" -->
         <div
             v-show="dataView === 'Grid'"
             class="relative"
         >
-            <BlockUI :blocked="blockedGrid">
+            <BlockUI
+                :blocked="blockedGrid"
+                pt:mask:class="z-[1]!"
+            >
                 <div class="space-y-4">
                     <div v-if="!searchResults?.hits.length && isFetching">
                         <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
