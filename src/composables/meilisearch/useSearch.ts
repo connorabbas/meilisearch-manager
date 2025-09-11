@@ -34,6 +34,8 @@ export function useSearch(initialPerPage: number = 20) {
         }
 
         isFetching.value = true;
+        // TODO: cleanup, for testing
+        await new Promise(resolve => setTimeout(resolve, 1000));
         error.value = null;
 
         try {
@@ -46,12 +48,17 @@ export function useSearch(initialPerPage: number = 20) {
         }
     }
 
-    function statefulSearch(indexUid: string) {
+    function statefulSearch(indexUid: string): Promise<void> {
         currentPage.value = 1;
-        search(indexUid, searchQuery.value, searchParams.value);
+        return search(indexUid, searchQuery.value, searchParams.value);
     }
 
-    function handlePageEvent(indexUid: string, event: PageState | DataTablePageEvent, scrollTop: boolean = true) {
+    // TODO: abstract pagination to separate composable
+    function handlePageEvent(
+        indexUid: string,
+        event: PageState | DataTablePageEvent,
+        scrollTop: boolean = true
+    ): Promise<void> {
         if (event.rows !== perPage.value) {
             currentPage.value = 1;
         } else {
@@ -59,7 +66,7 @@ export function useSearch(initialPerPage: number = 20) {
         }
         perPage.value = event.rows;
 
-        search(indexUid, searchQuery.value, searchParams.value).then(() => {
+        return search(indexUid, searchQuery.value, searchParams.value).then(() => {
             if (scrollTop) {
                 window.scrollTo({ top: 0 });
             }

@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useSearch } from '@/composables/meilisearch/useSearch';
-import type { Index } from 'meilisearch';
+import type { Index, RecordAny } from 'meilisearch';
 import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
 import NotFoundMessage from '@/components/NotFoundMessage.vue';
+import Menu from '@/components/primevue/Menu.vue';
 import { useStats } from '@/composables/meilisearch/useStats';
 import { looksLikeAnImageUrl } from '@/utils';
-import { Search, X } from 'lucide-vue-next';
+import { EllipsisVertical, Pencil, Search, Trash2, X } from 'lucide-vue-next';
+import type { MenuItem } from '@/types';
+import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
+import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
+import { useDocuments } from '@/composables/meilisearch/useDocuments';
 
 const props = defineProps<{
     indexUid: string,
@@ -15,6 +20,7 @@ const props = defineProps<{
 
 const primaryKey = computed(() => props.index?.primaryKey);
 
+const { confirmDeleteDocument } = useDocuments();
 const { indexStats, fetchIndexStats } = useStats();
 const {
     searchResults,
@@ -25,6 +31,21 @@ const {
     statefulSearch,
     handlePageEvent,
 } = useSearch();
+
+// Add delay to blocked UI, because the meiliclient is too fast...
+// https://github.com/primefaces/primevue/issues/7817
+const blockedGrid = ref(false);
+watch(isFetching, (newVal) => {
+    nextTick(() => {
+        if (!newVal) {
+            setTimeout(() => {
+                blockedGrid.value = newVal;
+            }, 50);
+        } else {
+            blockedGrid.value = newVal;
+        }
+    });
+});
 
 async function fetchData() {
     await Promise.all([
@@ -41,10 +62,94 @@ function handleClearSearchQuery() {
     statefulSearch(props.indexUid);
 }
 
+function handleDataTablePaginateScrollTop() {
+    const tableContainer = document.getElementById('documents-data-table-container');
+    if (tableContainer) {
+        tableContainer.scrollTop = 0;
+    }
+}
+
+function handleDeleteDocument(documentId: string | number) {
+    confirmDeleteDocument(props.indexUid, documentId, () => {
+        fetchData();
+    });
+}
+
+// Drawer
+const showDocumentDrawerOpen = ref(false);
+const currentDocument = ref<RecordAny | null>(null);
+function editDocument(document: RecordAny) {
+    currentDocument.value = document;
+    showDocumentDrawerOpen.value = true;
+}
+function handleEditDrawerClose() {
+    currentDocument.value = null;
+}
+
+// Context Menu
+const documentContextMenu = useTemplateRef('document-context-menu');
+const documentContextMenuItems = ref<MenuItem[]>([]);
+function toggleDocumentContextMenu(event: Event, document: RecordAny) {
+    documentContextMenuItems.value = [
+        {
+            label: 'Edit',
+            lucideIcon: Pencil,
+            command: () => editDocument(document),
+        },
+        {
+            visible: Boolean(primaryKey.value),
+            label: 'Delete',
+            lucideIcon: Trash2,
+            class: 'text-red-500 dark:text-red-400',
+            lucideIconClass: 'text-red-500 dark:text-red-400',
+            command: () => {
+                if (primaryKey.value) {
+                    handleDeleteDocument(document[primaryKey.value]);
+                }
+            },
+        },
+    ];
+    if (documentContextMenu.value && documentContextMenu.value?.$el) {
+        documentContextMenu.value.$el.toggle(event);
+    }
+}
+
+// Popover
+const fieldDetail = ref<RecordAny | null>();
+const tableFieldDetailPopover = useTemplateRef('field-detail-popover');
+function toggleTableFieldDetailPopover(event: Event, fieldName: string, fieldValue: RecordAny) {
+    if (Array.isArray(fieldValue)) {
+        fieldDetail.value = {};
+        fieldDetail.value[fieldName] = fieldValue;
+    } else {
+        fieldDetail.value = fieldValue;
+    }
+    if (tableFieldDetailPopover.value) {
+        tableFieldDetailPopover.value.toggle(event);
+    }
+}
+function handleFieldPopoverHidden() {
+    fieldDetail.value = null;
+}
 </script>
 
 <template>
     <div class="space-y-4">
+        <Menu
+            ref="document-context-menu"
+            class="shadow-sm"
+            :model="documentContextMenuItems"
+            popup
+        />
+        <EditDocumentDrawer
+            v-if="currentDocument"
+            v-model="showDocumentDrawerOpen"
+            :index-uid="props.indexUid"
+            :primary-key="props.index?.primaryKey"
+            :document="currentDocument"
+            @document-updated="fetchData"
+            @hide="handleEditDrawerClose"
+        />
         <Card>
             <template #content>
                 <div class="flex justify-between gap-4">
@@ -74,6 +179,7 @@ function handleClearSearchQuery() {
                     <SelectButton
                         v-model="dataView"
                         :options="['Grid', 'Table']"
+                        :allowEmpty="false"
                     />
                 </div>
             </template>
@@ -82,6 +188,25 @@ function handleClearSearchQuery() {
         <!-- Table view -->
         <Card v-show="dataView === 'Table'">
             <template #content>
+                <!-- TODO: max height with scroll -->
+                <Popover
+                    ref="field-detail-popover"
+                    @hide="handleFieldPopoverHidden"
+                >
+                    <div class="w-auto">
+                        <ThemedJsonViewer
+                            v-if="fieldDetail && Object.prototype.toString.call(fieldDetail) === '[object Object]'"
+                            class="py-2"
+                            :data="fieldDetail"
+                            expanded
+                            :expandDepth="9999"
+                        />
+                        <pre
+                            v-else
+                            class="text-pretty"
+                        >{{ fieldDetail }}</pre>
+                    </div>
+                </Popover>
                 <DataTable
                     lazy
                     paginator
@@ -92,34 +217,82 @@ function handleClearSearchQuery() {
                     :first="firstDatasetIndex"
                     :totalRecords="searchResults?.estimatedTotalHits"
                     :rowsPerPageOptions="[10, 20, 50, 100]"
+                    :pt="{
+                        tableContainer: {
+                            id: 'documents-data-table-container'
+                        },
+                        thead: {
+                            class: 'z-2'
+                        }
+                    }"
                     scrollHeight="500px"
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                    @page="(event) => handlePageEvent(props.indexUid, event, false)"
+                    @page="handlePageEvent(props.indexUid, $event, false).then(() => handleDataTablePaginateScrollTop())"
                 >
                     <template #empty>
                         <NotFoundMessage subject="Documents" />
                     </template>
                     <Column
-                        v-for="field in Object.keys(indexStats?.fieldDistribution ?? {})"
-                        :key="field"
-                        :field
-                        :header="field"
+                        v-if="primaryKey"
+                        :pt="{
+                            headerCell: {
+                                class: 'dynamic-bg z-2'
+                            },
+                            bodyCell: {
+                                class: 'dynamic-bg z-1'
+                            }
+                        }"
+                        :header="primaryKey"
+                        :field="primaryKey"
+                        frozen
+                        alignFrozen="left"
+                    />
+                    <Column
+                        v-for="fieldName in Object.keys(indexStats?.fieldDistribution ?? {})"
+                        :key="fieldName"
+                        :field="fieldName"
+                        :header="fieldName"
                     >
                         <template #body="{ data }">
                             <Image
-                                v-if="looksLikeAnImageUrl(data[field])"
-                                :src="data[field]"
+                                v-if="looksLikeAnImageUrl(data[fieldName])"
+                                :src="data[fieldName]"
                                 alt="Document Image"
+                                pt:previewMask:class="rounded-xl"
                                 pt:image:class="max-h-20 rounded-lg"
                                 preview
                             />
-                            <div
+                            <Button
                                 v-else
-                                class="truncate w-[200px]"
+                                v-tooltip.top="`View ${fieldName} value`"
+                                class="p-0 text-inherit"
+                                severity="contrast"
+                                variant="link"
+                                @click="toggleTableFieldDetailPopover($event, fieldName, data[fieldName])"
                             >
-                                {{ data[field] }}
-                            </div>
+                                <span class="truncate w-auto max-w-[200px]">{{ data[fieldName] }}</span>
+                            </Button>
+                        </template>
+                    </Column>
+                    <Column
+                        header="Action"
+                        frozen
+                        alignFrozen="right"
+                    >
+                        <template #body="{ data }">
+                            <Button
+                                v-tooltip.top="'Show Document Actions'"
+                                type="button"
+                                severity="secondary"
+                                rounded
+                                text
+                                @click="toggleDocumentContextMenu($event, data)"
+                            >
+                                <template #icon>
+                                    <EllipsisVertical class="size-5!" />
+                                </template>
+                            </Button>
                         </template>
                     </Column>
                 </DataTable>
@@ -127,50 +300,60 @@ function handleClearSearchQuery() {
         </Card>
 
         <!-- Grid View -->
-        <BlockUI
+        <!-- TODO: toast z-index issue -->
+        <!-- pt:root:class="z-[1000]" -->
+        <div
             v-show="dataView === 'Grid'"
-            :blocked="isFetching"
+            class="relative"
         >
-            <div class="space-y-4">
-                <div v-if="!searchResults?.hits.length && isFetching">
-                    <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
-                        <ProgressSpinner
-                            pt:root:class="h-15"
-                            strokeWidth="4"
-                        />
-                        <div class="text-sm text-muted-color">
-                            Loading Documents...
+            <BlockUI :blocked="blockedGrid">
+                <div class="space-y-4">
+                    <div v-if="!searchResults?.hits.length && isFetching">
+                        <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
+                            <ProgressSpinner
+                                pt:root:class="h-15"
+                                strokeWidth="4"
+                                animationDuration=".5s"
+                            />
+                            <div class="text-sm text-muted-color">
+                                Loading Documents...
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div
-                    v-else-if="searchResults?.hits.length"
-                    class="grid grid-cols-1 sm:grid-cols-12 gap-4"
-                >
                     <div
-                        v-for="hit, hitIndex in searchResults.hits"
-                        :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
-                        class="sm:col-span-6 lg:col-span-3"
+                        v-else-if="searchResults?.hits.length"
+                        class="grid grid-cols-1 sm:grid-cols-12 gap-4"
                     >
-                        <DocumentHitCard :hit />
+                        <div
+                            v-for="hit, hitIndex in searchResults.hits"
+                            :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
+                            class="sm:col-span-6 lg:col-span-3"
+                        >
+                            <DocumentHitCard
+                                :hit
+                                :primary-key="primaryKey"
+                                @edit="editDocument"
+                                @delete="handleDeleteDocument"
+                            />
+                        </div>
+                    </div>
+                    <div v-else-if="!searchResults?.hits.length && !isFetching">
+                        <NotFoundMessage subject="Document" />
+                    </div>
+                    <div v-if="searchResults?.hits.length">
+                        <Paginator
+                            :rows="perPage"
+                            :first="firstDatasetIndex"
+                            :totalRecords="searchResults?.estimatedTotalHits"
+                            :rowsPerPageOptions="[20, 50, 100]"
+                            pt:root:class="shadow-sm border dynamic-border rounded-xl"
+                            template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                            @page="handlePageEvent(props.indexUid, $event)"
+                        />
                     </div>
                 </div>
-                <div v-else-if="!searchResults?.hits.length && !isFetching">
-                    <NotFoundMessage subject="Document" />
-                </div>
-                <div v-if="searchResults?.hits.length">
-                    <Paginator
-                        :rows="perPage"
-                        :first="firstDatasetIndex"
-                        :totalRecords="searchResults?.estimatedTotalHits"
-                        :rowsPerPageOptions="[20, 50, 100]"
-                        pt:root:class="shadow-sm"
-                        template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                        @page="(event) => handlePageEvent(props.indexUid, event)"
-                    />
-                </div>
-            </div>
-        </BlockUI>
+            </BlockUI>
+        </div>
     </div>
 </template>

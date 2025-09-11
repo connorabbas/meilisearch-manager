@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { type Key, type KeyCreation, type KeysQuery, type KeysResults, type KeyUpdate } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
@@ -13,11 +13,7 @@ export function useKeys() {
     const keys = ref<Key[] | null>(null);
     const isFetching = ref(false);
     const isLoading = ref(false);
-    const isSendingTask = ref(false);
-    const isPollingTask = ref(false);
     const error = ref<string | null>(null);
-
-    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
 
     async function fetchKeys(params?: KeysQuery) {
         const client = meilisearchStore.getClient();
@@ -152,9 +148,6 @@ export function useKeys() {
         keysResults,
         isFetching,
         isLoading,
-        isSendingTask,
-        isPollingTask,
-        isLoadingTask,
         error,
         fetchKeys,
         fetchAllKeys,

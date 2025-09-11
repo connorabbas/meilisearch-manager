@@ -66,7 +66,7 @@ export function getStatusSeverity(status: string) {
     }
 }
 
-export const looksLikeAnImageUrl = (value: any) => {
+export function looksLikeAnImageUrl(value: any) {
     if ('string' !== typeof value) {
         return false;
     }
@@ -83,3 +83,10 @@ export const looksLikeAnImageUrl = (value: any) => {
         path.endsWith('.webp')
     );
 };
+
+export function prefersDarkColorScheme() {
+    if (window && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+}

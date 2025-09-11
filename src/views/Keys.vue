@@ -225,7 +225,11 @@ function copyApiKey(key: string) {
                             {{ formatDate((data as Key).createdAt) }}
                         </template>
                     </Column>
-                    <Column header="Action">
+                    <Column
+                        header="Action"
+                        frozen
+                        alignFrozen="right"
+                    >
                         <template #body="{ data }">
                             <Button
                                 v-tooltip.top="'Show Key Actions'"

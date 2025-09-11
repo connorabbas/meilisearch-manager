@@ -218,7 +218,11 @@ onMounted(() => {
                             {{ formatDate((data as Task).finishedAt as string) }}
                         </template>
                     </Column>
-                    <Column header="Action">
+                    <Column
+                        header="Action"
+                        frozen
+                        alignFrozen="right"
+                    >
                         <template #body="{ data }">
                             <Button
                                 label="Details"
