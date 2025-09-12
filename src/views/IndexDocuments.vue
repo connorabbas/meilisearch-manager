@@ -184,15 +184,15 @@ function handleFieldPopoverHidden() {
         <!-- Table view -->
         <Card v-show="dataView === 'Table'">
             <template #content>
-                <!-- TODO: max height with scroll -->
+                <!-- TODO: show primary key -->
                 <Popover
                     ref="field-detail-popover"
                     @hide="handleFieldPopoverHidden"
                 >
-                    <div class="w-auto">
+                    <div class="w-auto max-w-[35rem]">
                         <ThemedJsonViewer
                             v-if="fieldDetail && Object.prototype.toString.call(fieldDetail) === '[object Object]'"
-                            class="py-2"
+                            class="py-2 rounded-lg max-h-[35rem] overflow-y-auto"
                             :data="fieldDetail"
                             expanded
                             :expandDepth="9999"
@@ -227,7 +227,7 @@ function handleFieldPopoverHidden() {
                     @page="handlePageEvent(props.indexUid, $event, false).then(() => handleDataTablePaginateScrollTop())"
                 >
                     <template #empty>
-                        <NotFoundMessage subject="Documents" />
+                        <NotFoundMessage subject="Document" />
                     </template>
                     <Column
                         v-if="primaryKey"
@@ -332,6 +332,12 @@ function handleFieldPopoverHidden() {
                                 @edit="editDocument"
                                 @delete="handleDeleteDocument"
                             />
+                            <!-- <DocumentHitCardAlt
+                                :hit
+                                :primary-key="primaryKey"
+                                @edit="editDocument"
+                                @delete="handleDeleteDocument"
+                            /> -->
                         </div>
                     </div>
                     <div v-else-if="!searchResults?.hits.length && !isFetching">

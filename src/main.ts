@@ -1,6 +1,8 @@
 import '@/assets/css/app.css';
 import '@/assets/css/tailwind.css';
 import 'nprogress/nprogress.css';
+import 'vue3-json-viewer/dist/vue3-json-viewer.css';
+import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';

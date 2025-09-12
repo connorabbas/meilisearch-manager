@@ -36,7 +36,7 @@ const {
                 </div>
                 <template #footer>
                     <div class="flex flex-col">
-                        <!-- TODO: color mode toggle here -->
+                        <SelectColorModeButton />
                     </div>
                 </template>
             </Drawer>
@@ -88,7 +88,7 @@ const {
                         </div>
                     </div>
                     <div>
-                        <!-- TODO: color mode toggle here -->
+                        <SelectColorModeButton />
                     </div>
                 </div>
             </aside>

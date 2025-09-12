@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { looksLikeAnImageUrl } from '@/utils';
 import { Pencil, Trash2 } from 'lucide-vue-next';
 import type { Hit } from 'meilisearch';
@@ -13,17 +13,6 @@ const props = defineProps<{
 defineEmits(['edit', 'delete']);
 
 const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) as string | null);
-
-const expandedData = ref(false);
-const expandedDataDepth = ref(1);
-
-watch(expandedData, (newVal) => {
-    if (newVal) {
-        expandedDataDepth.value = 999;
-    } else {
-        expandedDataDepth.value = 1;
-    }
-});
 </script>
 
 <template>
@@ -34,11 +23,12 @@ watch(expandedData, (newVal) => {
         <template #content>
             <div class="relative">
                 <div
-                    class="absolute z-20 top-2 right-2 opacity-0 invisible transition-opacity duration-100 ease-in-out group-hover:opacity-100 group-hover:visible"
+                    class="absolute z-20 top-2 left-2 opacity-0 invisible transition-opacity duration-100 ease-in-out group-hover:opacity-100 group-hover:visible"
                 >
                     <div class="flex flex-col gap-2">
+                        <!-- TODO: mobile buttons -->
                         <Button
-                            v-tooltip.left="'View/Edit Document'"
+                            v-tooltip.right="'View/Edit Document'"
                             severity="secondary"
                             raised
                             @click="$emit('edit', props.hit)"
@@ -49,7 +39,7 @@ watch(expandedData, (newVal) => {
                         </Button>
                         <Button
                             v-if="props.primaryKey"
-                            v-tooltip.left="'Delete Document'"
+                            v-tooltip.right="'Delete Document'"
                             severity="danger"
                             raised
                             @click="$emit('delete', props.hit[props.primaryKey])"
@@ -73,12 +63,13 @@ watch(expandedData, (newVal) => {
                         preview
                     />
                 </div>
-                <div>
+                <div
+                    ref="document-json-viewer"
+                    class="max-h-[25rem] overflow-y-auto rounded-lg"
+                >
                     <ThemedJsonViewer
                         class="py-2"
                         :data="props.hit"
-                        :expanded="expandedData"
-                        :expandDepth="expandedDataDepth"
                     />
                 </div>
             </div>

@@ -22,9 +22,32 @@ const theme = computed(() => {
 </template>
 
 <style>
-@import 'vue3-json-viewer/dist/vue3-json-viewer.css';
-
+/* Match syntax highlighting coloring from JSON Editor */
 .jv-code {
     padding: 0 !important
+}
+
+.jv-container.jv-dark .jv-key,
+.jv-container.jv-dark .jv-item.jv-string .jv-link {
+    color: #9cdcfe !important;
+}
+
+.jv-container.jv-dark .jv-item.jv-number {
+    color: #b5cea8 !important;
+}
+
+.jv-container.jv-dark .jv-item.jv-string,
+.jv-container.jv-dark .jv-item.jv-string .jv-link {
+    color: #ce9178 !important;
+}
+
+.jv-container.jv-dark .jv-item.jv-undefined {
+    color: #569cd6 !important;
+}
+
+.jv-container.jv-dark .jv-item.jv-array,
+.jv-container.jv-dark .jv-item.jv-object,
+.jv-node:after {
+    color: #949494 !important;
 }
 </style>

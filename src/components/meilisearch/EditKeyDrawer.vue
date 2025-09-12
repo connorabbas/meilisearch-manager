@@ -37,9 +37,7 @@ function saveNewKey() {
         drawerOpen.value = false;
         emit('key-updated');
     }).catch(() => {
-        //
-    }).finally(() => {
-        //
+        // TODO
     });
 }
 
@@ -64,6 +62,7 @@ watch(keyToUpdate, (newVal) => {
         @hide="$emit('hide')"
     >
         <form
+            id="edit-key-form"
             class="space-y-6 sm:space-y-8"
             @submit.prevent="saveNewKey"
         >
@@ -154,13 +153,14 @@ watch(keyToUpdate, (newVal) => {
                     fluid
                 />
             </div>
-            <div>
-                <Button
-                    type="submit"
-                    label="Save"
-                    :loading="isLoading"
-                />
-            </div>
         </form>
+        <template #footer>
+            <Button
+                type="submit"
+                form="edit-key-form"
+                label="Save"
+                :loading="isLoading"
+            />
+        </template>
     </Drawer>
 </template>

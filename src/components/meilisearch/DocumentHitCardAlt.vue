@@ -59,13 +59,13 @@ watchEffect(async () => {
                     class="absolute inset-0 z-10 opacity-0 invisible transition-opacity duration-100 ease-in-out group-hover:opacity-100 group-hover:visible bg-radial-[at_100%_0%] from-surface-0 from-20% to-transparent to-80% dark:from-surface-900 dark:to-transparent">
                 </div> -->
                 <div
-                    class="absolute z-20 top-2 right-2 opacity-0 invisible transition-opacity duration-100 ease-in-out group-hover:opacity-100 group-hover:visible"
+                    class="absolute z-20 bottom-2 left-2 opacity-0 invisible transition-opacity duration-100 ease-in-out group-hover:opacity-100 group-hover:visible"
                 >
                     <div class="flex flex-col gap-2">
                         <Button
-                            v-tooltip.left="'View/Edit Document'"
+                            v-tooltip.right="'View/Edit Document'"
                             severity="secondary"
-                            outlined
+                            raised
                             @click="$emit('edit', props.hit)"
                         >
                             <template #icon>
@@ -73,9 +73,9 @@ watchEffect(async () => {
                             </template>
                         </Button>
                         <Button
-                            v-tooltip.left="'Delete Document'"
+                            v-tooltip.right="'Delete Document'"
                             severity="danger"
-                            outlined
+                            raised
                             @click="$emit('delete', props.hit)"
                         >
                             <template #icon>
@@ -102,21 +102,22 @@ watchEffect(async () => {
                 </div>
                 <div
                     v-else
-                    class="relative"
+                    class="relative max-h-[25rem] overflow-y-auto no-scrollbar rounded-xl"
                 >
+                    <!-- overflow-hidden -->
                     <div
                         ref="shikiWrapper"
-                        class="shiki-wrapper [&_pre.shiki]:p-2 [&_pre.shiki]:rounded-lg [&_pre.shiki]:text-sm [&_pre.shiki]:leading-6 transition-[max-height] duration-300 ease-in-out overflow-hidden"
+                        class="shiki-wrapper [&_pre.shiki]:p-2 [&_pre.shiki]:text-sm [&_pre.shiki]:leading-6 [&_pre.shiki]:no-scrollbar! transition-[max-height] duration-300 ease-in-out"
                         :class="(expanded || !isOverflowing) ? 'max-h-full' : 'max-h-80'"
                         v-html="hitHtml"
                     />
-                    <div
+                    <!-- <div
                         v-if="isOverflowing && !expanded"
                         class="absolute z-10 bottom-0 left-0 right-0 h-40 bg-linear-to-b from-transparent to-surface-0 dark:to-surface-900 pointer-events-none"
-                    />
+                    /> -->
                 </div>
             </div>
-            <div
+            <!-- <div
                 v-if="isOverflowing"
                 class="flex z-20 justify-center mt-2"
             >
@@ -134,7 +135,7 @@ watchEffect(async () => {
                         <ChevronDown v-else />
                     </template>
                 </Button>
-            </div>
+            </div> -->
         </template>
     </Card>
 </template>

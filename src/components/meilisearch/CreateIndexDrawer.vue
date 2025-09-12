@@ -16,9 +16,7 @@ function submitNewIndex() {
         drawerOpen.value = false;
         emit('index-created');
     }).catch(() => {
-        //
-    }).finally(() => {
-        //
+        // TODO
     });
 }
 
@@ -45,11 +43,11 @@ watch(primaryKey, (newVal) => {
         header="New Index"
         class="w-full sm:w-[40rem]"
         position="right"
-        :autoZIndex="false"
         blockScroll
         @hide="handleHideDrawer"
     >
         <form
+            id="create-index-form"
             class="space-y-6 sm:space-y-8"
             @submit.prevent="submitNewIndex"
         >
@@ -75,13 +73,14 @@ watch(primaryKey, (newVal) => {
                     fluid
                 />
             </div>
-            <div>
-                <Button
-                    type="submit"
-                    label="Submit"
-                    :loading="isSendingTask"
-                />
-            </div>
         </form>
+        <template #footer>
+            <Button
+                type="submit"
+                form="create-index-form"
+                label="Submit"
+                :loading="isSendingTask"
+            />
+        </template>
     </Drawer>
 </template>

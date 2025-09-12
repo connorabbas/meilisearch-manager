@@ -49,9 +49,7 @@ function submitNewKey() {
         drawerOpen.value = false;
         emit('key-created');
     }).catch(() => {
-        //
-    }).finally(() => {
-        //
+        // TODO
     });
 }
 
@@ -96,6 +94,7 @@ watch(allActions, (newVal) => {
         @hide="handleHideDrawer"
     >
         <form
+            id="create-key-form"
             class="space-y-6 sm:space-y-8"
             @submit.prevent="submitNewKey"
         >
@@ -222,13 +221,14 @@ watch(allActions, (newVal) => {
                     @clear-click="newKey.expiresAt = null"
                 />
             </div>
-            <div>
-                <Button
-                    type="submit"
-                    label="Submit"
-                    :loading="isLoading"
-                />
-            </div>
         </form>
+        <template #footer>
+            <Button
+                type="submit"
+                form="create-key-form"
+                label="Submit"
+                :loading="isLoading"
+            />
+        </template>
     </Drawer>
 </template>

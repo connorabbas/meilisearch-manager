@@ -15,7 +15,3 @@ const jsonEditorDarkModeClass = computed(() => {
 <template>
     <JsonEditorVue :class="jsonEditorDarkModeClass" />
 </template>
-
-<style>
-@import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
-</style>
