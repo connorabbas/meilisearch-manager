@@ -56,7 +56,7 @@ function toggleKeyContextMenu(event: Event, key: Key) {
         {
             label: 'Delete',
             lucideIcon: Trash2,
-            class: 'text-red-500 dark:text-red-400',
+            class: 'delete-menu-item',
             lucideIconClass: 'text-red-500 dark:text-red-400',
             command: () => {
                 confirmDeleteKey(key.uid, () => {

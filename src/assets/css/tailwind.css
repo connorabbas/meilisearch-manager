@@ -32,3 +32,7 @@
 @utility dynamic-border {
     @apply border-surface-200 dark:border-surface-800;
 }
+
+@utility delete-menu-item {
+    @apply text-red-500 dark:text-red-400 hover:bg-red-500/10 rounded-[var(--p-menu-item-border-radius)];
+}

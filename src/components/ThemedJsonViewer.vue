@@ -27,6 +27,10 @@ const theme = computed(() => {
     padding: 0 !important
 }
 
+.jv-container.jv-dark {
+    background-color: #1e1e1e !important;
+}
+
 .jv-container.jv-dark .jv-key,
 .jv-container.jv-dark .jv-item.jv-string .jv-link {
     color: #9cdcfe !important;

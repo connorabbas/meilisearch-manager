@@ -102,7 +102,7 @@ function toggleDocumentContextMenu(event: Event, document: RecordAny) {
             visible: Boolean(primaryKey.value),
             label: 'Delete',
             lucideIcon: Trash2,
-            class: 'text-red-500 dark:text-red-400',
+            class: 'delete-menu-item',
             lucideIconClass: 'text-red-500 dark:text-red-400',
             command: () => {
                 if (primaryKey.value) {

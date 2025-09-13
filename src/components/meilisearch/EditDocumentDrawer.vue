@@ -39,7 +39,6 @@ function handleSaveDocument() {
         @hide="$emit('hide')"
     >
         <div>
-            {{ updatedDocument }}
             <ThemedJsonEditor
                 v-model="updatedDocument"
                 :mode="Mode.text"
