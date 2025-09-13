@@ -20,7 +20,7 @@ const props = defineProps<{
 
 const primaryKey = computed(() => props.index?.primaryKey);
 
-const { confirmDeleteDocument } = useDocuments();
+const { isSendingTask, confirmDeleteDocument } = useDocuments();
 const { indexStats, fetchIndexStats } = useStats();
 const {
     searchResults,
@@ -81,6 +81,11 @@ const currentDocument = ref<RecordAny | null>(null);
 function editDocument(document: RecordAny) {
     currentDocument.value = document;
     showDocumentDrawerOpen.value = true;
+}
+function handleDrawerHidden() {
+    if (!isSendingTask.value) {
+        currentDocument.value = null;
+    }
 }
 
 // Context Menu
@@ -145,6 +150,7 @@ function handleFieldPopoverHidden() {
             :primary-key="props.index?.primaryKey"
             :document="currentDocument"
             @document-updated="fetchData"
+            @hide="handleDrawerHidden"
         />
         <Card>
             <template #content>

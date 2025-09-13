@@ -15,7 +15,9 @@ await fetchIndexStats(props.indexUid);
 
 <template>
     <div>
-        <!-- TODO: more stat cards: avg doc size, number of embeddings/docs, field distribution -->
+        <!-- TODO: more stat cards: avg doc size, number of embeddings/docs -->
+        <!-- TODO: field distribution graph -->
+        <!-- <pre>{{ indexStats }}</pre> -->
         <div
             v-if="props.index && indexStats"
             class="grid grid-cols-12 items-stretch gap-4"

@@ -20,6 +20,7 @@ const { updateDocuments, isSendingTask } = useDocuments();
 const updatedDocument = ref<RecordAny>(props.document);
 function handleSaveDocument() {
     // TODO: handle JSON errors (reference settings)
+    // TODO: if drawer is closed manually right after saving, the emit won't send... resulting in no refresh in the parent/list view
     updateDocuments(props.indexUid, [updatedDocument.value], props.primaryKey)
         .then(() => {
             drawerOpen.value = false;
@@ -38,6 +39,7 @@ function handleSaveDocument() {
         @hide="$emit('hide')"
     >
         <div>
+            {{ updatedDocument }}
             <ThemedJsonEditor
                 v-model="updatedDocument"
                 :mode="Mode.text"

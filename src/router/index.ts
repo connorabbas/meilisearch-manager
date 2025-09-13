@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import progress from '@/utils/progress';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import Welcome from '@/views/Welcome.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,7 +9,7 @@ const router = createRouter({
         {
             path: '/',
             name: 'welcome',
-            component: Welcome,
+            redirect: { name: 'dashboard' },
         },
         {
             path: '/dashboard',
