@@ -40,10 +40,14 @@ export function useDocuments() {
             onTaskEnqueued?.(enqueuedTask);
 
             isPollingTask.value = true;
+            let successMessage = 'Documents have been successfully updated';
+            if (documents.length === 1 && primaryKey) {
+                successMessage = `Document: "${documents[0][primaryKey]}" has been successfully updated`;
+            }
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A document update task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
-                `Document has been successfully updated`,
+                successMessage,
             );
 
             return result;

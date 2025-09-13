@@ -173,6 +173,7 @@ export function useIndexes() {
             return result;
         } catch (err) {
             error.value = (err as Error).message;
+            throw err;
         } finally {
             isSendingTask.value = false;
             isPollingTask.value = false;

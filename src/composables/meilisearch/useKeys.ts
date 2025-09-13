@@ -59,7 +59,6 @@ export function useKeys() {
         try {
             return await client.createKey(params);
         } catch (err) {
-            // TODO: evaluate other crud actions and add throw
             error.value = (err as Error).message;
             throw err;
         } finally {
@@ -101,6 +100,7 @@ export function useKeys() {
             return await client.deleteKey(id);
         } catch (err) {
             error.value = (err as Error).message;
+            throw err;
         } finally {
             isLoading.value = false;
         }

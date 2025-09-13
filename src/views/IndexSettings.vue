@@ -14,6 +14,7 @@ const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings()
 await fetchSettings(props.indexUid);
 
 const editMode = ref(false);
+// TODO: is canceled, reset to original value
 const toggleEditMode = () => {
     editMode.value = !editMode.value;
 };
