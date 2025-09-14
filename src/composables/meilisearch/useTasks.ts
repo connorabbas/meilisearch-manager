@@ -72,6 +72,7 @@ export function useTasks() {
         let attempts = 0;
         try {
             toast.add(taskToastOptions);
+            // Wait just a moment to show the task enqueued toast
             await new Promise(resolve => setTimeout(resolve, 1500));
             while (attempts < maxAttempts) {
                 const taskResponse = await client.tasks.getTask(taskUid);

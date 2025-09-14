@@ -63,7 +63,8 @@ export function useIndexes() {
         }
 
         isFetching.value = true;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // TODO: cleanup, for testing
+        //await new Promise(resolve => setTimeout(resolve, 1000));
         error.value = null;
 
         try {
