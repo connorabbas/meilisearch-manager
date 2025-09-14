@@ -5,7 +5,7 @@ import SelectColorModePopoverButton from '@/components/SelectColorModePopoverBut
 import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue';
 import { ChevronsUpDown, Menu as MenuIcon } from 'lucide-vue-next';
 import Container from '@/components/Container.vue';
-import DropdownMenu from '@/components/DropdownMenu.vue';
+import PopupMenuButton from '@/components/PopupMenuButton.vue';
 import LogoLink from '@/components/LogoLink.vue';
 import Menubar from '@/components/primevue/Menubar.vue';
 import PanelMenu from '@/components/primevue/PanelMenu.vue';
@@ -61,16 +61,17 @@ onUnmounted(() => {
                         v-if="singleInstanceMode"
                         :show-label="false"
                     />
-                    <DropdownMenu
+                    <PopupMenuButton
                         v-else
                         name="mobile-meili-instance-dd"
+                        button-variant="text"
                         :menu-items="meilisearchInstanceMenuItems"
                         :button-label="currentMeilisearchIntanceName"
                     >
                         <template #toggleIcon>
                             <ChevronsUpDown />
                         </template>
-                    </DropdownMenu>
+                    </PopupMenuButton>
                 </template>
             </Drawer>
             <ChangeInstanceModal v-model="changeInstanceModalOpen" />
@@ -107,8 +108,9 @@ onUnmounted(() => {
                                             name="desktop-color-mode"
                                             fixed-position="right"
                                         />
-                                        <DropdownMenu
+                                        <PopupMenuButton
                                             name="desktop-meili-instance-dd"
+                                            button-variant="text"
                                             fixed-position="right"
                                             :menu-items="meilisearchInstanceMenuItems"
                                             :button-label="currentMeilisearchIntanceName"

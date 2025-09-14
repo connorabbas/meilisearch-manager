@@ -4,10 +4,7 @@ import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useRouter } from 'vue-router';
 import { Plus } from 'lucide-vue-next';
 
-const modalOpen = defineModel({
-    default: false,
-    type: Boolean,
-});
+const modalOpen = defineModel<boolean>({ default: false });
 
 const router = useRouter();
 const meilisearchStore = useMeilisearchStore();

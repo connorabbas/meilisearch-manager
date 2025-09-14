@@ -4,12 +4,17 @@ import Menu from '@/components/primevue/Menu.vue';
 import { MenuItem } from 'primevue/menuitem';
 import { ChevronDown } from 'lucide-vue-next';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     name: string,
     menuItems: MenuItem[],
-    buttonLabel: string,
+    buttonLabel?: string,
+    buttonSeverity?: 'secondary' | 'success' | 'info' | 'warn' | 'help' | 'danger' | 'contrast' | undefined,
+    buttonVariant?: 'default' | 'outlined' | 'text' | 'link' | undefined,
     fixedPosition?: 'left' | 'right',
-}>();
+}>(), {
+    buttonSeverity: 'secondary',
+    buttonVariant: 'default',
+});
 
 const appendToId = computed(() => {
     return props.name.replace(/[^a-zA-Z0-9]/g, '') + '_append';
@@ -27,14 +32,14 @@ const menuPositionClasses = computed(() => {
     let classes = '';
     if (props?.fixedPosition) {
         switch (props?.fixedPosition) {
-        case 'left':
-            classes = 'left-auto! top-0! left-0';
-            break;
-        case 'right':
-            classes = 'left-auto! top-0! right-0';
-            break;
-        default:
-            break;
+            case 'left':
+                classes = 'left-auto! top-0! left-0';
+                break;
+            case 'right':
+                classes = 'left-auto! top-0! right-0';
+                break;
+            default:
+                break;
         }
     }
 
@@ -46,10 +51,10 @@ const menuPositionClasses = computed(() => {
     <div class="flex flex-col">
         <Button
             id="instances-menu-btn"
-            :label="props.buttonLabel"
-            pt:root:class="flex flex-row-reverse justify-between"
-            severity="secondary"
-            text
+            :label="props?.buttonLabel"
+            :pt:root:class="{ 'flex flex-row-reverse justify-between': props?.buttonLabel }"
+            :severity="props.buttonSeverity"
+            :variant="props.buttonVariant === 'default' ? undefined : props.buttonVariant"
             @click="toggleDropdownMenu($event)"
         >
             <template #icon>
@@ -69,7 +74,7 @@ const menuPositionClasses = computed(() => {
             :ref="props.name"
             :appendTo="props?.fixedPosition ? `#${appendToId}` : 'body'"
             :model="props.menuItems"
-            :pt:root:class="['z-[1200]', menuPositionClasses]"
+            :pt:root:class="['z-[1200] w-[12.5rem] min-w-max', menuPositionClasses]"
             popup
         />
     </div>
