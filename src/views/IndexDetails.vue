@@ -1,20 +1,45 @@
 <script setup lang="ts">
 import { useStats } from '@/composables/meilisearch/useStats';
 import { formatDate, formatBytes } from '@/utils';
-import { Clock, Database, FileText } from 'lucide-vue-next';
+import { Clock, Database, FileText, RefreshCw } from 'lucide-vue-next';
 import type { Index } from 'meilisearch';
 
 const props = defineProps<{
     indexUid: string,
     index: Index,
+    fetching?: boolean,
 }>();
 
-const { indexStats, fetchIndexStats } = useStats();
+const emit = defineEmits(['refetch-index']);
+
+const { indexStats, isFetching, fetchIndexStats } = useStats();
+
 await fetchIndexStats(props.indexUid);
+
+async function handleReload() {
+    emit('refetch-index');
+    fetchIndexStats(props.indexUid);
+}
 </script>
 
 <template>
     <div>
+        <Teleport to="#index-page-actions">
+            <Button
+                label="Refresh"
+                severity="secondary"
+                :loading="isFetching || props?.fetching"
+                @click="handleReload"
+            >
+                <template #icon>
+                    <RefreshCw />
+                </template>
+                <template #loadingicon>
+                    <RefreshCw class="animate-spin" />
+                </template>
+            </Button>
+        </Teleport>
+
         <!-- TODO: more stat cards: avg doc size, number of embeddings/docs -->
         <!-- TODO: field distribution graph -->
         <!-- <pre>{{ indexStats }}</pre> -->

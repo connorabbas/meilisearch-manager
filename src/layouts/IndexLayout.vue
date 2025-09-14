@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import { useRoute } from 'vue-router';
 import { completeAsyncLoading } from '@/router';
-import { Home, RefreshCw } from 'lucide-vue-next';
+import { Home } from 'lucide-vue-next';
 import AppLayout from './AppLayout.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
@@ -49,24 +49,10 @@ const currentRouteName = computed(() => route.name as string);
             </template>
             <template #end>
                 <div
-                    v-if="route.meta?.breadcrumbLabel === 'Details'"
-                    class="flex gap-4"
+                    id="index-page-actions"
+                    class="empty:hidden flex gap-4"
                 >
-                    <!-- TODO: refresh stats (total docs data, etc.) -->
-                    <!-- TODO: re-explore having this slot data in the child component  -->
-                    <Button
-                        label="Refresh"
-                        severity="secondary"
-                        :loading="isFetching"
-                        @click="fetchIndex(props.indexUid)"
-                    >
-                        <template #icon>
-                            <RefreshCw />
-                        </template>
-                        <template #loadingicon>
-                            <RefreshCw class="animate-spin" />
-                        </template>
-                    </Button>
+                    <!-- Child views will teleport action buttons here -->
                 </div>
             </template>
         </PageTitleSection>
@@ -97,6 +83,7 @@ const currentRouteName = computed(() => route.name as string);
                     <component
                         :is="Component"
                         :index="currentIndex"
+                        :fetching="isFetching"
                         @refetch-index="fetchIndex(props.indexUid)"
                         @nullify-index="currentIndex = null"
                     />

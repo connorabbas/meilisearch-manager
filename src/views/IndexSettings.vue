@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, toRaw, watch } from 'vue';
 import { useSettings } from '../composables/meilisearch/useSettings';
 import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
 import { Mode } from 'vanilla-jsoneditor';
@@ -13,9 +13,14 @@ const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings()
 
 await fetchSettings(props.indexUid);
 
+const originalSettings = structuredClone(toRaw(settings.value));
 const editMode = ref(false);
-// TODO: is canceled, reset to original value
 const toggleEditMode = () => {
+    // if edit is canceled, reset to original value
+    if (editMode.value) {
+        console.log('editing', originalSettings);
+        settings.value = originalSettings;
+    }
     editMode.value = !editMode.value;
 };
 
