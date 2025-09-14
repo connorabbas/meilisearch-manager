@@ -160,31 +160,31 @@ function copyApiKey(key: string) {
                         header="Key"
                     >
                         <template #body="{ data }">
-                            <InputGroup v-if="canCopy">
-                                <InputText
-                                    class="w-[8rem]"
-                                    size="small"
-                                    :value="maskedApiKey(data.key)"
-                                    disabled
-                                />
+                            <div class="flex items-center gap-2">
+                                <Inplace pt:display:class="p-0">
+                                    <template #display>
+                                        <div
+                                            v-tooltip.left="'Reveal API Key'"
+                                            class="p-2"
+                                        >
+                                            {{ maskedApiKey(data.key) }}
+                                        </div>
+                                    </template>
+                                    <template #content>
+                                        <div class="whitespace-normal break-all max-w-[20rem]">{{ data.key }}</div>
+                                    </template>
+                                </Inplace>
                                 <Button
+                                    v-if="canCopy"
                                     v-tooltip.right="'Copy'"
                                     severity="secondary"
                                     size="small"
-                                    outlined
+                                    text
                                     @click="copyApiKey(data.key)"
                                 >
                                     <Copy />
                                 </Button>
-                            </InputGroup>
-                            <Inplace v-else>
-                                <template #display>
-                                    Reveal API Key
-                                </template>
-                                <template #content>
-                                    {{ data.key }}
-                                </template>
-                            </Inplace>
+                            </div>
                         </template>
                     </Column>
                     <Column

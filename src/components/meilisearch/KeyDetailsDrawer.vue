@@ -40,14 +40,22 @@ const keyExpired = computed(() => {
                 {{ props.apiKey.uid }}
             </Fieldset>
             <Fieldset legend="Key">
-                <div
-                    v-if="canCopy"
-                    class="flex items-center gap-4"
-                >
-                    <div>
-                        {{ maskedApiKey(props.apiKey.key) }}
-                    </div>
+                <div class="flex items-center gap-2">
+                    <Inplace pt:display:class="p-0">
+                        <template #display>
+                            <div
+                                v-tooltip.left="'Reveal API Key'"
+                                class="p-2"
+                            >
+                                {{ maskedApiKey(props.apiKey.key) }}
+                            </div>
+                        </template>
+                        <template #content>
+                            <div class="whitespace-normal break-all">{{ props.apiKey.key }}</div>
+                        </template>
+                    </Inplace>
                     <Button
+                        v-if="canCopy"
                         v-tooltip.right="'Copy'"
                         severity="secondary"
                         size="small"
@@ -57,14 +65,6 @@ const keyExpired = computed(() => {
                         <Copy />
                     </Button>
                 </div>
-                <Inplace v-else>
-                    <template #display>
-                        Reveal API Key
-                    </template>
-                    <template #content>
-                        {{ props.apiKey.key }}
-                    </template>
-                </Inplace>
             </Fieldset>
             <Fieldset
                 v-if="props.apiKey?.description"
