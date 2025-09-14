@@ -3,6 +3,12 @@ import { ref, watchEffect, inject } from 'vue';
 import { Sun, Moon, Monitor } from 'lucide-vue-next';
 import type { UseColorModeReturn } from '@vueuse/core';
 
+const props = withDefaults(defineProps<{
+    showLabel?: boolean,
+}>(), {
+    showLabel: true,
+});
+
 const colorMode = inject<UseColorModeReturn>('colorMode')!;
 const selectedColorMode = ref(colorMode?.value || 'auto');
 
@@ -24,7 +30,7 @@ watchEffect(() => colorMode.value = selectedColorMode.value);
         optionValue="value"
     >
         <template #option="{ option }">
-            <component :is="option.icon" /><!--  {{ option.label }} -->
+            <component :is="option.icon" /> <span v-if="props.showLabel">{{ option.label }}</span>
         </template>
     </SelectButton>
 </template>

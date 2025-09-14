@@ -38,6 +38,7 @@ const retryConnection = async () => {
                                     {{ error }}
                                 </Message>
                                 <Button
+                                    v-if="meilisearchStore.currentInstance"
                                     label="Retry Connection"
                                     :loading="meilisearchStore.isConnecting"
                                     @click="retryConnection"
@@ -48,6 +49,19 @@ const retryConnection = async () => {
                                     <template #loadingicon>
                                         <RefreshCw class="animate-spin" />
                                     </template>
+                                </Button>
+                                <Button
+                                    v-if="!meilisearchStore.singleInstanceMode"
+                                    v-slot="slotProps"
+                                    severity="secondary"
+                                    asChild
+                                >
+                                    <RouterLink
+                                        :to="{ name: 'new-instance' }"
+                                        :class="[slotProps.class, 'no-underline']"
+                                    >
+                                        Add new instance
+                                    </RouterLink>
                                 </Button>
                             </section>
                         </div>

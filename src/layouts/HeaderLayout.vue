@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAppLayout } from '@/composables/useAppLayout';
-import SelectColorModeButton from '@/components/SelectColorModeButton.vue';
-import { Menu as MenuIcon } from 'lucide-vue-next';
+import SelectColorModePopoverButton from '@/components/SelectColorModePopoverButton.vue';
+import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue';
+import { ChevronsUpDown, Menu as MenuIcon } from 'lucide-vue-next';
 import Container from '@/components/Container.vue';
-import NavLogoLink from '@/components/NavLogoLink.vue';
+import DropdownMenu from '@/components/DropdownMenu.vue';
+import LogoLink from '@/components/LogoLink.vue';
 import Menubar from '@/components/primevue/Menubar.vue';
 import PanelMenu from '@/components/primevue/PanelMenu.vue';
 import Breadcrumb from '@/components/primevue/Breadcrumb.vue';
@@ -20,6 +22,10 @@ const {
     currentRoute,
     mobileMenuOpen,
     menuItems,
+    singleInstanceMode,
+    changeInstanceModalOpen,
+    meilisearchInstanceMenuItems,
+    currentMeilisearchIntanceName,
 } = useAppLayout();
 
 const isOpaque = ref(false);
@@ -51,11 +57,23 @@ onUnmounted(() => {
                     />
                 </div>
                 <template #footer>
-                    <div class="flex flex-col">
-                        <SelectColorModeButton />
-                    </div>
+                    <SelectColorModeButton
+                        v-if="singleInstanceMode"
+                        :show-label="false"
+                    />
+                    <DropdownMenu
+                        v-else
+                        name="mobile-meili-instance-dd"
+                        :menu-items="meilisearchInstanceMenuItems"
+                        :button-label="currentMeilisearchIntanceName"
+                    >
+                        <template #toggleIcon>
+                            <ChevronsUpDown />
+                        </template>
+                    </DropdownMenu>
                 </template>
             </Drawer>
+            <ChangeInstanceModal v-model="changeInstanceModalOpen" />
             <ScrollTop
                 :buttonProps="{ class: 'fixed! right-4! bottom-4! md:right-8! md:bottom-8! z-[1000]!', rounded: true, raised: true }"
             />
@@ -75,17 +93,32 @@ onUnmounted(() => {
                             pt:button:class="hidden"
                         >
                             <template #start>
-                                <div class="shrink-0 flex items-center mr-5">
-                                    <NavLogoLink />
+                                <div class="shrink-0 flex items-center gap-6 mr-6">
+                                    <LogoLink />
                                 </div>
                             </template>
                             <template #end>
-                                <div class="hidden lg:flex items-center ms-6 space-x-3">
-                                    <SelectColorModeButton />
+                                <div class="hidden lg:flex items-center ms-6 space-x-4">
+                                    <template v-if="singleInstanceMode">
+                                        <SelectColorModeButton :show-label="false" />
+                                    </template>
+                                    <template v-else>
+                                        <SelectColorModePopoverButton
+                                            name="desktop-color-mode"
+                                            fixed-position="right"
+                                        />
+                                        <DropdownMenu
+                                            name="desktop-meili-instance-dd"
+                                            fixed-position="right"
+                                            :menu-items="meilisearchInstanceMenuItems"
+                                            :button-label="currentMeilisearchIntanceName"
+                                        />
+                                    </template>
                                 </div>
                                 <!-- Mobile Menu Toggle -->
                                 <div class="flex items-center lg:hidden">
-                                    <div class="relative">
+                                    <div class="flex gap-4">
+                                        <SelectColorModePopoverButton name="mobile-color-mode" />
                                         <Button
                                             severity="secondary"
                                             class="p-1!"

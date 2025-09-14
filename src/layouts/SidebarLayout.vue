@@ -2,7 +2,7 @@
 import { Menu as MenuIcon } from 'lucide-vue-next';
 import { useAppLayout } from '@/composables/useAppLayout';
 import Container from '@/components/Container.vue';
-import NavLogoLink from '@/components/NavLogoLink.vue';
+import LogoLink from '@/components/LogoLink.vue';
 import PanelMenu from '@/components/primevue/PanelMenu.vue';
 import Breadcrumb from '@/components/primevue/Breadcrumb.vue';
 import type { MenuItem } from '@/types';
@@ -51,7 +51,7 @@ const {
                 <Container class="grow">
                     <div class="flex justify-between items-center py-4">
                         <div>
-                            <NavLogoLink />
+                            <LogoLink />
                         </div>
                         <div>
                             <Button
@@ -77,7 +77,7 @@ const {
                 <div class="w-full h-full flex flex-col justify-between p-4">
                     <div class="space-y-6">
                         <div class="p-2">
-                            <NavLogoLink />
+                            <LogoLink />
                         </div>
                         <div>
                             <PanelMenu

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import progress from '@/utils/progress';
 import { useMeilisearchStore } from '@/stores/meilisearch';
+import { useToast } from 'primevue/usetoast';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,6 +11,17 @@ const router = createRouter({
             path: '/',
             name: 'welcome',
             redirect: { name: 'dashboard' },
+        },
+        {
+            path: '/new-instance',
+            name: 'new-instance',
+            component: () => import('../views/NewInstance.vue'),
+            beforeEnter: () => {
+                const meilisearchStore = useMeilisearchStore();
+                if (meilisearchStore.singleInstanceMode) {
+                    return { name: 'dashboard' };
+                }
+            },
         },
         {
             path: '/dashboard',
@@ -89,6 +101,22 @@ let progressTimer: number | null = null;
 let isAsyncComponentLoading = false;
 
 router.beforeEach(async (to, from) => {
+    const toast = useToast();
+    const meilisearchStore = useMeilisearchStore();
+    // TODO: 404 not working when no instance
+    if (to.name === 'connection-error' || to.name === 'new-instance') {
+        return;
+    }
+    if (meilisearchStore.instances.length === 0) {
+        toast.add({
+            severity: 'info',
+            summary: 'No Instances Found',
+            detail: 'Please connect at least one Meilisearch instance',
+            life: 7500,
+        });
+        return { name: 'new-instance' };
+    }
+
     if (progress.isStarted()) {
         progress.done();
     }
@@ -106,15 +134,10 @@ router.beforeEach(async (to, from) => {
         }, 150);
     }
 
-    const meilisearchStore = useMeilisearchStore();
     try {
         await meilisearchStore.connect();
     } catch (err) {
         console.error(err);
-    }
-
-    if (to.name === 'connection-error') {
-        return;
     }
     if (!meilisearchStore.isConnected || meilisearchStore.connectionError) {
         return { name: 'connection-error' };

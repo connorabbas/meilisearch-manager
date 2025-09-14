@@ -19,6 +19,7 @@ await fetchData();
 
 <template>
     <AppLayout :breadcrumbs>
+        <!-- TODO error messaging -->
         <div class="grid grid-cols-12 items-stretch gap-4">
             <div
                 v-if="instanceStats"
