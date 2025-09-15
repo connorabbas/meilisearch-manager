@@ -57,7 +57,7 @@ watch(() => settings.value, (newVal) => {
                     <div class="flex items-center gap-3">
                         <span>JSON Index Configuration</span>
                         <a
-                            href="https://www.meilisearch.com/docs/reference/api/settings"
+                            href="https://www.meilisearch.com/docs/reference/api/settings#settings-object"
                             target="_blank"
                             class="text-inherit"
                         >

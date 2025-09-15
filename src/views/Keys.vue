@@ -171,7 +171,9 @@ function copyApiKey(key: string) {
                                         </div>
                                     </template>
                                     <template #content>
-                                        <div class="whitespace-normal break-all max-w-[20rem]">{{ data.key }}</div>
+                                        <div class="whitespace-normal break-all max-w-[20rem]">
+                                            {{ data.key }}
+                                        </div>
                                     </template>
                                 </Inplace>
                                 <Button

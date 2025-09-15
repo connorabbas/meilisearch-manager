@@ -51,7 +51,9 @@ const keyExpired = computed(() => {
                             </div>
                         </template>
                         <template #content>
-                            <div class="whitespace-normal break-all">{{ props.apiKey.key }}</div>
+                            <div class="whitespace-normal break-all">
+                                {{ props.apiKey.key }}
+                            </div>
                         </template>
                     </Inplace>
                     <Button
