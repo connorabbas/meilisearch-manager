@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, ListCheck, KeyRound, FolderSearch, Plus, ArrowLeftRight, Trash2 } from 'lucide-vue-next';
+import { LayoutDashboard, ListCheck, KeyRound, FolderSearch, Plus, ArrowLeftRight, Trash2, BookText } from 'lucide-vue-next';
 import { type MenuItem } from '@/types';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 
@@ -45,6 +45,11 @@ export function useAppLayout() {
             route: { name: 'keys' },
             active: isActiveRoute('keys'),
         },
+        /* {
+            label: 'Meilisearch Docs',
+            lucideIcon: BookText,
+            link: 'https://www.meilisearch.com/docs/home',
+        }, */
     ]);
 
     // Meilisearch instance

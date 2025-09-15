@@ -5,11 +5,11 @@ import type { Index, RecordAny } from 'meilisearch';
 import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
 import NotFoundMessage from '@/components/NotFoundMessage.vue';
 import Menu from '@/components/primevue/Menu.vue';
-import PopupMenuButton from '@/components/PopupMenuButton.vue';
 import { useStats } from '@/composables/meilisearch/useStats';
 import { looksLikeAnImageUrl } from '@/utils';
-import { EllipsisVertical, Pencil, Plus, Search, Settings, Trash2, X } from 'lucide-vue-next';
+import { EllipsisVertical, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next';
 import type { MenuItem } from '@/types';
+import CreateDocumentDrawer from '@/components/meilisearch/CreateDocumentDrawer.vue';
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
@@ -62,52 +62,33 @@ function handleClearSearchQuery() {
     searchQuery.value = '';
     statefulSearch(props.indexUid);
 }
-
 function handleDataTablePaginateScrollTop() {
     const tableContainer = document.getElementById('documents-data-table-container');
     if (tableContainer) {
         tableContainer.scrollTop = 0;
     }
 }
-
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
         fetchData();
     });
 }
 
-// Drawer
-const showDocumentDrawerOpen = ref(false);
+// Create Drawer
+const showCreateDocumentDrawerOpen = ref(false);
+
+// Edit / Details Drawer
+const editDocumentDrawerOpen = ref(false);
 const currentDocument = ref<RecordAny | null>(null);
 function editDocument(document: RecordAny) {
     currentDocument.value = document;
-    showDocumentDrawerOpen.value = true;
+    editDocumentDrawerOpen.value = true;
 }
-function handleDrawerHidden() {
+function handleEditDrawerHidden() {
     if (!isSendingTask.value) {
         currentDocument.value = null;
     }
 }
-
-// Options Menu
-const documentsOptionsMenuItems: MenuItem[] = [
-    {
-        label: 'New Document',
-        lucideIcon: Plus,
-        command: () => {
-            // TODO: New Doc Drawer
-        },
-    },
-    {
-        label: 'Delete All Documents',
-        lucideIcon: Trash2,
-        class: 'delete-menu-item',
-        lucideIconClass: 'text-red-500 dark:text-red-400',
-        command: () => {
-            // TODO: confirm delete all documents
-        },
-    },
-];
 
 // DataTable context Menu
 const documentContextMenu = useTemplateRef('document-context-menu');
@@ -159,25 +140,30 @@ function handleFieldPopoverHidden() {
 <template>
     <div>
         <Teleport to="#index-page-actions">
-            <PopupMenuButton
-                name="documents-options-dd"
-                fixed-position="right"
-                :menu-items="documentsOptionsMenuItems"
+            <Button
+                label="New Document"
+                @click="showCreateDocumentDrawerOpen = true"
             >
-                <template #toggleIcon>
-                    <Settings />
+                <template #icon>
+                    <Plus />
                 </template>
-            </PopupMenuButton>
+            </Button>
         </Teleport>
         <div class="space-y-4">
+            <CreateDocumentDrawer
+                v-model="showCreateDocumentDrawerOpen"
+                :index-uid="props.indexUid"
+                :primary-key="props.index?.primaryKey"
+                @document-created="fetchData"
+            />
             <EditDocumentDrawer
                 v-if="currentDocument"
-                v-model="showDocumentDrawerOpen"
+                v-model="editDocumentDrawerOpen"
                 :index-uid="props.indexUid"
                 :primary-key="props.index?.primaryKey"
                 :document="currentDocument"
                 @document-updated="fetchData"
-                @hide="handleDrawerHidden"
+                @hide="handleEditDrawerHidden"
             />
             <Card>
                 <template #content>

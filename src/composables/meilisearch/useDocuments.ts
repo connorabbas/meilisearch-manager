@@ -15,11 +15,13 @@ export function useDocuments() {
     const isLoading = ref(false);
     const isSendingTask = ref(false);
     const isPollingTask = ref(false);
+    // TODO: errors reactive object with different keys
     const error = ref<string | null>(null);
 
     const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
 
-    async function updateDocuments(
+    async function addOrUpdateDocuments(
+        action: 'addition' | 'update',
         indexUid: string,
         documents: Partial<RecordAny>[],
         primaryKey?: string,
@@ -35,18 +37,25 @@ export function useDocuments() {
         error.value = null;
 
         try {
-            const enqueuedTask = await client.index(indexUid).updateDocuments(documents, { primaryKey });
+            const enqueuedTask = (action === 'addition')
+                ? await client.index(indexUid).addDocuments(documents, { primaryKey })
+                : await client.index(indexUid).updateDocuments(documents, { primaryKey });
+
+            const pastVerb = (action === 'addition')
+                ? 'added'
+                : 'updated';
+
             isSendingTask.value = false;
             onTaskEnqueued?.(enqueuedTask);
 
             isPollingTask.value = true;
-            let successMessage = 'Documents have been successfully updated';
+            let successMessage = `Documents have been successfully ${pastVerb}`;
             if (documents.length === 1 && primaryKey) {
-                successMessage = `Document: "${documents[0][primaryKey]}" has been successfully updated`;
+                successMessage = `Document: "${documents[0][primaryKey]}" has been successfully ${pastVerb}`;
             }
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
-                `A document update task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 successMessage,
             );
 
@@ -202,7 +211,7 @@ export function useDocuments() {
         isPollingTask,
         isLoadingTask,
         error,
-        updateDocuments,
+        addOrUpdateDocuments,
         confirmDeleteAllDocuments,
         confirmDeleteDocument,
     };

@@ -18,6 +18,7 @@ declare module 'vue' {
     Column: typeof import('primevue/column')['default']
     ConfirmDialog: typeof import('primevue/confirmdialog')['default']
     Container: typeof import('./src/components/Container.vue')['default']
+    CreateDocumentDrawer: typeof import('./src/components/meilisearch/CreateDocumentDrawer.vue')['default']
     CreateIndexDrawer: typeof import('./src/components/meilisearch/CreateIndexDrawer.vue')['default']
     CreateKeyDrawer: typeof import('./src/components/meilisearch/CreateKeyDrawer.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
