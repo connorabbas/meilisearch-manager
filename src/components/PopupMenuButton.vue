@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue';
 import Menu from '@/components/primevue/Menu.vue';
-import { MenuItem } from 'primevue/menuitem';
 import { ChevronDown } from 'lucide-vue-next';
+import { MenuItem } from '@/types';
 
 const props = withDefaults(defineProps<{
     name: string,

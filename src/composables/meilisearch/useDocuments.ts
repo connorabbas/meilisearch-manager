@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import { type EnqueuedTask, type RecordAny, type Task } from 'meilisearch';
+import { ContentType, type EnqueuedTask, type RecordAny, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useConfirm } from 'primevue';
@@ -49,14 +49,55 @@ export function useDocuments() {
             onTaskEnqueued?.(enqueuedTask);
 
             isPollingTask.value = true;
-            let successMessage = `Documents have been successfully ${pastVerb}`;
-            if (documents.length === 1 && primaryKey) {
-                successMessage = `Document: "${documents[0][primaryKey]}" has been successfully ${pastVerb}`;
-            }
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
-                successMessage,
+                `Documents have been successfully ${pastVerb}`,
+            );
+
+            return result;
+        } catch (err) {
+            error.value = (err as Error).message;
+            throw err;
+        } finally {
+            isSendingTask.value = false;
+            isPollingTask.value = false;
+        }
+    }
+
+    async function addOrUpdateDocumentsFromString(
+        action: 'addition' | 'update',
+        indexUid: string,
+        documents: string,
+        contentType: ContentType,
+        onTaskEnqueued?: (task: EnqueuedTask) => void
+    ): Promise<Task | undefined> {
+        const client = meilisearchStore.getClient();
+        if (!client) {
+            error.value = 'MeiliSearch client not connected';
+            return;
+        }
+
+        isSendingTask.value = true;
+        error.value = null;
+
+        try {
+            const enqueuedTask = (action === 'addition')
+                ? await client.index(indexUid).addDocumentsFromString(documents, contentType)
+                : await client.index(indexUid).updateDocumentsFromString(documents, contentType);
+
+            const pastVerb = (action === 'addition')
+                ? 'added'
+                : 'updated';
+
+            isSendingTask.value = false;
+            onTaskEnqueued?.(enqueuedTask);
+
+            isPollingTask.value = true;
+            const result = await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `Documents have been successfully ${pastVerb}`,
             );
 
             return result;
@@ -212,6 +253,7 @@ export function useDocuments() {
         isLoadingTask,
         error,
         addOrUpdateDocuments,
+        addOrUpdateDocumentsFromString,
         confirmDeleteAllDocuments,
         confirmDeleteDocument,
     };

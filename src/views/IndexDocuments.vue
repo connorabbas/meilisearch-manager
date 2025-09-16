@@ -9,7 +9,7 @@ import { useStats } from '@/composables/meilisearch/useStats';
 import { looksLikeAnImageUrl } from '@/utils';
 import { EllipsisVertical, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next';
 import type { MenuItem } from '@/types';
-import CreateDocumentDrawer from '@/components/meilisearch/CreateDocumentDrawer.vue';
+import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue';
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
@@ -75,7 +75,7 @@ function handleDeleteDocument(documentId: string | number) {
 }
 
 // Create Drawer
-const showCreateDocumentDrawerOpen = ref(false);
+const showImportDocumentsDrawerOpen = ref(false);
 
 // Edit / Details Drawer
 const editDocumentDrawerOpen = ref(false);
@@ -141,8 +141,8 @@ function handleFieldPopoverHidden() {
     <div>
         <Teleport to="#index-page-actions">
             <Button
-                label="New Document"
-                @click="showCreateDocumentDrawerOpen = true"
+                label="Import Documents"
+                @click="showImportDocumentsDrawerOpen = true"
             >
                 <template #icon>
                     <Plus />
@@ -150,11 +150,11 @@ function handleFieldPopoverHidden() {
             </Button>
         </Teleport>
         <div class="space-y-4">
-            <CreateDocumentDrawer
-                v-model="showCreateDocumentDrawerOpen"
+            <ImportDocumentsDrawer
+                v-model="showImportDocumentsDrawerOpen"
                 :index-uid="props.indexUid"
                 :primary-key="props.index?.primaryKey"
-                @document-created="fetchData"
+                @documents-imported="fetchData"
             />
             <EditDocumentDrawer
                 v-if="currentDocument"
