@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef, watch } from 'vue';
 import type { ContentType, RecordAny } from 'meilisearch';
-import { Braces, Info, Upload } from 'lucide-vue-next';
+import { Braces, Info, TriangleAlert, Upload } from 'lucide-vue-next';
 import { Mode } from 'vanilla-jsoneditor';
 import ThemedJsonEditor from '../ThemedJsonEditor.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
@@ -22,10 +22,6 @@ const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask } = 
 
 const newDocuments = ref<RecordAny[]>([]);
 const newDocumentsAsString = ref('');
-function reset() {
-    newDocuments.value = [];
-    newDocumentsAsString.value = '';
-}
 
 const importMethod = ref<'upload' | 'manual'>('upload');
 const importMode = ref<'addition' | 'update'>('addition');
@@ -37,7 +33,7 @@ const uploadContentType = ref<ContentType>('application/json');
 const uploadOptions = [
     { label: 'CSV', value: 'text/csv' },
     { label: 'JSON', value: 'application/json' },
-    { label: 'x-ndjson', value: 'application/x-ndjson' },
+    //{ label: 'x-ndjson', value: 'application/x-ndjson' },
 ];
 
 type FileUploadType = InstanceType<typeof FileUpload>;
@@ -45,7 +41,6 @@ const fileUploader = useTemplateRef<FileUploadType>('document-file-uploader');
 const fileUploaderChanged = ref(0);
 async function handleUpload(event: FileUploadSelectEvent) {
     const files: File[] = event.files as File[];
-    console.log(files[0]);
     const fileText = await readFileAsText(files[0]);
     newDocumentsAsString.value = fileText;
 }
@@ -72,7 +67,6 @@ async function handleSaveDocument() {
                 emit('documents-imported');
             });
     } else {
-        console.log('save', newDocumentsAsString.value);
         addOrUpdateDocumentsFromString(importMode.value, props.indexUid, newDocumentsAsString.value, uploadContentType.value)
             .then(() => {
                 drawerOpen.value = false;
@@ -80,6 +74,15 @@ async function handleSaveDocument() {
             });
     }
 }
+
+function reset() {
+    importMethod.value = 'upload';
+    importMode.value = 'addition';
+    uploadContentType.value = 'application/json';
+    newDocuments.value = [];
+    newDocumentsAsString.value = '';
+}
+
 function handleHidden() {
     emit('hide');
     reset();
@@ -115,7 +118,7 @@ watch(uploadContentType, (newVal) => {
                 />
             </div>
             <!-- TODO: error message -->
-            <Message>
+            <Message severity="info">
                 <template #icon>
                     <Info />
                 </template>
@@ -159,6 +162,16 @@ watch(uploadContentType, (newVal) => {
                                     optionLabel="label"
                                     optionValue="value"
                                 />
+                                <Message
+                                    v-if="uploadContentType === 'text/csv'"
+                                    severity="warn"
+                                >
+                                    <template #icon>
+                                        <TriangleAlert class="text-base! size-[22px]!" />
+                                    </template>
+                                    <span class="font-bold">Warning:</span> CSV uploads do not handle array and nested object
+                                    structures correctly, this option is only advised if your dataset has basic key:value pairs
+                                </Message>
                                 <FileUpload
                                     ref="document-file-uploader"
                                     :key="fileUploaderChanged"

@@ -107,7 +107,7 @@ watch(allActions, (newVal) => {
                     type="text"
                     fluid
                 />
-                <Message>
+                <Message severity="info">
                     <template #icon>
                         <Info />
                     </template>

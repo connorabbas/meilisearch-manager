@@ -42,7 +42,7 @@ export function useDocuments() {
                 : await client.index(indexUid).updateDocuments(documents, { primaryKey });
 
             const pastVerb = (action === 'addition')
-                ? 'added'
+                ? 'imported'
                 : 'updated';
 
             isSendingTask.value = false;
@@ -86,10 +86,6 @@ export function useDocuments() {
                 ? await client.index(indexUid).addDocumentsFromString(documents, contentType)
                 : await client.index(indexUid).updateDocumentsFromString(documents, contentType);
 
-            const pastVerb = (action === 'addition')
-                ? 'added'
-                : 'updated';
-
             isSendingTask.value = false;
             onTaskEnqueued?.(enqueuedTask);
 
@@ -97,7 +93,7 @@ export function useDocuments() {
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
-                `Documents have been successfully ${pastVerb}`,
+                'Documents have been successfully imported',
             );
 
             return result;

@@ -54,7 +54,7 @@ export function useTasks() {
         taskEnqueuedMessage: string,
         successMessage: string,
         maxAttempts = 30,
-        delayMs = 250
+        delayMs = 500
     ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
@@ -102,7 +102,7 @@ export function useTasks() {
                 }
                 throw new Error(`Unknown task status: ${taskResponse.status}`);
             }
-            throw new Error(`Task did not complete after ${maxAttempts} attempts`);
+            throw new Error(`Task did not complete after ${maxAttempts} attempts, please check the Tasks log`);
         } finally {
             checkingTaskStatus.value = false;
             // Add slight delay as not to clash with potential error toasts
