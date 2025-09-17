@@ -119,6 +119,7 @@ onMounted(() => {
                             <MultiSelect
                                 v-model="tasksParams.statuses"
                                 pt:label:class="flex flex-wrap"
+                                pt:overlay:class="z-1!"
                                 :options="[
                                     'enqueued',
                                     'processing',
@@ -157,6 +158,7 @@ onMounted(() => {
                             <MultiSelect
                                 v-model="tasksParams.types"
                                 pt:label:class="flex flex-wrap"
+                                pt:overlay:class="z-1!"
                                 :options="[
                                     'documentAdditionOrUpdate',
                                     'documentEdition',
@@ -190,6 +192,7 @@ onMounted(() => {
                             <MultiSelect
                                 v-model="tasksParams.indexUids"
                                 pt:label:class="flex flex-wrap"
+                                pt:overlay:class="z-1!"
                                 :options="indexUids"
                                 display="chip"
                                 placeholder="Filter by index"

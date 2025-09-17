@@ -76,7 +76,7 @@ onUnmounted(() => {
             </Drawer>
             <ChangeInstanceModal v-model="changeInstanceModalOpen" />
             <ScrollTop
-                :buttonProps="{ class: 'fixed! right-4! bottom-4! md:right-8! md:bottom-8! z-[1000]!', rounded: true, raised: true }"
+                :buttonProps="{ class: 'fixed! right-4! bottom-4! md:right-8! md:bottom-8! z-1000!', rounded: true, raised: true }"
             />
         </Teleport>
         <div class="min-h-screen">

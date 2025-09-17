@@ -62,7 +62,7 @@ const popoverPositionClasses = computed(() => {
             :ref="props.name"
             :appendTo="props?.fixedPosition ? `#${appendToId}` : 'body'"
             :pt="{
-                root: { class: ['z-[1200]', popoverPositionClasses] },
+                root: { class: ['z-1200', popoverPositionClasses] },
                 content: { class: 'p-2' }
             }"
         >

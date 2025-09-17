@@ -324,7 +324,7 @@ function handleFieldPopoverHidden() {
             >
                 <BlockUI
                     :blocked="blockedGrid"
-                    pt:mask:class="z-[1]!"
+                    pt:mask:class="z-1!"
                 >
                     <div class="space-y-4">
                         <div v-if="!searchResults?.hits.length && isFetching">
