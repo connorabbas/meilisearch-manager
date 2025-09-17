@@ -3,22 +3,19 @@ import { type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import type { DataTablePageEvent, PageState } from 'primevue';
+import { usePagination } from '@/composables/usePagination';
 
 export function useSearch(initialPerPage: number = 20) {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
+    const { currentPage, perPage, firstDatasetIndex, handlePageEvent } = usePagination(initialPerPage);
 
     const searchResults = ref<SearchResponse | null>(null);
     const searchQuery = ref('');
-    const currentPage = ref(1);
-    const perPage = ref(initialPerPage);
 
     const isFetching = ref(false);
     const error = ref<string | null>(null);
 
-    const firstDatasetIndex = computed(() => {
-        return (currentPage.value - 1) * perPage.value;
-    });
     const searchParams = computed<SearchParams>(() => {
         return {
             limit: perPage.value,
@@ -48,29 +45,11 @@ export function useSearch(initialPerPage: number = 20) {
         }
     }
 
-    function statefulSearch(indexUid: string): Promise<void> {
-        currentPage.value = 1;
-        return search(indexUid, searchQuery.value, searchParams.value);
-    }
-
-    // TODO: abstract pagination to separate composable
-    function handlePageEvent(
-        indexUid: string,
-        event: PageState | DataTablePageEvent,
-        scrollTop: boolean = true
-    ): Promise<void> {
-        if (event.rows !== perPage.value) {
+    function statefulSearch(indexUid: string, resetPagination: boolean = false): Promise<void> {
+        if (resetPagination) {
             currentPage.value = 1;
-        } else {
-            currentPage.value = event.page + 1;
         }
-        perPage.value = event.rows;
-
-        return search(indexUid, searchQuery.value, searchParams.value).then(() => {
-            if (scrollTop) {
-                window.scrollTo({ top: 0 });
-            }
-        });
+        return search(indexUid, searchQuery.value, searchParams.value);
     }
 
     watch(error, (newError) => {

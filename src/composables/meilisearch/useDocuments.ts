@@ -94,6 +94,8 @@ export function useDocuments() {
                 enqueuedTask.taskUid,
                 `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 'Documents have been successfully imported',
+                60,
+                1000
             );
 
             return result;

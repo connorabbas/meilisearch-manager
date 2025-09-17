@@ -60,13 +60,7 @@ const dataView = ref<'Grid' | 'Table'>('Grid');
 
 function handleClearSearchQuery() {
     searchQuery.value = '';
-    statefulSearch(props.indexUid);
-}
-function handleDataTablePaginateScrollTop() {
-    const tableContainer = document.getElementById('documents-data-table-container');
-    if (tableContainer) {
-        tableContainer.scrollTop = 0;
-    }
+    statefulSearch(props.indexUid, true);
 }
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
@@ -176,7 +170,7 @@ function handleFieldPopoverHidden() {
                             <InputText
                                 v-model="searchQuery"
                                 placeholder="search query"
-                                @keyup.enter="statefulSearch(props.indexUid)"
+                                @keyup.enter="statefulSearch(props.indexUid, true)"
                             />
                             <Button
                                 v-if="searchQuery"
@@ -247,7 +241,7 @@ function handleFieldPopoverHidden() {
                         scrollHeight="500px"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                        @page="handlePageEvent(props.indexUid, $event, false).then(() => handleDataTablePaginateScrollTop())"
+                        @page="handlePageEvent($event, () => statefulSearch(props.indexUid), true, 'documents-data-table-container')"
                     >
                         <template #empty>
                             <NotFoundMessage subject="Document" />
@@ -374,7 +368,7 @@ function handleFieldPopoverHidden() {
                                 pt:root:class="shadow-sm border dynamic-border rounded-xl"
                                 template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                                @page="handlePageEvent(props.indexUid, $event)"
+                                @page="handlePageEvent($event, () => statefulSearch(props.indexUid))"
                             />
                         </div>
                     </div>
