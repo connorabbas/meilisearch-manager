@@ -12,7 +12,7 @@ import { PrimeVueResolver } from '@primevue/auto-import-resolver';
 export default defineConfig(({ mode }) => {
     // https://vite.dev/config/#using-environment-variables-in-config
     const env = loadEnv(mode, process.cwd(), '');
-    const devPort = env.APP_PORT ? Number(env.APP_PORT) : 5173;
+    const devPort = env.VITE_APP_PORT ? Number(env.VITE_APP_PORT) : 5173;
 
     return {
         plugins: [
@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
                 ]
             })
         ],
+        base: env.VITE_BASE_PATH || '/',
         define: {
             // Provide an explicit app-level constant derived from an env var.
             __APP_ENV__: JSON.stringify(env.APP_ENV),

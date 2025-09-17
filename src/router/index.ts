@@ -4,7 +4,7 @@ import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useToast } from 'primevue/usetoast';
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(import.meta.env.VITE_BASE_PATH),
     linkActiveClass: 'text-primary!',
     routes: [
         {
