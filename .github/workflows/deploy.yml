@@ -1,0 +1,23 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+      - main 
+
+jobs:
+  # https://github.com/marketplace/actions/vue-to-github-pages
+  build_vue:
+    runs-on: ubuntu-latest
+    name: Build Vue
+    steps:
+    - uses: actions/checkout@v2
+    - id: Build-Vue
+      uses: xRealNeon/VuePagesAction@1.0.1
+      env:
+        VITE_BASE_PATH: '/${{ github.event.repository.name }}/'
+      with:
+        username: ${{ github.repository_owner }}
+        reponame: ${{ github.event.repository.name }}
+        token: ${{ secrets.GITHUB_TOKEN }}
