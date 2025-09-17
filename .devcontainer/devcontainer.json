@@ -1,6 +1,6 @@
 // https://aka.ms/devcontainer.json
 {
-    "name": "Meilisearch UI - Vue",
+    "name": "Meilisearch Dashboard",
     "dockerComposeFile": [
         "../docker-compose.dev.yml"
     ],
@@ -18,6 +18,8 @@
                 "streetsidesoftware.code-spell-checker",
                 "hollowtree.vue-snippets",
                 "Vue.volar",
+                "dbaeumer.vscode-eslint",
+                "EditorConfig.EditorConfig",
                 "bradlc.vscode-tailwindcss",
                 "shd101wyy.markdown-preview-enhanced",
                 "formulahendry.auto-rename-tag",
