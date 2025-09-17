@@ -24,12 +24,12 @@ const primaryKey = computed(() => props.index?.primaryKey);
 const { isSendingTask, confirmDeleteDocument } = useDocuments();
 const { indexStats, fetchIndexStats } = useStats();
 const {
-    searchResults,
-    searchQuery,
     perPage,
     firstDatasetIndex,
+    searchResults,
+    searchQuery,
     isFetching,
-    statefulSearch,
+    searchPaginated,
     handlePageEvent,
 } = useSearch();
 
@@ -50,7 +50,7 @@ watch(isFetching, (newVal) => {
 
 async function fetchData() {
     await Promise.all([
-        statefulSearch(props.indexUid),
+        searchPaginated(props.indexUid, true),
         fetchIndexStats(props.indexUid),
     ]);
 }
@@ -60,7 +60,7 @@ const dataView = ref<'Grid' | 'Table'>('Grid');
 
 function handleClearSearchQuery() {
     searchQuery.value = '';
-    statefulSearch(props.indexUid, true);
+    searchPaginated(props.indexUid, true);
 }
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
@@ -170,7 +170,7 @@ function handleFieldPopoverHidden() {
                             <InputText
                                 v-model="searchQuery"
                                 placeholder="search query"
-                                @keyup.enter="statefulSearch(props.indexUid, true)"
+                                @keyup.enter="searchPaginated(props.indexUid, true)"
                             />
                             <Button
                                 v-if="searchQuery"
@@ -229,7 +229,7 @@ function handleFieldPopoverHidden() {
                         :rows="perPage"
                         :first="firstDatasetIndex"
                         :totalRecords="searchResults?.estimatedTotalHits"
-                        :rowsPerPageOptions="[10, 20, 50, 100]"
+                        :rowsPerPageOptions="[20, 50, 100]"
                         :pt="{
                             tableContainer: {
                                 id: 'documents-data-table-container'
@@ -241,7 +241,7 @@ function handleFieldPopoverHidden() {
                         scrollHeight="500px"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                        @page="handlePageEvent($event, () => statefulSearch(props.indexUid), true, 'documents-data-table-container')"
+                        @page="handlePageEvent($event, () => searchPaginated(props.indexUid), true, 'documents-data-table-container')"
                     >
                         <template #empty>
                             <NotFoundMessage subject="Document" />
@@ -368,7 +368,7 @@ function handleFieldPopoverHidden() {
                                 pt:root:class="shadow-sm border dynamic-border rounded-xl"
                                 template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                                @page="handlePageEvent($event, () => statefulSearch(props.indexUid))"
+                                @page="handlePageEvent($event, () => searchPaginated(props.indexUid))"
                             />
                         </div>
                     </div>

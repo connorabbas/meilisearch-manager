@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import { type SearchParams, type SearchResponse } from 'meilisearch';
+import { RecordAny, type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import type { DataTablePageEvent, PageState } from 'primevue';
@@ -8,7 +8,7 @@ import { usePagination } from '@/composables/usePagination';
 export function useSearch(initialPerPage: number = 20) {
     const toast = useToast();
     const meilisearchStore = useMeilisearchStore();
-    const { currentPage, perPage, firstDatasetIndex, handlePageEvent } = usePagination(initialPerPage);
+    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage);
 
     const searchResults = ref<SearchResponse | null>(null);
     const searchQuery = ref('');
@@ -19,11 +19,15 @@ export function useSearch(initialPerPage: number = 20) {
     const searchParams = computed<SearchParams>(() => {
         return {
             limit: perPage.value,
-            offset: (perPage.value * currentPage.value) - perPage.value,
+            offset: offset.value,
         };
     });
 
-    async function search(indexUid: string, query?: string, params?: SearchParams) {
+    async function search(
+        indexUid: string,
+        query?: string,
+        params?: SearchParams
+    ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -36,7 +40,9 @@ export function useSearch(initialPerPage: number = 20) {
         error.value = null;
 
         try {
-            searchResults.value = await client.index(indexUid).search(query, params);
+            const results = await client.index(indexUid).search(query, params);
+            searchResults.value = results;
+            return results;
         } catch (err) {
             searchResults.value = null;
             error.value = (err as Error).message;
@@ -45,7 +51,10 @@ export function useSearch(initialPerPage: number = 20) {
         }
     }
 
-    function statefulSearch(indexUid: string, resetPagination: boolean = false): Promise<void> {
+    function searchPaginated(
+        indexUid: string,
+        resetPagination: boolean = false
+    ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
         if (resetPagination) {
             currentPage.value = 1;
         }
@@ -64,16 +73,17 @@ export function useSearch(initialPerPage: number = 20) {
     });
 
     return {
-        searchResults,
-        searchQuery,
         currentPage,
         perPage,
+        firstDatasetIndex,
+        offset,
+        searchResults,
+        searchQuery,
         isFetching,
         error,
-        firstDatasetIndex,
         searchParams,
-        search,
-        statefulSearch,
         handlePageEvent,
+        search,
+        searchPaginated,
     };
 }

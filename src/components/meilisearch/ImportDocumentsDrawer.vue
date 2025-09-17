@@ -20,6 +20,7 @@ const drawerOpen = defineModel<boolean>({ default: false });
 
 const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask } = useDocuments();
 
+// TODO: empty record with primary key set
 const newDocuments = ref<RecordAny[]>([]);
 const newDocumentsAsString = ref('');
 

@@ -8,10 +8,11 @@ export function usePagination(initialPerPage: number = 20) {
     const firstDatasetIndex = computed(() => {
         return (currentPage.value - 1) * perPage.value;
     });
+    const offset = computed(() => (perPage.value * currentPage.value) - perPage.value);
 
-    function handlePageEvent(
+    function handlePageEvent<T>(
         event: PageState | DataTablePageEvent,
-        onPaginatedCallback?: () => Promise<void>,
+        onPaginatedCallback?: () => Promise<T>,
         scrollTop: boolean = true,
         scrollTopContainerId?: string,
     ): Promise<void> | undefined {
@@ -38,6 +39,7 @@ export function usePagination(initialPerPage: number = 20) {
         currentPage,
         perPage,
         firstDatasetIndex,
+        offset,
         handlePageEvent,
     };
 }

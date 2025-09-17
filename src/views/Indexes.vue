@@ -11,12 +11,20 @@ import NotFoundMessage from '@/components/NotFoundMessage.vue';
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
 const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats();
-const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
+const {
+    perPage,
+    firstDatasetIndex,
+    indexes,
+    indexesResults,
+    isFetching: isFetchingIndexes,
+    fetchIndexesPaginated,
+    handlePageEvent,
+} = useIndexes();
 
 async function fetchData() {
     await Promise.all([
         fetchStats(),
-        fetchAllIndexes(),
+        fetchIndexesPaginated(),
     ]);
 }
 await fetchData();
@@ -73,10 +81,28 @@ const indexesData = computed(() => {
         <div>
             <Card>
                 <template #content>
-                    <!-- TODO: pagination -->
                     <DataTable
-                        :value="indexesData"
+                        lazy
+                        paginator
+                        scrollable
                         :loading="isFetchingIndexes"
+                        :value="indexesData"
+                        :rows="perPage"
+                        :first="firstDatasetIndex"
+                        :totalRecords="indexesResults?.total"
+                        :rowsPerPageOptions="[20, 50, 100]"
+                        :pt="{
+                            tableContainer: {
+                                id: 'indexes-data-table-container'
+                            },
+                            thead: {
+                                class: 'z-2'
+                            }
+                        }"
+                        scrollHeight="500px"
+                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                        @page="handlePageEvent($event, () => fetchIndexesPaginated(), true, 'indexes-data-table-container')"
                     >
                         <template #empty>
                             <NotFoundMessage subject="Index" />
@@ -106,7 +132,11 @@ const indexesData = computed(() => {
                             field="numberOfDocuments"
                             header="Documents"
                         />
-                        <Column header="Action">
+                        <Column
+                            header="Action"
+                            frozen
+                            alignFrozen="right"
+                        >
                             <template #body="{ data }">
                                 <Button
                                     v-slot="slotProps"

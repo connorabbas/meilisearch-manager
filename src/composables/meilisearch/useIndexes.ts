@@ -4,11 +4,13 @@ import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { useTasks } from './useTasks';
+import { usePagination } from '../usePagination';
 
-export function useIndexes() {
+export function useIndexes(initialPerPage: number = 20) {
     const toast = useToast();
     const confirm = useConfirm();
     const meilisearchStore = useMeilisearchStore();
+    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage);
     const { pollTaskStatus } = useTasks();
 
     const indexesResults = ref<IndexesResults<Index[]> | null>(null);
@@ -20,6 +22,12 @@ export function useIndexes() {
     const error = ref<string | null>(null);
 
     const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
+    const indexesQuery = computed<IndexesQuery>(() => {
+        return {
+            limit: perPage.value,
+            offset: offset.value,
+        };
+    });
 
     async function fetchIndexes(params?: IndexesQuery): Promise<IndexesResults<Index[]> | undefined> {
         const client = meilisearchStore.getClient();
@@ -44,6 +52,13 @@ export function useIndexes() {
         } finally {
             isFetching.value = false;
         }
+    }
+
+    function fetchIndexesPaginated(resetPagination: boolean = false): Promise<IndexesResults<Index[]> | undefined> {
+        if (resetPagination) {
+            currentPage.value = 1;
+        }
+        return fetchIndexes(indexesQuery.value);
     }
 
     async function fetchAllIndexes() {
@@ -222,6 +237,10 @@ export function useIndexes() {
     });
 
     return {
+        currentPage,
+        perPage,
+        firstDatasetIndex,
+        offset,
         indexesResults,
         indexes,
         currentIndex,
@@ -230,7 +249,9 @@ export function useIndexes() {
         isPollingTask,
         isLoadingTask,
         error,
+        handlePageEvent,
         fetchIndexes,
+        fetchIndexesPaginated,
         fetchAllIndexes,
         fetchIndex,
         createIndex,
