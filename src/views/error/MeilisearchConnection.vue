@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Container from '@/components/Container.vue';
+import PopupMenuButton from '@/components/PopupMenuButton.vue';
 import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import { ArrowLeftRight, CircleX, Plus, RefreshCw } from 'lucide-vue-next';
+import { ArrowLeftRight, CircleX, Plus, RefreshCw, Trash2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
+import { MenuItem } from '@/types';
 
 const router = useRouter();
 const meilisearchStore = useMeilisearchStore();
@@ -19,6 +21,39 @@ const retryConnection = async () => {
         router.push({ name: 'indexes' });
     }
 };
+
+const menuItems: MenuItem[] = [
+    {
+        label: 'Refresh Connection',
+        lucideIcon: RefreshCw,
+        lucideIconClass: meilisearchStore.isConnecting ? 'animate-spin' : '',
+        command: () => retryConnection(),
+    },
+    {
+        label: 'Add New Instance',
+        route: { name: 'new-instance' },
+        lucideIcon: Plus,
+    },
+    {
+        label: 'Change Instance',
+        lucideIcon: ArrowLeftRight,
+        command: () => changeInstanceModalOpen.value = true,
+    },
+    {
+        label: 'Remove Instance',
+        lucideIcon: Trash2,
+        class: 'delete-menu-item',
+        lucideIconClass: 'text-red-500 dark:text-red-400',
+        command: async () => {
+            if (meilisearchStore?.currentInstance?.id) {
+                meilisearchStore.confirmRemoveInstance(meilisearchStore.currentInstance.id, async () => {
+                    await router.push({ name: 'dashboard' });
+                    router.go(0);
+                });
+            }
+        },
+    },
+];
 
 const changeInstanceModalOpen = ref(false);
 </script>
@@ -42,41 +77,11 @@ const changeInstanceModalOpen = ref(false);
                                     {{ error }}
                                 </Message>
                                 <div class="flex gap-4">
-                                    <Button
-                                        v-if="meilisearchStore.currentInstance"
-                                        label="Retry connection"
-                                        :loading="meilisearchStore.isConnecting"
-                                        @click="retryConnection"
-                                    >
-                                        <template #icon>
-                                            <RefreshCw />
-                                        </template>
-                                        <template #loadingicon>
-                                            <RefreshCw class="animate-spin" />
-                                        </template>
-                                    </Button>
-                                    <Button
-                                        v-if="!meilisearchStore.singleInstanceMode"
-                                        v-slot="slotProps"
-                                        severity="secondary"
-                                        asChild
-                                    >
-                                        <RouterLink
-                                            :to="{ name: 'new-instance' }"
-                                            :class="[slotProps.class, 'no-underline']"
-                                        >
-                                            <Plus /> Add new instance
-                                        </RouterLink>
-                                    </Button>
-                                    <Button
-                                        label="Change instance"
-                                        severity="secondary"
-                                        @click="changeInstanceModalOpen = true"
-                                    >
-                                        <template #icon>
-                                            <ArrowLeftRight />
-                                        </template>
-                                    </Button>
+                                    <PopupMenuButton
+                                        name="failed-connection-dd"
+                                        button-label="Instance Options"
+                                        :menu-items="menuItems"
+                                    />
                                 </div>
                             </section>
                         </div>
