@@ -105,7 +105,7 @@ watch(() => settings.value, (newVal) => {
                     severity="error"
                 >
                     <template #icon>
-                        <AlertCircle class="size-5!" />
+                        <AlertCircle />
                     </template>
                     {{ jsonError }}
                 </Message>

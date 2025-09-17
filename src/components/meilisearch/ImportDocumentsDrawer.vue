@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef, watch } from 'vue';
 import type { ContentType, RecordAny } from 'meilisearch';
-import { Braces, Info, TriangleAlert, Upload } from 'lucide-vue-next';
+import { Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next';
 import { Mode } from 'vanilla-jsoneditor';
 import ThemedJsonEditor from '../ThemedJsonEditor.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
@@ -155,14 +155,6 @@ watch(uploadContentType, (newVal) => {
                         <TabPanel value="upload">
                             <!-- TODO: https://primevue.org/progressbar/#dynamic -->
                             <div class="flex flex-col gap-4">
-                                <Select
-                                    id="new-mode"
-                                    v-model="uploadContentType"
-                                    class="w-fit"
-                                    :options="uploadOptions"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                />
                                 <Message
                                     v-if="uploadContentType === 'text/csv'"
                                     severity="warn"
@@ -170,8 +162,10 @@ watch(uploadContentType, (newVal) => {
                                     <template #icon>
                                         <TriangleAlert class="text-base! size-[22px]!" />
                                     </template>
-                                    <span class="font-bold">Warning:</span> CSV uploads do not handle array and nested object
-                                    structures correctly, this option is only advised if your dataset has basic key:value pairs
+                                    <span class="font-bold">Warning:</span> CSV uploads do not handle array and nested
+                                    object
+                                    structures correctly, this option is only advised if your dataset has basic
+                                    key:value pairs
                                 </Message>
                                 <FileUpload
                                     ref="document-file-uploader"
@@ -180,9 +174,12 @@ watch(uploadContentType, (newVal) => {
                                     :multiple="false"
                                     :previewWidth="0"
                                     :fileLimit="1"
+                                    :maxFileSize="20000000"
                                     :showUploadButton="false"
                                     :showCancelButton="false"
                                     :pt="{
+                                        header: { class: 'pb-0' },
+                                        content: { class: 'pt-4 mt-4' },
                                         pcProgressBar: {
                                             root: {
                                                 class: 'hidden'
@@ -197,8 +194,34 @@ watch(uploadContentType, (newVal) => {
                                     @remove="handleUploaderReset"
                                     @removeUploadedFile="handleUploaderReset"
                                 >
+                                    <template #header="{ chooseCallback, files }">
+                                        <div class="flex gap-4">
+                                            <Select
+                                                id="new-mode"
+                                                v-model="uploadContentType"
+                                                class="w-fit"
+                                                :options="uploadOptions"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                            />
+                                            <Button
+                                                severity="secondary"
+                                                label="Choose file"
+                                                :disabled="Boolean(files.length)"
+                                                @click="chooseCallback"
+                                            >
+                                                <template #icon>
+                                                    <Plus />
+                                                </template>
+                                            </Button>
+                                        </div>
+                                    </template>
                                     <template #empty>
-                                        <span>Or drag and drop a file here to upload.</span>
+                                        <div
+                                            class="flex items-center justify-center border border-dashed dynamic-border h-30 p-4"
+                                        >
+                                            <span>Or drag and drop a file here</span>
+                                        </div>
                                     </template>
                                 </FileUpload>
                             </div>

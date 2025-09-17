@@ -2,7 +2,8 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useSearch } from '@/composables/meilisearch/useSearch';
 import type { Index, RecordAny } from 'meilisearch';
-import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
+//import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
+import DocumentHitJsonRow from '@/components/meilisearch/DocumentHitJsonRow.vue';
 import NotFoundMessage from '@/components/NotFoundMessage.vue';
 import Menu from '@/components/primevue/Menu.vue';
 import { useStats } from '@/composables/meilisearch/useStats';
@@ -35,15 +36,15 @@ const {
 
 // Add delay to blocked UI, because the meiliclient is too fast...
 // https://github.com/primefaces/primevue/issues/7817
-const blockedGrid = ref(false);
+const blockedJsonView = ref(false);
 watch(isFetching, (newVal) => {
     nextTick(() => {
         if (!newVal) {
             setTimeout(() => {
-                blockedGrid.value = newVal;
+                blockedJsonView.value = newVal;
             }, 50);
         } else {
-            blockedGrid.value = newVal;
+            blockedJsonView.value = newVal;
         }
     });
 });
@@ -56,7 +57,7 @@ async function fetchData() {
 }
 await fetchData();
 
-const dataView = ref<'Grid' | 'Table'>('Grid');
+const dataView = ref<'JSON' | 'Table'>('JSON');
 
 function handleClearSearchQuery() {
     searchQuery.value = '';
@@ -80,7 +81,10 @@ function editDocument(document: RecordAny) {
 }
 function handleEditDrawerHidden() {
     if (!isSendingTask.value) {
-        currentDocument.value = null;
+        // delayed null reset to allow the drawer close animation to complete
+        setTimeout(() => {
+            currentDocument.value = null;
+        }, 250);
     }
 }
 
@@ -187,7 +191,7 @@ function handleFieldPopoverHidden() {
                         </InputGroup>
                         <SelectButton
                             v-model="dataView"
-                            :options="['Grid', 'Table']"
+                            :options="['JSON', 'Table']"
                             :allowEmpty="false"
                         />
                     </div>
@@ -319,11 +323,11 @@ function handleFieldPopoverHidden() {
             </Card>
             <!-- Grid View -->
             <div
-                v-show="dataView === 'Grid'"
+                v-show="dataView === 'JSON'"
                 class="relative"
             >
                 <BlockUI
-                    :blocked="blockedGrid"
+                    :blocked="blockedJsonView"
                     pt:mask:class="z-1!"
                 >
                     <div class="space-y-4">
@@ -343,12 +347,14 @@ function handleFieldPopoverHidden() {
                             v-else-if="searchResults?.hits.length"
                             class="grid grid-cols-1 sm:grid-cols-12 gap-4"
                         >
+                            <!-- When using card -->
+                            <!-- sm:col-span-6 lg:col-span-3 -->
                             <div
                                 v-for="hit, hitIndex in searchResults.hits"
                                 :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
-                                class="sm:col-span-6 lg:col-span-3"
+                                class="col-span-12"
                             >
-                                <DocumentHitCard
+                                <DocumentHitJsonRow
                                     :hit
                                     :primary-key="primaryKey"
                                     @edit="editDocument"

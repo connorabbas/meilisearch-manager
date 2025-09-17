@@ -2,7 +2,6 @@ import { computed, ref, watch } from 'vue';
 import { RecordAny, type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
-import type { DataTablePageEvent, PageState } from 'primevue';
 import { usePagination } from '@/composables/usePagination';
 
 export function useSearch(initialPerPage: number = 20) {

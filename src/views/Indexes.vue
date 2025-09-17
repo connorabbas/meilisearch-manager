@@ -7,6 +7,8 @@ import PageTitleSection from '@/components/PageTitleSection.vue';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
 import CreateIndexDrawer from '@/components/meilisearch/CreateIndexDrawer.vue';
 import NotFoundMessage from '@/components/NotFoundMessage.vue';
+//import { formatDate } from '@/utils';
+//import { Index } from 'meilisearch';
 
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
 
@@ -132,6 +134,23 @@ const indexesData = computed(() => {
                             field="numberOfDocuments"
                             header="Documents"
                         />
+                        <!-- <Column
+                            field="createdAt"
+                            header="Created"
+                        >
+                            <template #body="{ data }">
+                                {{ data }}
+                                {{ formatDate((data as Index).createdAt as Date) }}
+                            </template>
+                        </Column>
+                        <Column
+                            field="updatedAt"
+                            header="Created"
+                        >
+                            <template #body="{ data }">
+                                {{ formatDate((data as Index).updatedAt as Date) }}
+                            </template>
+                        </Column> -->
                         <Column
                             header="Action"
                             frozen
