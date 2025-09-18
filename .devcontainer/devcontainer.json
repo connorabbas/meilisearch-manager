@@ -1,6 +1,6 @@
 // https://aka.ms/devcontainer.json
 {
-    "name": "Meilisearch Dashboard",
+    "name": "Meilisearch Manager",
     "dockerComposeFile": [
         "../docker-compose.dev.yml"
     ],

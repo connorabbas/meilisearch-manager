@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: meili-ui-vue
+    container_name: meilisearch-manager
     entrypoint: /bin/sh
     working_dir: /workspace
     volumes:
@@ -11,8 +11,8 @@ services:
     tty: true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.meili-vue.rule=Host(`meili-vue.localhost`)"
-      - "traefik.http.services.meili-vue.loadbalancer.server.port=${VITE_APP_PORT:-5173}"
+      - "traefik.http.routers.meilisearch-manager.rule=Host(`meilisearch-manager.localhost`)"
+      - "traefik.http.services.meilisearch-manager.loadbalancer.server.port=${VITE_APP_PORT:-5173}"
     networks:
       - proxy
 

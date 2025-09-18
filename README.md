@@ -1,4 +1,4 @@
-# Meilisearch Dashboard
+# Meilisearch Manager
 
 A modern web-based UI for managing Meilisearch instances.
 
@@ -25,7 +25,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 ## Demo
 
-You can use the hosted Meilsearch Dashboard (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-dashboard/](https://connorabbas.github.io/meilisearch-dashboard/).
+You can use the hosted Meilsearch Dashboard (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-manager/](https://connorabbas.github.io/meilisearch-manager/).
 
 ## Single Instance mode
 
