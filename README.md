@@ -14,6 +14,10 @@ A modern web-based UI for managing Meilisearch instances.
 -   :ballot_box_with_check: **Tasks** history with filtering & sorting
 -   :last_quarter_moon: Light / Dark / System color mode toggle
 
+## Demo
+
+You can use the hosted Meilsearch Dashboard (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-dashboard/](https://connorabbas.github.io/meilisearch-dashboard/).
+
 ### Roadmap
 
 -   Documents - better search, facet filtering, sorting functionality
@@ -38,11 +42,7 @@ VITE_MEILISEARCH_API_KEY=yourInstanceKey
 >
 > The relevant `.env` variables used to enable single instance mode will be complied into the source code of the application at build time. This means your admin-level API key will be exposed to the public via the bundled client-side code. For this reason, the single instance mode configuration is not recommended unless you have the ability to limit access to the hosted domain serving the dashboard (either with an authentication/authorization layer or hosted within a trusted internal network environment).
 
-## Demo
-
-You can use the hosted Meilsearch Dashboard (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-dashboard/](https://connorabbas.github.io/meilisearch-dashboard/).
-
-## Teck Stack
+## Tech Stack
 
 -   [Vite](https://vite.dev/) local dev server and bundler
 -   [Vue 3](https://vuejs.org/) w/ Composition API + [TypeScript](https://www.typescriptlang.org/)
