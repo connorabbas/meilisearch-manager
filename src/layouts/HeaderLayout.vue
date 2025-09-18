@@ -64,7 +64,6 @@ onUnmounted(() => {
                     <PopupMenuButton
                         v-else
                         name="mobile-meili-instance-dd"
-                        button-variant="text"
                         :menu-items="meilisearchInstanceMenuItems"
                         :button-label="currentMeilisearchIntanceName"
                     >

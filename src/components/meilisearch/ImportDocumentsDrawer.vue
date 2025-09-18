@@ -158,14 +158,14 @@ watch(uploadContentType, (newVal) => {
                                 <Message
                                     v-if="uploadContentType === 'text/csv'"
                                     severity="warn"
+                                    pt:content:class="items-start"
                                 >
                                     <template #icon>
                                         <TriangleAlert class="text-base! size-[22px]!" />
                                     </template>
-                                    <span class="font-bold">Warning:</span> CSV uploads do not handle array and nested
-                                    object
-                                    structures correctly, this option is only advised if your dataset has basic
-                                    key:value pairs
+                                    <span class="font-bold">Warning:</span>
+                                    CSV uploads may not handle arrays and nested object structures correctly, this
+                                    option is only advised if your dataset has basic key:value pairs
                                 </Message>
                                 <FileUpload
                                     ref="document-file-uploader"

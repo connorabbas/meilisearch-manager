@@ -40,7 +40,7 @@ const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) 
                     class="grow rounded-lg"
                 >
                     <ThemedJsonViewer
-                        class="py-2"
+                        class="py-2 rounded-lg"
                         :data="props.hit"
                     />
                 </div>
