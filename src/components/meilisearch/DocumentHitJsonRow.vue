@@ -37,14 +37,14 @@ const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) 
                 </div>
                 <div
                     ref="document-json-viewer"
-                    class="grow max-h-[25rem] overflow-y-auto rounded-lg"
-                > 
+                    class="grow rounded-lg"
+                >
                     <ThemedJsonViewer
                         class="py-2"
                         :data="props.hit"
                     />
                 </div>
-                <div class="flex flex-row sm:flex-col justify-end gap-2">
+                <div class="flex flex-row sm:flex-col justify-end gap-4">
                     <Button
                         v-tooltip.left="'Edit Document'"
                         severity="secondary"

@@ -167,13 +167,11 @@ function handleFieldPopoverHidden() {
                 <template #content>
                     <div class="flex justify-between gap-4">
                         <InputGroup>
-                            <InputGroupAddon>
-                                <Search />
-                            </InputGroupAddon>
                             <!-- TODO: debounced @input search -->
                             <InputText
                                 v-model="searchQuery"
                                 placeholder="search query"
+                                autofocus
                                 @keyup.enter="searchPaginated(props.indexUid, true)"
                             />
                             <Button
@@ -185,6 +183,15 @@ function handleFieldPopoverHidden() {
                             >
                                 <template #icon>
                                     <X />
+                                </template>
+                            </Button>
+                            <Button
+                                severity="secondary"
+                                outlined
+                                @click="searchPaginated(props.indexUid, true)"
+                            >
+                                <template #icon>
+                                    <Search />
                                 </template>
                             </Button>
                             <!-- TODO: -->
