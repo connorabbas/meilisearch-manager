@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useTasks } from '@/composables/meilisearch/useTasks';
 import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { Home, Info } from 'lucide-vue-next';
+import { Home, Info, RefreshCw } from 'lucide-vue-next';
 import type { Task, TasksOrBatchesQuery } from 'meilisearch';
 import { Mode } from 'vanilla-jsoneditor';
 import { formatDate, getStatusSeverity } from '@/utils';
@@ -80,16 +80,32 @@ onMounted(() => {
             </template>
             <template #end>
                 <div class="flex gap-4">
-                    <!-- TODO: Reset filters/Refresh Button -->
-                    <InputGroup>
-                        <InputGroupAddon>
-                            Limit
-                        </InputGroupAddon>
-                        <Select
-                            v-model="tasksParams.limit"
-                            :options="[20, 50, 100, 500]"
-                        />
-                    </InputGroup>
+                    <div>
+                        <Button
+                            severity="secondary"
+                            label="Refresh"
+                            :loading="isFetchingTasks"
+                            @click="fetchTasks()"
+                        >
+                            <template #icon>
+                                <RefreshCw />
+                            </template>
+                            <template #loadingicon>
+                                <RefreshCw class="animate-spin" />
+                            </template>
+                        </Button>
+                    </div>
+                    <div>
+                        <InputGroup>
+                            <InputGroupAddon>
+                                Limit
+                            </InputGroupAddon>
+                            <Select
+                                v-model="tasksParams.limit"
+                                :options="[20, 50, 100, 500]"
+                            />
+                        </InputGroup>
+                    </div>
                 </div>
             </template>
         </PageTitleSection>
