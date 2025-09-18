@@ -48,6 +48,7 @@ VITE_MEILISEARCH_API_KEY=yourInstanceKey
 
 -   [Vite](https://vite.dev/) local dev server and bundler
 -   [Vue 3](https://vuejs.org/) w/ Composition API + [TypeScript](https://www.typescriptlang.org/)
+-   [Pinia](https://pinia.vuejs.org/) state management store
 -   [VueUse](https://vueuse.org/) utilities
 -   [PrimeVue](https://primevue.org/) Components
 -   [Tailwind CSS](https://tailwindcss.com/) utility styles

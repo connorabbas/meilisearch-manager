@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, toRaw, watch } from 'vue';
 import { useSettings } from '../composables/meilisearch/useSettings';
-import { AlertCircle, CircleQuestionMark, Pencil, X } from 'lucide-vue-next';
+import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X } from 'lucide-vue-next';
 import { Mode } from 'vanilla-jsoneditor';
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
 
@@ -53,7 +53,7 @@ watch(() => settings.value, (newVal) => {
     <div>
         <Card>
             <template #title>
-                <div class="flex justify-between items-center mb-3">
+                <div class="flex justify-between items-center mb-2">
                     <div class="flex items-center gap-3">
                         <span>JSON Index Configuration</span>
                         <a
@@ -99,23 +99,45 @@ watch(() => settings.value, (newVal) => {
                 </div>
             </template>
             <template #content>
-                <Message
-                    v-if="jsonError"
-                    class="mb-4"
-                    severity="error"
-                >
-                    <template #icon>
-                        <AlertCircle />
-                    </template>
-                    {{ jsonError }}
-                </Message>
-                <ThemedJsonEditor
-                    v-model="settings"
-                    :read-only="!editMode"
-                    :mode="Mode.text"
-                    :main-menu-bar="false"
-                    :stringified="false"
-                />
+                <div class="flex flex-col gap-4">
+                    <div v-if="editMode">
+                        <Message
+                            severity="warn"
+                            pt:content:class="items-start"
+                        >
+                            <template #icon>
+                                <TriangleAlert class="size-[22px]!" />
+                            </template>
+                            <span class="font-bold">Warning:</span> Updating distinct attributes, filterable attributes,
+                            searchable attributes, sortable attributes, and stop words will re-index all the documents
+                            in this index, which can take some time. Reference the
+                            <a
+                                href="https://www.meilisearch.com/docs/reference/api/settings#update-settings"
+                                target="_blank"
+                                class="text-inherit"
+                            >
+                                settings documentation
+                            </a> for more information.
+                        </Message>
+                    </div>
+                    <div v-if="jsonError">
+                        <Message severity="error">
+                            <template #icon>
+                                <AlertCircle />
+                            </template>
+                            {{ jsonError }}
+                        </Message>
+                    </div>
+                    <div>
+                        <ThemedJsonEditor
+                            v-model="settings"
+                            :read-only="!editMode"
+                            :mode="Mode.text"
+                            :main-menu-bar="false"
+                            :stringified="false"
+                        />
+                    </div>
+                </div>
             </template>
         </Card>
     </div>
