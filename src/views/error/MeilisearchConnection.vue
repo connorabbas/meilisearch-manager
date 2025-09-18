@@ -21,6 +21,7 @@ const retryConnection = async () => {
         router.push({ name: 'indexes' });
     }
 };
+const changeInstanceModalOpen = ref(false);
 
 const menuItems: MenuItem[] = [
     {
@@ -54,8 +55,6 @@ const menuItems: MenuItem[] = [
         },
     },
 ];
-
-const changeInstanceModalOpen = ref(false);
 </script>
 
 <template>
@@ -76,12 +75,30 @@ const changeInstanceModalOpen = ref(false);
                                     </template>
                                     {{ error }}
                                 </Message>
-                                <div class="flex gap-4">
+                                <div
+                                    v-if="!meilisearchStore.singleInstanceMode"
+                                    class="flex gap-4"
+                                >
                                     <PopupMenuButton
                                         name="failed-connection-dd"
                                         button-label="Instance Options"
                                         :menu-items="menuItems"
                                     />
+                                </div>
+                                <div v-else>
+                                    <Button
+                                        v-if="meilisearchStore.currentInstance"
+                                        label="Retry Connection"
+                                        :loading="meilisearchStore.isConnecting"
+                                        @click="retryConnection"
+                                    >
+                                        <template #icon>
+                                            <RefreshCw />
+                                        </template>
+                                        <template #loadingicon>
+                                            <RefreshCw class="animate-spin" />
+                                        </template>
+                                    </Button>
                                 </div>
                             </section>
                         </div>
