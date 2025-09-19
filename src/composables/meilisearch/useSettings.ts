@@ -138,6 +138,8 @@ export function useSettings() {
 
     return {
         settings,
+        filterableAttributes,
+        sortableAttributes,
         isFetching,
         isSendingTask,
         isPollingTask,

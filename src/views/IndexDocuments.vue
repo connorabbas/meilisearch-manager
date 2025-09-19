@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useSearch } from '@/composables/meilisearch/useSearch';
 import type { Index, RecordAny } from 'meilisearch';
 //import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
@@ -8,12 +8,13 @@ import NotFoundMessage from '@/components/NotFoundMessage.vue';
 import Menu from '@/components/primevue/Menu.vue';
 import { useStats } from '@/composables/meilisearch/useStats';
 import { looksLikeAnImageUrl } from '@/utils';
-import { EllipsisVertical, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next';
+import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next';
 import type { MenuItem } from '@/types';
 import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue';
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
+import { useSettings } from '@/composables/meilisearch/useSettings';
 
 const props = defineProps<{
     indexUid: string,
@@ -24,11 +25,13 @@ const primaryKey = computed(() => props.index?.primaryKey);
 
 const { isSendingTask, confirmDeleteDocument } = useDocuments();
 const { indexStats, fetchIndexStats } = useStats();
+const { sortableAttributes, isFetching: isFetchingSettings, fetchSortableAttributes } = useSettings();
 const {
     perPage,
     firstDatasetIndex,
     searchResults,
     searchQuery,
+    searchSort,
     isFetching,
     searchPaginated,
     handlePageEvent,
@@ -68,6 +71,34 @@ function handleDeleteDocument(documentId: string | number) {
         fetchData();
     });
 }
+
+// Sorting
+type SortOptions = {
+    value: string[],
+    label: string,
+}
+const sortMessage = computed(() => {
+    if (sortableAttributes.value?.length) {
+        return 'Sort Documents';
+    }
+    return 'No sortable attributes available, please update the index settings';
+});
+// Basic single sort, TODO: use Multiselect for multi-sort?
+const sortingOptions = computed(() => {
+    const options: SortOptions[] = [];
+    sortableAttributes.value?.forEach((attribute) => {
+        options.push({
+            value: [`${attribute}:asc`],
+            label: `${attribute}:asc`,
+        });
+        options.push({
+            value: [`${attribute}:desc`],
+            label: `${attribute}:desc`,
+        });
+    });
+
+    return options;
+});
 
 // Create Drawer
 const showImportDocumentsDrawerOpen = ref(false);
@@ -133,6 +164,10 @@ function toggleTableFieldDetailPopover(event: Event, fieldName: string, fieldVal
 function handleFieldPopoverHidden() {
     fieldDetail.value = null;
 }
+
+onMounted(() => {
+    fetchSortableAttributes(props.indexUid);
+});
 </script>
 
 <template>
@@ -164,42 +199,77 @@ function handleFieldPopoverHidden() {
             />
             <Card>
                 <template #content>
-                    <div class="flex justify-between gap-4">
-                        <InputGroup>
-                            <!-- TODO: debounced @input search -->
-                            <InputText
-                                v-model="searchQuery"
-                                placeholder="search query"
-                                autofocus
-                                @keyup.enter="searchPaginated(props.indexUid, true)"
-                            />
-                            <Button
-                                v-if="searchQuery"
-                                v-tooltip="'Clear search query'"
-                                severity="secondary"
-                                outlined
-                                @click="handleClearSearchQuery"
-                            >
-                                <template #icon>
-                                    <X />
-                                </template>
-                            </Button>
-                            <Button
-                                severity="secondary"
-                                outlined
-                                @click="searchPaginated(props.indexUid, true)"
-                            >
-                                <template #icon>
-                                    <Search />
-                                </template>
-                            </Button>
-                            <!-- TODO: -->
-                        </InputGroup>
-                        <SelectButton
-                            v-model="dataView"
-                            :options="['JSON', 'Table']"
-                            :allowEmpty="false"
-                        />
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="grow">
+                            <InputGroup>
+                                <!-- TODO: debounced @input search -->
+                                <InputText
+                                    v-model="searchQuery"
+                                    placeholder="search query"
+                                    autofocus
+                                    @keyup.enter="searchPaginated(props.indexUid, true)"
+                                />
+                                <Button
+                                    v-if="searchQuery"
+                                    v-tooltip="'Clear search query'"
+                                    severity="secondary"
+                                    outlined
+                                    @click="handleClearSearchQuery"
+                                >
+                                    <template #icon>
+                                        <X />
+                                    </template>
+                                </Button>
+                                <Button
+                                    severity="secondary"
+                                    outlined
+                                    @click="searchPaginated(props.indexUid, true)"
+                                >
+                                    <template #icon>
+                                        <Search />
+                                    </template>
+                                </Button>
+                                <!-- TODO: -->
+                            </InputGroup>
+                        </div>
+                        <div class="flex justify-end gap-4">
+                            <div>
+                                <Select
+                                    v-model="searchSort"
+                                    v-tooltip.top="{
+                                        value: sortMessage,
+                                        pt: {
+                                            root: { class: 'max-w-[20rem] sm:max-w-[100%]' },
+                                            text: { class: 'w-full' },
+                                        },
+                                    }"
+                                    :options="sortingOptions"
+                                    :loading="isFetchingSettings.sortableAttributes"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Sort by"
+                                    @change="searchPaginated(props.indexUid, true)"
+                                />
+                            </div>
+                            <div>
+                                <Button
+                                    v-tooltip.top="'Filter Documents (WIP)'"
+                                    severity="secondary"
+                                    outlined
+                                >
+                                    <template #icon>
+                                        <Funnel />
+                                    </template>
+                                </Button>
+                            </div>
+                            <div>
+                                <SelectButton
+                                    v-model="dataView"
+                                    :options="['JSON', 'Table']"
+                                    :allowEmpty="false"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </template>
             </Card>

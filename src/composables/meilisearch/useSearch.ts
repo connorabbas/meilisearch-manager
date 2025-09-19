@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import { RecordAny, type SearchParams, type SearchResponse } from 'meilisearch';
+import { Filter, RecordAny, type SearchParams, type SearchResponse } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useMeilisearchStore } from '@/stores/meilisearch';
 import { usePagination } from '@/composables/usePagination';
@@ -11,12 +11,16 @@ export function useSearch(initialPerPage: number = 20) {
 
     const searchResults = ref<SearchResponse | null>(null);
     const searchQuery = ref('');
+    const searchSort = ref<string[]>([]);
+    const searchFilter = ref<Filter | null>(null);
 
     const isFetching = ref(false);
     const error = ref<string | null>(null);
 
     const searchParams = computed<SearchParams>(() => {
         return {
+            sort: searchSort.value,
+            filter: searchFilter.value ?? undefined,
             limit: perPage.value,
             offset: offset.value,
         };
@@ -76,6 +80,8 @@ export function useSearch(initialPerPage: number = 20) {
         offset,
         searchResults,
         searchQuery,
+        searchSort,
+        searchFilter,
         isFetching,
         error,
         searchParams,
