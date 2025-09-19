@@ -13,7 +13,7 @@ export function useStats() {
     const isFetching = ref(false);
     const error = ref<string | null>(null);
 
-    async function fetchStats() {
+    async function fetchStats(): Promise<Stats | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -24,7 +24,9 @@ export function useStats() {
         error.value = null;
 
         try {
-            instanceStats.value = await client.getStats();
+            const results = await client.getStats();
+            instanceStats.value = results;
+            return results;
         } catch (err) {
             instanceStats.value = null;
             error.value = (err as Error).message;
@@ -33,7 +35,7 @@ export function useStats() {
         }
     }
 
-    async function fetchIndexStats(uid: string) {
+    async function fetchIndexStats(uid: string): Promise<IndexStats | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -44,7 +46,9 @@ export function useStats() {
         error.value = null;
 
         try {
-            indexStats.value = await client.index(uid).getStats();
+            const results = await client.index(uid).getStats();
+            indexStats.value = results;
+            return results;
         } catch (err) {
             indexStats.value = null;
             error.value = (err as Error).message;
@@ -53,7 +57,7 @@ export function useStats() {
         }
     }
 
-    async function fetchVersion() {
+    async function fetchVersion(): Promise<Version | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -64,8 +68,9 @@ export function useStats() {
         error.value = null;
 
         try {
-            version.value = await client.getVersion();
-            return version.value;
+            const results = await client.getVersion();
+            version.value = results;
+            return results;
         } catch (err) {
             version.value = null;
             error.value = (err as Error).message;

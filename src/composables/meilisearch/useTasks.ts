@@ -14,7 +14,7 @@ export function useTasks() {
     const error = ref<string | null>(null);
     const hasMore = ref(false);
 
-    async function fetchTasks(params?: TasksOrBatchesQuery, append = false) {
+    async function fetchTasks(params?: TasksOrBatchesQuery, append = false): Promise<TasksResults | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -35,6 +35,7 @@ export function useTasks() {
             }
 
             hasMore.value = !!results.next;
+            return results;
         } catch (err) {
             if (!append) tasks.value = [];
             error.value = (err as Error).message;
