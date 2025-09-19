@@ -27,7 +27,7 @@ const newKeyDrawerOpen = ref(false);
 const editKeyDrawerOpen = ref(false);
 const keyDetailsDrawerOpen = ref(false);
 
-const currentKey = ref<Key | null>(null);
+const currentKey = ref<Key | null>();
 function showKeyDetails(key: Key) {
     currentKey.value = key;
     keyDetailsDrawerOpen.value = true;
@@ -105,7 +105,6 @@ function copyApiKey(key: string) {
             @key-created="fetchAllKeys"
         />
         <EditKeyDrawer
-            v-if="currentKey"
             v-model="editKeyDrawerOpen"
             :api-key="currentKey"
             @hide="resetCurrentKey"
