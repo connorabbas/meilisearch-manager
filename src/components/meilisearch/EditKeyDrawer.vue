@@ -7,9 +7,11 @@ import { useToast } from 'primevue';
 import { CircleQuestionMark } from 'lucide-vue-next';
 import { keyActions } from '@/utils/data';
 
-const props = defineProps<{
-    apiKey: Key,
-}>();
+const props = withDefaults(defineProps<{
+    apiKey?: Key | null,
+}>(), {
+    apiKey: null,
+});
 
 const drawerOpen = defineModel<boolean>({ default: false });
 
@@ -26,8 +28,9 @@ const keyToUpdate = ref<KeyUpdate>({
     name: props.apiKey?.name ?? undefined,
     description: props.apiKey?.description ?? undefined,
 });
+const keyValue = ref(props.apiKey?.key ?? 'key');
 function saveNewKey() {
-    updateKey(props.apiKey.key, keyToUpdate.value).then(() => {
+    updateKey(keyValue.value, keyToUpdate.value).then(() => {
         toast.add({
             severity: 'success',
             summary: 'API Key Updated',
@@ -49,6 +52,15 @@ watch(keyToUpdate, (newVal) => {
         delete keyToUpdate.value.description;
     }
 }, { deep: true });
+watch(() => props.apiKey, (newVal: Key | null) => {
+    if (newVal) {
+        keyValue.value = newVal.key;
+        keyToUpdate.value = {
+            name: newVal?.name ?? undefined,
+            description: newVal?.description ?? undefined,
+        };
+    }
+});
 </script>
 
 <template>
@@ -66,11 +78,14 @@ watch(keyToUpdate, (newVal) => {
             class="space-y-6 sm:space-y-8"
             @submit.prevent="saveNewKey"
         >
-            <div class="flex flex-col gap-2">
+            <div
+                v-if="props.apiKey"
+                class="flex flex-col gap-2"
+            >
                 <label for="new-key-uid">UID</label>
                 <InputText
                     id="edit-key-uid"
-                    :value="props.apiKey?.uid"
+                    :value="props.apiKey.uid"
                     placeholder="optional - set UID"
                     type="text"
                     disabled
@@ -99,7 +114,10 @@ watch(keyToUpdate, (newVal) => {
                     fluid
                 />
             </div>
-            <div class="flex flex-col gap-2">
+            <div
+                v-if="props.apiKey"
+                class="flex flex-col gap-2"
+            >
                 <label for="new-key-indexes">Indexes</label>
                 <MultiSelect
                     :modelValue="props.apiKey.indexes"
@@ -114,7 +132,10 @@ watch(keyToUpdate, (newVal) => {
                     fluid
                 />
             </div>
-            <div class="flex flex-col gap-2">
+            <div
+                v-if="props.apiKey"
+                class="flex flex-col gap-2"
+            >
                 <label
                     for="new-key-actions"
                     class="flex items-center gap-2"
@@ -140,7 +161,10 @@ watch(keyToUpdate, (newVal) => {
                     fluid
                 />
             </div>
-            <div class="flex flex-col gap-2">
+            <div
+                v-if="props.apiKey"
+                class="flex flex-col gap-2"
+            >
                 <label for="new-key-expires">Expires At</label>
                 <DatePicker
                     id="edit-key-expires"

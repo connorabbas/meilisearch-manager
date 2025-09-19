@@ -18,7 +18,6 @@ const editMode = ref(false);
 const toggleEditMode = () => {
     // if edit is canceled, reset to original value
     if (editMode.value) {
-        console.log('editing', originalSettings);
         settings.value = originalSettings;
     }
     editMode.value = !editMode.value;

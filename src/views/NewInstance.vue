@@ -46,7 +46,6 @@ async function submitNewInstance(event: FormSubmitEvent) {
                     life: 5000,
                 });
             });
-            console.log();
         } catch (err) {
             console.error('Failed to add new Meilisearch instance...', err);
         } finally {

@@ -74,7 +74,7 @@ const showImportDocumentsDrawerOpen = ref(false);
 
 // Edit / Details Drawer
 const editDocumentDrawerOpen = ref(false);
-const currentDocument = ref<RecordAny | null>(null);
+const currentDocument = ref<RecordAny | null>();
 function editDocument(document: RecordAny) {
     currentDocument.value = document;
     editDocumentDrawerOpen.value = true;
@@ -155,7 +155,6 @@ function handleFieldPopoverHidden() {
                 @documents-imported="fetchData"
             />
             <EditDocumentDrawer
-                v-if="currentDocument"
                 v-model="editDocumentDrawerOpen"
                 :index-uid="props.indexUid"
                 :primary-key="props.index?.primaryKey"
