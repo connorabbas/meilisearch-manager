@@ -42,7 +42,6 @@ function handleDeleteAllDocuments() {
                         severity="danger"
                         @click="handleDeleteIndex"
                     />
-                    <!-- TODO: maybe move to documents tab? -->
                     <Button
                         label="Delete all documents"
                         severity="danger"
