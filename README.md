@@ -17,7 +17,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 ### Roadmap
 
--   Documents - geo search, facet filtering, sorting functionality
+-   Documents - geo search, facet filtering, multi-sort functionality
 -   Backups - Ability to create snapshots and dumps
 -   Indexes - field distribution graph, [index swapping](https://www.meilisearch.com/docs/learn/getting_started/indexes#swapping-indexes)
 -   Hosted demo on dedicated domain/server
@@ -25,7 +25,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 ## Demo
 
-You can use the hosted Meilsearch Dashboard (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-manager/](https://connorabbas.github.io/meilisearch-manager/).
+You can use the hosted Meilsearch Manager (deployed on GitHub pages) with your search instances, given they expose appropriate CORS headers on: [https://connorabbas.github.io/meilisearch-manager/](https://connorabbas.github.io/meilisearch-manager/).
 
 ## Single Instance mode
 
