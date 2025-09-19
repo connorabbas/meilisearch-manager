@@ -8,7 +8,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue';
-import { BookText, LayoutDashboard } from 'lucide-vue-next';
+import { BookText, FolderGit2, LayoutDashboard } from 'lucide-vue-next';
 
 const meilisearchStore = useMeilisearchStore();
 const router = useRouter();
@@ -199,7 +199,7 @@ async function submitNewInstance(event: FormSubmitEvent) {
                 </RouterLink>
                 <Button
                     as="a"
-                    label="Meilisearch Docs"
+                    label="Docs"
                     variant="link"
                     href="https://www.meilisearch.com/docs/home"
                     target="_blank"
@@ -210,7 +210,19 @@ async function submitNewInstance(event: FormSubmitEvent) {
                         <BookText />
                     </template>
                 </Button>
-                <!-- TODO: GitHub repo link -->
+                <Button
+                    as="a"
+                    label="Repository"
+                    variant="link"
+                    href="https://github.com/connorabbas/meilisearch-manager"
+                    target="_blank"
+                    rel="noopener"
+                    class="no-underline"
+                >
+                    <template #icon>
+                        <FolderGit2 />
+                    </template>
+                </Button>
             </div>
         </div>
     </Container>

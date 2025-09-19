@@ -17,7 +17,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 ### Roadmap
 
--   Documents - better search, facet filtering, sorting functionality
+-   Documents - geo search, facet filtering, sorting functionality
 -   Backups - Ability to create snapshots and dumps
 -   Indexes - field distribution graph, [index swapping](https://www.meilisearch.com/docs/learn/getting_started/indexes#swapping-indexes)
 -   Hosted demo on dedicated domain/server
@@ -48,9 +48,11 @@ VITE_MEILISEARCH_API_KEY=yourInstanceKey
 
 -   [Vite](https://vite.dev/) local dev server and bundler
 -   [Vue 3](https://vuejs.org/) w/ Composition API + [TypeScript](https://www.typescriptlang.org/)
+-   [Vue Router](https://router.vuejs.org/) client side navigation
+-   [PrimeVue](https://primevue.org/) components
 -   [Pinia](https://pinia.vuejs.org/) state management store
 -   [VueUse](https://vueuse.org/) utilities
--   [PrimeVue](https://primevue.org/) Components
 -   [Tailwind CSS](https://tailwindcss.com/) utility styles
 -   [Lucide](https://lucide.dev/) icons
 -   [Meilisearch client](https://github.com/meilisearch/meilisearch-js) for TypeScript
+-   [Zod](https://zod.dev/) schema validation

@@ -29,12 +29,10 @@ const keyDetailsDrawerOpen = ref(false);
 
 const currentKey = ref<Key | null>(null);
 function showKeyDetails(key: Key) {
-    // TODO: fetch single key before to make sure its the latest data
     currentKey.value = key;
     keyDetailsDrawerOpen.value = true;
 }
 function editKey(key: Key) {
-    // TODO: fetch single key before to make sure its the latest data
     currentKey.value = key;
     editKeyDrawerOpen.value = true;
 }
