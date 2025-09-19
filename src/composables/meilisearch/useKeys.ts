@@ -15,7 +15,7 @@ export function useKeys() {
     const isLoading = ref(false);
     const error = ref<string | null>(null);
 
-    async function fetchKeys(params?: KeysQuery) {
+    async function fetchKeys(params?: KeysQuery): Promise<KeysResults | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -26,8 +26,10 @@ export function useKeys() {
         error.value = null;
 
         try {
-            keysResults.value = await client.getKeys(params);
-            keys.value = keysResults.value.results;
+            const results = await client.getKeys(params);
+            keysResults.value = results;
+            keys.value = results.results;
+            return results;
         } catch (err) {
             keysResults.value = null;
             keys.value = null;

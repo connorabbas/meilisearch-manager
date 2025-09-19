@@ -1,5 +1,5 @@
 import { ref, watch, computed } from 'vue';
-import { type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch';
+import { RecordAny, type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useMeilisearchStore } from '@/stores/meilisearch';
@@ -70,7 +70,7 @@ export function useIndexes(initialPerPage: number = 20) {
         });
     }
 
-    async function fetchIndex(uid: string) {
+    async function fetchIndex(uid: string): Promise<Index<RecordAny> | undefined> {
         const client = meilisearchStore.getClient();
         if (!client) {
             error.value = 'MeiliSearch client not connected';
@@ -81,7 +81,9 @@ export function useIndexes(initialPerPage: number = 20) {
         error.value = null;
 
         try {
-            currentIndex.value = await client.getIndex(uid);
+            const result = await client.getIndex(uid);
+            currentIndex.value = result;
+            return result;
         } catch (err) {
             currentIndex.value = null;
             error.value = (err as Error).message;
