@@ -74,7 +74,7 @@ const menuPositionClasses = computed(() => {
             :ref="props.name"
             :appendTo="props?.fixedPosition ? `#${appendToId}` : 'body'"
             :model="props.menuItems"
-            :pt:root:class="['z-1200! w-[12.5rem] min-w-max', menuPositionClasses]"
+            :pt:root:class="['z-1200 w-[12.5rem] min-w-max', menuPositionClasses]"
             popup
         />
     </div>

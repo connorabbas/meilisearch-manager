@@ -88,17 +88,11 @@ watch(facetFilters, (newVal) => {
 </script>
 
 <template>
-    <!-- TODO: drawer covers instance dd menu -->
     <Drawer
         v-model:visible="drawerOpen"
-        :modal="false"
         :blockScroll="false"
-        :dismissable="false"
-        :autoZIndex="false"
         header="Filter Documents"
-        class="z-1000! w-full sm:w-[30rem] top-0 sm:top-[var(--header-height)]"
-        pt:footer:class="mb-0 sm:mb-[var(--header-height)]"
-        pt:mask:class="z-1000!"
+        class="w-full sm:w-[30rem]"
         position="right"
         @hide="handleHideDrawer"
     >
