@@ -278,7 +278,7 @@ onMounted(async () => {
                                     @change="searchPaginated(props.indexUid, true)"
                                 />
                             </div>
-                            <div>
+                            <div class="relative">
                                 <Button
                                     v-tooltip.top="'Filter Documents'"
                                     severity="secondary"
@@ -289,6 +289,12 @@ onMounted(async () => {
                                         <Funnel />
                                     </template>
                                 </Button>
+                                <span
+                                    v-if="searchFilter"
+                                    class="absolute top-0 right-0 -mt-1 -mr-1 flex size-3"
+                                >
+                                    <span class="relative inline-flex size-3 rounded-full bg-primary" />
+                                </span>
                             </div>
                             <div>
                                 <SelectButton

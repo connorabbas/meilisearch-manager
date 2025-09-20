@@ -96,6 +96,7 @@ watch(facetFilters, (newVal) => {
         position="right"
         @hide="handleHideDrawer"
     >
+        <!-- TODO: manual input search -->
         <div class="relative flex flex-col gap-4">
             <div class="flex flex-col gap-2">
                 <label for="filterable-attributes">Facets</label>
@@ -151,7 +152,7 @@ watch(facetFilters, (newVal) => {
         <template #footer>
             <div
                 v-if="props.totalHits"
-                class="flex justify-center text-muted-color text-sm"
+                class="flex justify-center text-muted-color"
             >
                 {{ props.totalHits.toLocaleString('en-US') }} estimated total hits
             </div>
