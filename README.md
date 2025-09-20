@@ -9,7 +9,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 -   :rocket: **Multiple instances** management
 -   :open_file_folder: **Indexes** CRUD operations, settings
--   :page_facing_up: **Documents** bulk imports, CRUD operations, search
+-   :page_facing_up: **Documents** bulk imports, CRUD operations, search with filtering and sorting
 -   :lock: **API keys** management
 -   :ballot_box_with_check: **Tasks** history with filtering & sorting
 -   :iphone: **Responsive** design
@@ -17,7 +17,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 ### Roadmap
 
--   Documents - geo search, facet filtering, multi-sort functionality
+-   Documents - geo search, manual filtering option
 -   Backups - Ability to create snapshots and dumps
 -   Indexes - field distribution graph, [index swapping](https://www.meilisearch.com/docs/learn/getting_started/indexes#swapping-indexes)
 -   Hosted demo on dedicated domain/server
