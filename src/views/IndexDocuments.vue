@@ -12,6 +12,7 @@ import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucid
 import type { MenuItem } from '@/types';
 import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue';
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
+import FilterDocumentsDrawer from '@/components/meilisearch/FilterDocumentsDrawer.vue';
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
 import { useDocuments } from '@/composables/meilisearch/useDocuments';
 import { useSettings } from '@/composables/meilisearch/useSettings';
@@ -25,14 +26,21 @@ const primaryKey = computed(() => props.index?.primaryKey);
 
 const { isSendingTask, confirmDeleteDocument } = useDocuments();
 const { indexStats, fetchIndexStats } = useStats();
-const { sortableAttributes, isFetching: isFetchingSettings, fetchSortableAttributes } = useSettings();
+const {
+    sortableAttributes,
+    filterableAttributes,
+    isFetching: isFetchingSettings,
+    fetchSortableAttributes,
+    fetchFilterableAttributes,
+} = useSettings();
 const {
     perPage,
     firstDatasetIndex,
     searchResults,
     searchQuery,
     searchSort,
-    isFetching,
+    searchFilter,
+    isFetching: isSearching,
     searchPaginated,
     handlePageEvent,
 } = useSearch();
@@ -40,7 +48,7 @@ const {
 // Add delay to blocked UI, because the meiliclient is too fast...
 // https://github.com/primefaces/primevue/issues/7817
 const blockedJsonView = ref(false);
-watch(isFetching, (newVal) => {
+watch(isSearching, (newVal) => {
     nextTick(() => {
         if (!newVal) {
             setTimeout(() => {
@@ -99,6 +107,9 @@ const sortingOptions = computed(() => {
 
     return options;
 });
+
+// Filtering
+const showFilteringDrawerOpen = ref(false);
 
 // Create Drawer
 const showImportDocumentsDrawerOpen = ref(false);
@@ -165,8 +176,15 @@ function handleFieldPopoverHidden() {
     fieldDetail.value = null;
 }
 
-onMounted(() => {
-    fetchSortableAttributes(props.indexUid);
+watch(searchFilter, () => {
+    searchPaginated(props.indexUid, true);
+});
+
+onMounted(async () => {
+    await Promise.all([
+        fetchSortableAttributes(props.indexUid),
+        fetchFilterableAttributes(props.indexUid),
+    ]);
 });
 </script>
 
@@ -183,20 +201,30 @@ onMounted(() => {
             </Button>
         </Teleport>
         <div class="space-y-4">
-            <ImportDocumentsDrawer
-                v-model="showImportDocumentsDrawerOpen"
-                :index-uid="props.indexUid"
-                :primary-key="props.index?.primaryKey"
-                @documents-imported="fetchData"
-            />
-            <EditDocumentDrawer
-                v-model="editDocumentDrawerOpen"
-                :index-uid="props.indexUid"
-                :primary-key="props.index?.primaryKey"
-                :document="currentDocument"
-                @document-updated="fetchData"
-                @hide="handleEditDrawerHidden"
-            />
+            <div class="relative">
+                <ImportDocumentsDrawer
+                    v-model="showImportDocumentsDrawerOpen"
+                    :index-uid="props.indexUid"
+                    :primary-key="props.index?.primaryKey"
+                    @documents-imported="fetchData"
+                />
+                <EditDocumentDrawer
+                    v-model="editDocumentDrawerOpen"
+                    :index-uid="props.indexUid"
+                    :primary-key="props.index?.primaryKey"
+                    :document="currentDocument"
+                    @document-updated="fetchData"
+                    @hide="handleEditDrawerHidden"
+                />
+                <FilterDocumentsDrawer
+                    v-model="showFilteringDrawerOpen"
+                    v-model:filter="searchFilter"
+                    :index-uid="props.indexUid"
+                    :filterable-attributes="filterableAttributes"
+                    :searching="isSearching"
+                    :total-hits="searchResults?.estimatedTotalHits"
+                />
+            </div>
             <Card>
                 <template #content>
                     <div class="flex flex-col md:flex-row gap-4">
@@ -229,7 +257,6 @@ onMounted(() => {
                                         <Search />
                                     </template>
                                 </Button>
-                                <!-- TODO: -->
                             </InputGroup>
                         </div>
                         <div class="flex justify-end gap-4">
@@ -251,16 +278,23 @@ onMounted(() => {
                                     @change="searchPaginated(props.indexUid, true)"
                                 />
                             </div>
-                            <div>
+                            <div class="relative">
                                 <Button
-                                    v-tooltip.top="'Filter Documents (WIP)'"
+                                    v-tooltip.top="'Filter Documents'"
                                     severity="secondary"
                                     outlined
+                                    @click="showFilteringDrawerOpen = true"
                                 >
                                     <template #icon>
                                         <Funnel />
                                     </template>
                                 </Button>
+                                <span
+                                    v-if="searchFilter"
+                                    class="absolute top-0 right-0 -mt-1 -mr-1 flex size-3"
+                                >
+                                    <span class="relative inline-flex size-3 rounded-full bg-primary" />
+                                </span>
                             </div>
                             <div>
                                 <SelectButton
@@ -304,7 +338,7 @@ onMounted(() => {
                         lazy
                         paginator
                         scrollable
-                        :loading="isFetching"
+                        :loading="isSearching"
                         :value="searchResults?.hits"
                         :rows="perPage"
                         :first="firstDatasetIndex"
@@ -407,7 +441,7 @@ onMounted(() => {
                     pt:mask:class="z-1!"
                 >
                     <div class="space-y-4">
-                        <div v-if="!searchResults?.hits.length && isFetching">
+                        <div v-if="!searchResults?.hits.length && isSearching">
                             <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
                                 <ProgressSpinner
                                     pt:root:class="h-15"
@@ -438,7 +472,7 @@ onMounted(() => {
                                 />
                             </div>
                         </div>
-                        <div v-else-if="!searchResults?.hits.length && !isFetching">
+                        <div v-else-if="!searchResults?.hits.length && !isSearching">
                             <NotFoundMessage subject="Document" />
                         </div>
                         <div v-if="searchResults?.hits.length">
