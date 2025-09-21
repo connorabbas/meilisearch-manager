@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch';
 import { FacetHit, Filter, FilterableAttributes } from 'meilisearch';
+import { AlertTriangle } from 'lucide-vue-next';
 
 const props = defineProps<{
     indexUid: string,
@@ -97,18 +98,30 @@ watch(facetFilters, (newVal) => {
         @hide="handleHideDrawer"
     >
         <!-- TODO: manual input search -->
-        <div class="relative flex flex-col gap-4">
+        <div class="mt-1 relative flex flex-col gap-4">
+            <Message
+                v-if="props.filterableAttributes?.length === 0"
+                pt:content:class="items-start"
+                severity="warn"
+            >
+                <template #icon>
+                    <AlertTriangle class="size-[22px]!" />
+                </template>
+                No facets available, please update the "filterableAttributes" index setting.
+            </Message>
             <div class="flex flex-col gap-2">
                 <label for="filterable-attributes">Facets</label>
                 <MultiSelect
                     v-model="selectedAttributes"
-                    :options="(filterableAttributes as string[])"
+                    :options="(props.filterableAttributes as string[])"
                     pt:label:class="flex flex-wrap"
                     placeholder="Select facets to filter on"
+                    filterPlaceholder="Search for facets"
                     inputId="filterable-attributes"
                     display="chip"
                     appendTo="self"
                     showClear
+                    filter
                     fluid
                 />
             </div>
@@ -124,6 +137,7 @@ watch(facetFilters, (newVal) => {
                 >
                     <label :for="`${facetFilter.attribute}_id`">{{ facetFilter.attribute }}</label>
                     <div class="relative">
+                        <!-- TODO: close button to remove the facet filter -->
                         <MultiSelect
                             v-model="facetFilters[facetFilter.attribute].value"
                             :options="facetFilter.facetHits"

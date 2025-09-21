@@ -9,7 +9,7 @@ A modern web-based UI for managing Meilisearch instances.
 
 -   :rocket: **Multiple instances** management
 -   :open_file_folder: **Indexes** CRUD operations, settings
--   :page_facing_up: **Documents** bulk imports, CRUD operations, search with filtering and sorting
+-   :page_facing_up: **Documents** bulk imports, CRUD operations, search, filter, sort
 -   :lock: **API keys** management
 -   :ballot_box_with_check: **Tasks** history with filtering & sorting
 -   :iphone: **Responsive** design
