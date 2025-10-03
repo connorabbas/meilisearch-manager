@@ -272,6 +272,7 @@ onMounted(async () => {
                                     }"
                                     :options="sortingOptions"
                                     :loading="isFetchingSettings.sortableAttributes"
+                                    showClear
                                     optionLabel="label"
                                     optionValue="value"
                                     placeholder="Sort by"
