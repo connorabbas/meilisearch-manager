@@ -28,7 +28,7 @@ const formValues = reactive<NewInstanceForm>({
 const resolver = zodResolver(
     z.object({
         name: z.string().min(1, { message: 'Please provide a name for your instance' }),
-        host: z.string().min(1, { message: 'Please the host url for your instance' }).url(),
+        host: z.string().min(1, { message: 'Please provide a host url/ip for your instance' }),
         apiKey: z.string().min(1, { message: 'Please provide a valid API key' }),
     })
 );
