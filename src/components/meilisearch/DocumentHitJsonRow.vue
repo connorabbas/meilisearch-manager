@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { looksLikeAnImageUrl } from '@/utils'
-import { Pencil, Trash2 } from 'lucide-vue-next'
+import { Expand, Minimize2, Pencil, Trash2 } from 'lucide-vue-next'
 import type { Hit } from 'meilisearch'
 import ThemedJsonViewer from '../ThemedJsonViewer.vue'
 
@@ -13,6 +13,11 @@ const props = defineProps<{
 defineEmits(['edit', 'delete'])
 
 const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) as string | null)
+
+const expandedJson = ref(false)
+function toggleJsonExpanded() {
+    expandedJson.value = !expandedJson.value
+}
 </script>
 
 <template>
@@ -42,9 +47,21 @@ const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) 
                     <ThemedJsonViewer
                         class="py-2 rounded-lg"
                         :data="props.hit"
+                        :expanded="expandedJson"
                     />
                 </div>
                 <div class="flex flex-row sm:flex-col justify-end gap-4">
+                    <Button
+                        v-tooltip.left="`${expandedJson ? 'Minimize' : 'Expand'} Data`"
+                        severity="secondary"
+                        outlined
+                        @click="toggleJsonExpanded()"
+                    >
+                        <template #icon>
+                            <Minimize2 v-if="expandedJson" />
+                            <Expand v-else />
+                        </template>
+                    </Button>
                     <Button
                         v-tooltip.left="'Edit Document'"
                         severity="secondary"
