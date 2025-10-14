@@ -1,7 +1,7 @@
-import type { RouteLocationRaw } from 'vue-router';
-import type { DataTableFilterMetaData } from 'primevue';
-import type { MenuItem as PrimeVueMenuItem } from 'primevue/menuitem';
-import type { LucideIcon } from 'lucide-vue-next';
+import type { RouteLocationRaw } from 'vue-router'
+import type { DataTableFilterMetaData } from 'primevue'
+import type { MenuItem as PrimeVueMenuItem } from 'primevue/menuitem'
+import type { LucideIcon } from 'lucide-vue-next'
 
 export type PrimeVueDataFilters = {
     [key: string]: DataTableFilterMetaData;

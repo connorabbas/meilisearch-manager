@@ -1,110 +1,110 @@
-import { ref, watch } from 'vue';
-import { type Key, type KeyCreation, type KeysQuery, type KeysResults, type KeyUpdate } from 'meilisearch';
-import { useToast } from 'primevue/usetoast';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useConfirm } from 'primevue';
+import { ref, watch } from 'vue'
+import { type Key, type KeyCreation, type KeysQuery, type KeysResults, type KeyUpdate } from 'meilisearch'
+import { useToast } from 'primevue/usetoast'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import { useConfirm } from 'primevue'
 
 export function useKeys() {
-    const toast = useToast();
-    const confirm = useConfirm();
-    const meilisearchStore = useMeilisearchStore();
+    const toast = useToast()
+    const confirm = useConfirm()
+    const meilisearchStore = useMeilisearchStore()
 
-    const keysResults = ref<KeysResults | null>(null);
-    const keys = ref<Key[] | null>(null);
-    const isFetching = ref(false);
-    const isLoading = ref(false);
-    const error = ref<string | null>(null);
+    const keysResults = ref<KeysResults | null>(null)
+    const keys = ref<Key[] | null>(null)
+    const isFetching = ref(false)
+    const isLoading = ref(false)
+    const error = ref<string | null>(null)
 
     async function fetchKeys(params?: KeysQuery): Promise<KeysResults | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isFetching.value = true;
-        error.value = null;
+        isFetching.value = true
+        error.value = null
 
         try {
-            const results = await client.getKeys(params);
-            keysResults.value = results;
-            keys.value = results.results;
-            return results;
+            const results = await client.getKeys(params)
+            keysResults.value = results
+            keys.value = results.results
+            return results
         } catch (err) {
-            keysResults.value = null;
-            keys.value = null;
-            error.value = (err as Error).message;
+            keysResults.value = null
+            keys.value = null
+            error.value = (err as Error).message
         } finally {
-            isFetching.value = false;
+            isFetching.value = false
         }
     }
 
     async function fetchAllKeys() {
         await fetchKeys({
             limit: 1 // Load in just one, so we can get the total amount for the actual dataset
-        });
+        })
         await fetchKeys({
             limit: keysResults.value?.total // Hacky way to load all the indexes
-        });
+        })
     }
 
     async function createKey(params: KeyCreation): Promise<Key | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isLoading.value = true;
-        error.value = null;
+        isLoading.value = true
+        error.value = null
 
         try {
-            return await client.createKey(params);
+            return await client.createKey(params)
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isLoading.value = false;
+            isLoading.value = false
         }
     }
 
     async function updateKey(keyOrUid: string, options: KeyUpdate): Promise<Key | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isLoading.value = true;
-        error.value = null;
+        isLoading.value = true
+        error.value = null
 
         try {
-            return await client.updateKey(keyOrUid, options);
+            return await client.updateKey(keyOrUid, options)
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isLoading.value = false;
+            isLoading.value = false
         }
     }
 
     async function deleteKey(id: string): Promise<void | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isLoading.value = true;
-        error.value = null;
+        isLoading.value = true
+        error.value = null
 
         try {
-            return await client.deleteKey(id);
+            return await client.deleteKey(id)
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isLoading.value = false;
+            isLoading.value = false
         }
     }
 
@@ -128,10 +128,10 @@ export function useKeys() {
             },
             accept: async () => {
                 await deleteKey(id).then(() => {
-                    onDeletedCallback?.();
-                });
+                    onDeletedCallback?.()
+                })
             },
-        });
+        })
     }
 
     watch(error, (newError) => {
@@ -141,9 +141,9 @@ export function useKeys() {
                 summary: 'Meilisearch Keys Error',
                 detail: newError,
                 life: 7500,
-            });
+            })
         }
-    });
+    })
 
     return {
         keys,
@@ -156,5 +156,5 @@ export function useKeys() {
         createKey,
         updateKey,
         confirmDeleteKey,
-    };
+    }
 }

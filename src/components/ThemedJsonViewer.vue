@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
-import type { UseColorModeReturn } from '@vueuse/core';
-import { JsonViewer } from "vue3-json-viewer";
-import { prefersDarkColorScheme } from '@/utils';
+import { computed, inject } from 'vue'
+import type { UseColorModeReturn } from '@vueuse/core'
+import { JsonViewer } from "vue3-json-viewer"
+import { prefersDarkColorScheme } from '@/utils'
 
 const props = defineProps<{
     data: object,
-}>();
+}>()
 
-const colorMode = inject<UseColorModeReturn>('colorMode')!;
+const colorMode = inject<UseColorModeReturn>('colorMode')!
 const theme = computed(() => {
-    return (colorMode.value === 'dark' || (prefersDarkColorScheme() && colorMode.value === 'auto')) ? 'dark' : 'light';
-});
+    return (colorMode.value === 'dark' || (prefersDarkColorScheme() && colorMode.value === 'auto')) ? 'dark' : 'light'
+})
 </script>
 
 <template>

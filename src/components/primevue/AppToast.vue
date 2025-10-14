@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, CircleX, Info, LoaderCircle, TriangleAlert } from 'lucide-vue-next';
+import { Check, CircleX, Info, LoaderCircle, TriangleAlert } from 'lucide-vue-next'
 </script>
 
 <template>

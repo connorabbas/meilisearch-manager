@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { useDocuments } from '@/composables/meilisearch/useDocuments';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { useRouter } from 'vue-router';
+import { useDocuments } from '@/composables/meilisearch/useDocuments'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
     indexUid: string,
-}>();
+}>()
 
-const router = useRouter();
-const { confirmDeleteIndex } = useIndexes();
-const { confirmDeleteAllDocuments } = useDocuments();
+const router = useRouter()
+const { confirmDeleteIndex } = useIndexes()
+const { confirmDeleteAllDocuments } = useDocuments()
 
 function handleDeleteIndex() {
     confirmDeleteIndex(props.indexUid, () => {
-        router.push({ name: 'dashboard' });
-    });
+        router.push({ name: 'dashboard' })
+    })
 }
 function handleDeleteAllDocuments() {
-    confirmDeleteAllDocuments(props.indexUid);
+    confirmDeleteAllDocuments(props.indexUid)
 }
 </script>
 

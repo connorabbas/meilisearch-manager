@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useAppLayout } from '@/composables/useAppLayout';
-import SelectColorModePopoverButton from '@/components/SelectColorModePopoverButton.vue';
-import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue';
-import { ChevronsUpDown, Menu as MenuIcon } from 'lucide-vue-next';
-import Container from '@/components/Container.vue';
-import PopupMenuButton from '@/components/PopupMenuButton.vue';
-import LogoLink from '@/components/LogoLink.vue';
-import Menubar from '@/components/primevue/Menubar.vue';
-import PanelMenu from '@/components/primevue/PanelMenu.vue';
-import Breadcrumb from '@/components/primevue/Breadcrumb.vue';
-import type { MenuItem } from '@/types';
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useAppLayout } from '@/composables/useAppLayout'
+import SelectColorModePopoverButton from '@/components/SelectColorModePopoverButton.vue'
+import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue'
+import { ChevronsUpDown, Menu as MenuIcon } from 'lucide-vue-next'
+import Container from '@/components/Container.vue'
+import PopupMenuButton from '@/components/PopupMenuButton.vue'
+import LogoLink from '@/components/LogoLink.vue'
+import Menubar from '@/components/primevue/Menubar.vue'
+import PanelMenu from '@/components/primevue/PanelMenu.vue'
+import Breadcrumb from '@/components/primevue/Breadcrumb.vue'
+import type { MenuItem } from '@/types'
 
 const props = withDefaults(defineProps<{
     breadcrumbs?: MenuItem[],
 }>(), {
     breadcrumbs: () => [],
-});
+})
 
 const {
     currentRoute,
@@ -26,20 +26,20 @@ const {
     changeInstanceModalOpen,
     meilisearchInstanceMenuItems,
     currentMeilisearchIntanceName,
-} = useAppLayout();
+} = useAppLayout()
 
-const isOpaque = ref(false);
+const isOpaque = ref(false)
 const onScroll = () => {
-    isOpaque.value = window.scrollY > 10; // 10px scroll threshold
-};
+    isOpaque.value = window.scrollY > 10 // 10px scroll threshold
+}
 
 onMounted(() => {
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // run once in case the page is already scrolled
-});
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll() // run once in case the page is already scrolled
+})
 onUnmounted(() => {
-    window.removeEventListener('scroll', onScroll);
-});
+    window.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <template>

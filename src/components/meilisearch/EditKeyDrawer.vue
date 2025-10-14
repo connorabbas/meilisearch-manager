@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useKeys } from '@/composables/meilisearch/useKeys';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import type { Key, KeyUpdate } from 'meilisearch';
-import { useToast } from 'primevue';
-import { CircleQuestionMark } from 'lucide-vue-next';
-import { keyActions } from '@/utils/data';
+import { computed, ref, watch } from 'vue'
+import { useKeys } from '@/composables/meilisearch/useKeys'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import type { Key, KeyUpdate } from 'meilisearch'
+import { useToast } from 'primevue'
+import { CircleQuestionMark } from 'lucide-vue-next'
+import { keyActions } from '@/utils/data'
 
 const props = withDefaults(defineProps<{
     apiKey?: Key | null,
 }>(), {
     apiKey: null,
-});
+})
 
-const drawerOpen = defineModel<boolean>({ default: false });
+const drawerOpen = defineModel<boolean>({ default: false })
 
-const emit = defineEmits(['hide', 'key-updated']);
+const emit = defineEmits(['hide', 'key-updated'])
 
-const toast = useToast();
-const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
-const { isLoading, updateKey } = useKeys();
+const toast = useToast()
+const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes()
+const { isLoading, updateKey } = useKeys()
 
-const indexOptions = computed(() => ['*', ...indexes.value.map((index) => index.uid)]);
-const actionsOptions = ['*', ...keyActions];
+const indexOptions = computed(() => ['*', ...indexes.value.map((index) => index.uid)])
+const actionsOptions = ['*', ...keyActions]
 
 const keyToUpdate = ref<KeyUpdate>({
     name: props.apiKey?.name ?? undefined,
     description: props.apiKey?.description ?? undefined,
-});
-const keyValue = ref(props.apiKey?.key ?? 'key');
+})
+const keyValue = ref(props.apiKey?.key ?? 'key')
 function saveNewKey() {
     updateKey(keyValue.value, keyToUpdate.value).then(() => {
         toast.add({
@@ -36,31 +36,31 @@ function saveNewKey() {
             summary: 'API Key Updated',
             detail: `The API key: "${keyToUpdate.value.name}" was successfully updated`,
             life: 3000,
-        });
-        drawerOpen.value = false;
-        emit('key-updated');
+        })
+        drawerOpen.value = false
+        emit('key-updated')
     }).catch(() => {
         // TODO
-    });
+    })
 }
 
 watch(keyToUpdate, (newVal) => {
     if (newVal.name === '') {
-        delete keyToUpdate.value.name;
+        delete keyToUpdate.value.name
     }
     if (newVal.description === '') {
-        delete keyToUpdate.value.description;
+        delete keyToUpdate.value.description
     }
-}, { deep: true });
+}, { deep: true })
 watch(() => props.apiKey, (newVal: Key | null) => {
     if (newVal) {
-        keyValue.value = newVal.key;
+        keyValue.value = newVal.key
         keyToUpdate.value = {
             name: newVal?.name ?? undefined,
             description: newVal?.description ?? undefined,
-        };
+        }
     }
-});
+})
 </script>
 
 <template>

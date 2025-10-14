@@ -1,24 +1,24 @@
-import { computed, ref, watch } from 'vue';
-import { ContentType, type EnqueuedTask, type RecordAny, type Task } from 'meilisearch';
-import { useToast } from 'primevue/usetoast';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useConfirm } from 'primevue';
-import { useTasks } from './useTasks';
+import { computed, ref, watch } from 'vue'
+import { ContentType, type EnqueuedTask, type RecordAny, type Task } from 'meilisearch'
+import { useToast } from 'primevue/usetoast'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import { useConfirm } from 'primevue'
+import { useTasks } from './useTasks'
 
 export function useDocuments() {
-    const toast = useToast();
-    const confirm = useConfirm();
-    const meilisearchStore = useMeilisearchStore();
-    const { pollTaskStatus } = useTasks();
+    const toast = useToast()
+    const confirm = useConfirm()
+    const meilisearchStore = useMeilisearchStore()
+    const { pollTaskStatus } = useTasks()
 
-    const isFetching = ref(false);
-    const isLoading = ref(false);
-    const isSendingTask = ref(false);
-    const isPollingTask = ref(false);
+    const isFetching = ref(false)
+    const isLoading = ref(false)
+    const isSendingTask = ref(false)
+    const isPollingTask = ref(false)
     // TODO: errors reactive object with different keys
-    const error = ref<string | null>(null);
+    const error = ref<string | null>(null)
 
-    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
+    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value)
 
     async function addOrUpdateDocuments(
         action: 'addition' | 'update',
@@ -27,41 +27,41 @@ export function useDocuments() {
         primaryKey?: string,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
             const enqueuedTask = (action === 'addition')
                 ? await client.index(indexUid).addDocuments(documents, { primaryKey })
-                : await client.index(indexUid).updateDocuments(documents, { primaryKey });
+                : await client.index(indexUid).updateDocuments(documents, { primaryKey })
 
             const pastVerb = (action === 'addition')
                 ? 'imported'
-                : 'updated';
+                : 'updated'
 
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `Documents have been successfully ${pastVerb}`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -72,39 +72,39 @@ export function useDocuments() {
         contentType: ContentType,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
             const enqueuedTask = (action === 'addition')
                 ? await client.index(indexUid).addDocumentsFromString(documents, contentType)
-                : await client.index(indexUid).updateDocumentsFromString(documents, contentType);
+                : await client.index(indexUid).updateDocumentsFromString(documents, contentType)
 
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A ${action} task has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 'Documents have been successfully imported',
                 60,
                 1000
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -113,34 +113,34 @@ export function useDocuments() {
         documentId: string | number,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
-            const enqueuedTask = await client.index(indexUid).deleteDocument(documentId);
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            const enqueuedTask = await client.index(indexUid).deleteDocument(documentId)
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A delete task for document: "${documentId}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `Document: "${documentId}" has been successfully deleted`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -165,44 +165,44 @@ export function useDocuments() {
             },
             accept: async () => {
                 await deleteDocument(indexUid, documentId).then(() => {
-                    onDeletedCallback?.();
-                });
+                    onDeletedCallback?.()
+                })
             },
-        });
+        })
     }
 
     async function deleteAllDocuments(
         indexUid: string,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
-            const enqueuedTask = await client.index(indexUid).deleteAllDocuments();
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            const enqueuedTask = await client.index(indexUid).deleteAllDocuments()
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A delete task for index: "${indexUid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `All documents from index: "${indexUid}" have been successfully deleted`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -226,10 +226,10 @@ export function useDocuments() {
             },
             accept: async () => {
                 await deleteAllDocuments(indexUid).then(() => {
-                    onDeletedCallback?.();
-                });
+                    onDeletedCallback?.()
+                })
             },
-        });
+        })
     }
 
     watch(error, (newError) => {
@@ -239,9 +239,9 @@ export function useDocuments() {
                 summary: 'Meilisearch Documents Error',
                 detail: newError,
                 life: 7500,
-            });
+            })
         }
-    });
+    })
 
     return {
         isFetching,
@@ -254,5 +254,5 @@ export function useDocuments() {
         addOrUpdateDocumentsFromString,
         confirmDeleteAllDocuments,
         confirmDeleteDocument,
-    };
+    }
 }

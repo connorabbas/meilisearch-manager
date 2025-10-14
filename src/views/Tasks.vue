@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { useTasks } from '@/composables/meilisearch/useTasks';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { Home, Info, RefreshCw } from 'lucide-vue-next';
-import type { Task, TasksOrBatchesQuery } from 'meilisearch';
-import { Mode } from 'vanilla-jsoneditor';
-import { formatDate, getStatusSeverity } from '@/utils';
-import AppLayout from '@/layouts/AppLayout.vue';
-import PageTitleSection from '@/components/PageTitleSection.vue';
-import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
-import NotFoundMessage from '@/components/NotFoundMessage.vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useTasks } from '@/composables/meilisearch/useTasks'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import { Home, Info, RefreshCw } from 'lucide-vue-next'
+import type { Task, TasksOrBatchesQuery } from 'meilisearch'
+import { Mode } from 'vanilla-jsoneditor'
+import { formatDate, getStatusSeverity } from '@/utils'
+import AppLayout from '@/layouts/AppLayout.vue'
+import PageTitleSection from '@/components/PageTitleSection.vue'
+import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue'
+import NotFoundMessage from '@/components/NotFoundMessage.vue'
 
-const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }];
+const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }]
 
-const { tasks, isFetching: isFetchingTasks, hasMore, fetchTasks, fetchAndAppendTasks } = useTasks();
-const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
+const { tasks, isFetching: isFetchingTasks, hasMore, fetchTasks, fetchAndAppendTasks } = useTasks()
+const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes()
 
 const tasksParams = reactive<TasksOrBatchesQuery>({
     limit: 50,
-});
+})
 
-await fetchTasks(tasksParams);
+await fetchTasks(tasksParams)
 
-const indexUids = computed(() => indexes.value.map((index) => index.uid));
+const indexUids = computed(() => indexes.value.map((index) => index.uid))
 
-const showTaskDrawerOpen = ref(false);
-const currentTask = ref<Task | null>(null);
-const taskHeaderTitle = computed(() => `Task ${currentTask.value?.uid}`);
+const showTaskDrawerOpen = ref(false)
+const currentTask = ref<Task | null>(null)
+const taskHeaderTitle = computed(() => `Task ${currentTask.value?.uid}`)
 function showTask(task: Task) {
-    currentTask.value = task;
-    showTaskDrawerOpen.value = true;
+    currentTask.value = task
+    showTaskDrawerOpen.value = true
 }
 
 // TODO: https://vueuse.org/core/useUrlSearchParams/
@@ -37,20 +37,20 @@ function showTask(task: Task) {
 watch(tasksParams, (newValue) => {
     // Unset array typed properties if they have no values, to prevent bad query results
     if (newValue?.statuses?.length === 0) {
-        delete tasksParams.statuses;
+        delete tasksParams.statuses
     }
     if (newValue?.indexUids?.length === 0) {
-        delete tasksParams.indexUids;
+        delete tasksParams.indexUids
     }
     if (newValue?.types?.length === 0) {
-        delete tasksParams.types;
+        delete tasksParams.types
     }
-    fetchTasks(tasksParams);
-}, { deep: true });
+    fetchTasks(tasksParams)
+}, { deep: true })
 
 onMounted(() => {
-    fetchAllIndexes(); // for filtering options
-});
+    fetchAllIndexes() // for filtering options
+})
 </script>
 
 <template>

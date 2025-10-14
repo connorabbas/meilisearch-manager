@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Key } from 'meilisearch';
-import { formatDate, maskedApiKey } from '@/utils';
-import { useClipboard } from '@vueuse/core';
-import { Copy } from 'lucide-vue-next';
+import { computed } from 'vue'
+import type { Key } from 'meilisearch'
+import { formatDate, maskedApiKey } from '@/utils'
+import { useClipboard } from '@vueuse/core'
+import { Copy } from 'lucide-vue-next'
 
-const drawerOpen = defineModel<boolean>({ default: false });
+const drawerOpen = defineModel<boolean>({ default: false })
 
 const props = defineProps<{
     apiKey: Key,
-}>();
+}>()
 
-defineEmits(['hide', 'copy-key']);
+defineEmits(['hide', 'copy-key'])
 
-const { isSupported: canCopy } = useClipboard();
+const { isSupported: canCopy } = useClipboard()
 
-const keyName = computed(() => props.apiKey?.name ?? 'API Key Details');
+const keyName = computed(() => props.apiKey?.name ?? 'API Key Details')
 const keyExpired = computed(() => {
     if (!props.apiKey.expiresAt) {
-        return false;
+        return false
     }
-    const today = new Date();
-    return props.apiKey.expiresAt < today;
-});
+    const today = new Date()
+    return props.apiKey.expiresAt < today
+})
 </script>
 
 <template>

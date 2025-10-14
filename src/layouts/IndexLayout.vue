@@ -1,37 +1,37 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import { useRoute } from 'vue-router';
-import { completeAsyncLoading } from '@/router';
-import { Home } from 'lucide-vue-next';
-import AppLayout from './AppLayout.vue';
-import PageTitleSection from '@/components/PageTitleSection.vue';
-import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue';
-import type { MenuItem } from '@/types';
+import { computed } from 'vue'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import { useRoute } from 'vue-router'
+import { completeAsyncLoading } from '@/router'
+import { Home } from 'lucide-vue-next'
+import AppLayout from './AppLayout.vue'
+import PageTitleSection from '@/components/PageTitleSection.vue'
+import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue'
+import type { MenuItem } from '@/types'
 
 const props = defineProps<{
     indexUid: string;
-}>();
+}>()
 
-const route = useRoute();
-const { currentIndex, isFetching, error, fetchIndex } = useIndexes();
+const route = useRoute()
+const { currentIndex, isFetching, error, fetchIndex } = useIndexes()
 
-await fetchIndex(props.indexUid);
+await fetchIndex(props.indexUid)
 
 const breadcrumbs = computed(() => {
     const dynamicBreadcrumbs: MenuItem[] = [
         { route: { name: 'dashboard' }, lucideIcon: Home },
         { label: 'Indexes', route: { name: 'indexes' } },
         { label: props.indexUid, route: { name: 'index-details', params: { indexUid: props.indexUid } } },
-    ];
+    ]
     if (route.meta.breadcrumbLabel) {
-        const breadcrumbLabel = route.meta.breadcrumbLabel as string;
-        dynamicBreadcrumbs.push({ label: breadcrumbLabel });
+        const breadcrumbLabel = route.meta.breadcrumbLabel as string
+        dynamicBreadcrumbs.push({ label: breadcrumbLabel })
     }
-    return dynamicBreadcrumbs;
-});
+    return dynamicBreadcrumbs
+})
 
-const currentRouteName = computed(() => route.name as string);
+const currentRouteName = computed(() => route.name as string)
 </script>
 
 <template>

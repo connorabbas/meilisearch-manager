@@ -1,99 +1,99 @@
 <script setup lang="ts">
-import { ref, useTemplateRef, watch } from 'vue';
-import type { ContentType, RecordAny } from 'meilisearch';
-import { Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next';
-import { Mode } from 'vanilla-jsoneditor';
-import ThemedJsonEditor from '../ThemedJsonEditor.vue';
-import { useDocuments } from '@/composables/meilisearch/useDocuments';
-import FileUpload, { FileUploadSelectEvent } from 'primevue/fileupload';
-import { readFileAsText } from '@/utils';
-import { computed } from 'vue';
+import { ref, useTemplateRef, watch } from 'vue'
+import type { ContentType, RecordAny } from 'meilisearch'
+import { Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next'
+import { Mode } from 'vanilla-jsoneditor'
+import ThemedJsonEditor from '../ThemedJsonEditor.vue'
+import { useDocuments } from '@/composables/meilisearch/useDocuments'
+import FileUpload, { FileUploadSelectEvent } from 'primevue/fileupload'
+import { readFileAsText } from '@/utils'
+import { computed } from 'vue'
 
 const props = defineProps<{
     indexUid: string,
     primaryKey?: string,
-}>();
+}>()
 
-const emit = defineEmits(['hide', 'documents-imported']);
+const emit = defineEmits(['hide', 'documents-imported'])
 
-const drawerOpen = defineModel<boolean>({ default: false });
+const drawerOpen = defineModel<boolean>({ default: false })
 
-const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask } = useDocuments();
+const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask } = useDocuments()
 
 // TODO: empty record with primary key set
-const newDocuments = ref<RecordAny[]>([]);
-const newDocumentsAsString = ref('');
+const newDocuments = ref<RecordAny[]>([])
+const newDocumentsAsString = ref('')
 
-const importMethod = ref<'upload' | 'manual'>('upload');
-const importMode = ref<'addition' | 'update'>('addition');
+const importMethod = ref<'upload' | 'manual'>('upload')
+const importMode = ref<'addition' | 'update'>('addition')
 const importModeOptions = [
     { label: 'Add or replace', value: 'addition' },
     { label: 'Add or update', value: 'update' },
-];
-const uploadContentType = ref<ContentType>('application/json');
+]
+const uploadContentType = ref<ContentType>('application/json')
 const uploadOptions = [
     { label: 'CSV', value: 'text/csv' },
     { label: 'JSON', value: 'application/json' },
     //{ label: 'x-ndjson', value: 'application/x-ndjson' },
-];
+]
 
 type FileUploadType = InstanceType<typeof FileUpload>;
-const fileUploader = useTemplateRef<FileUploadType>('document-file-uploader');
-const fileUploaderChanged = ref(0);
+const fileUploader = useTemplateRef<FileUploadType>('document-file-uploader')
+const fileUploaderChanged = ref(0)
 async function handleUpload(event: FileUploadSelectEvent) {
-    const files: File[] = event.files as File[];
-    const fileText = await readFileAsText(files[0]);
-    newDocumentsAsString.value = fileText;
+    const files: File[] = event.files as File[]
+    const fileText = await readFileAsText(files[0])
+    newDocumentsAsString.value = fileText
 }
 function handleUploaderReset() {
-    newDocumentsAsString.value = '';
-    fileUploaderChanged.value++;
+    newDocumentsAsString.value = ''
+    fileUploaderChanged.value++
 }
 
 const btnDisabled = computed(() => {
     if (importMethod.value === 'upload') {
-        return newDocumentsAsString.value?.length === 0;
+        return newDocumentsAsString.value?.length === 0
     } else if (importMethod.value === 'manual') {
-        return newDocuments.value?.length === 0;
+        return newDocuments.value?.length === 0
     }
-    return true;
-});
+    return true
+})
 
 async function handleSaveDocument() {
     if (importMethod.value === 'manual') {
         // TODO: handle JSON errors (reference settings)
         addOrUpdateDocuments(importMode.value, props.indexUid, newDocuments.value, props.primaryKey)
             .then(() => {
-                drawerOpen.value = false;
-                emit('documents-imported');
-            });
+                drawerOpen.value = false
+                emit('documents-imported')
+            })
     } else {
         addOrUpdateDocumentsFromString(importMode.value, props.indexUid, newDocumentsAsString.value, uploadContentType.value)
             .then(() => {
-                drawerOpen.value = false;
-                emit('documents-imported');
-            });
+                drawerOpen.value = false
+                emit('documents-imported')
+            })
     }
 }
 
 function reset() {
-    importMethod.value = 'upload';
-    importMode.value = 'addition';
-    uploadContentType.value = 'application/json';
-    newDocuments.value = [];
-    newDocumentsAsString.value = '';
+    importMethod.value = 'upload'
+    importMode.value = 'addition'
+    uploadContentType.value = 'application/json'
+    newDocuments.value = []
+    newDocumentsAsString.value = ''
 }
 
 function handleHidden() {
-    emit('hide');
-    reset();
+    emit('hide')
+    reset()
 }
 
 watch(uploadContentType, (newVal) => {
     if (newVal && fileUploader.value) {
-        handleUploaderReset();
+        handleUploaderReset()
     }
-});
+})
 
 </script>
 

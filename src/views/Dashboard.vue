@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatBytes } from '@/utils';
-import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next';
-import { useStats } from '@/composables/meilisearch/useStats';
+import AppLayout from '@/layouts/AppLayout.vue'
+import { formatDate, formatBytes } from '@/utils'
+import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next'
+import { useStats } from '@/composables/meilisearch/useStats'
 
-const breadcrumbs = [{ label: 'Dashboard' }];
+const breadcrumbs = [{ label: 'Dashboard' }]
 
-const { instanceStats, version, fetchStats, fetchVersion } = useStats();
+const { instanceStats, version, fetchStats, fetchVersion } = useStats()
 
 async function fetchData() {
     await Promise.all([
         fetchStats(),
         fetchVersion(),
-    ]);
+    ])
 }
-await fetchData();
+await fetchData()
 </script>
 
 <template>

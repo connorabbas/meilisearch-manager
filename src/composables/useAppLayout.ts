@@ -1,23 +1,23 @@
-import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, ListCheck, KeyRound, FolderSearch, Plus, ArrowLeftRight, Trash2 } from 'lucide-vue-next';
-import { type MenuItem } from '@/types';
-import { useMeilisearchStore } from '@/stores/meilisearch';
+import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { LayoutDashboard, ListCheck, KeyRound, FolderSearch, Plus, ArrowLeftRight, Trash2 } from 'lucide-vue-next'
+import { type MenuItem } from '@/types'
+import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useAppLayout() {
-    const meilisearchStore = useMeilisearchStore();
-    const route = useRoute();
-    const router = useRouter();
+    const meilisearchStore = useMeilisearchStore()
+    const route = useRoute()
+    const router = useRouter()
 
-    const currentRoute = computed(() => route.name);
-    const currentPath = computed(() => route.path);
+    const currentRoute = computed(() => route.name)
+    const currentPath = computed(() => route.path)
 
     const isActiveRoute = (routeName: string, path?: string) => {
-        if (currentRoute.value === routeName) return true;
-        if (path && currentPath.value.startsWith(path)) return true;
+        if (currentRoute.value === routeName) return true
+        if (path && currentPath.value.startsWith(path)) return true
 
-        return false;
-    };
+        return false
+    }
 
     // Main menu items
     const menuItems = computed<MenuItem[]>(() => [
@@ -50,11 +50,11 @@ export function useAppLayout() {
             lucideIcon: BookText,
             link: 'https://www.meilisearch.com/docs/home',
         }, */
-    ]);
+    ])
 
     // Meilisearch instance
-    const changeInstanceModalOpen = ref(false);
-    const currentMeilisearchIntanceName = computed(() => meilisearchStore?.currentInstance?.name ?? 'Default');
+    const changeInstanceModalOpen = ref(false)
+    const currentMeilisearchIntanceName = computed(() => meilisearchStore?.currentInstance?.name ?? 'Default')
     const meilisearchInstanceMenuItems = computed<MenuItem[]>(() => [
         {
             label: 'New Instance',
@@ -74,31 +74,31 @@ export function useAppLayout() {
             command: async () => {
                 if (meilisearchStore?.currentInstance?.id) {
                     meilisearchStore.confirmRemoveInstance(meilisearchStore.currentInstance.id, async () => {
-                        await router.push({ name: 'dashboard' });
-                        router.go(0);
-                    });
+                        await router.push({ name: 'dashboard' })
+                        router.go(0)
+                    })
                 }
             },
         },
-    ]);
+    ])
 
     // Mobile menu
-    const mobileMenuOpen = ref(false);
-    const windowWidth = ref(window.innerWidth);
+    const mobileMenuOpen = ref(false)
+    const windowWidth = ref(window.innerWidth)
     const updateWidth = () => {
-        windowWidth.value = window.innerWidth;
-    };
+        windowWidth.value = window.innerWidth
+    }
     onMounted(() => {
-        window.addEventListener('resize', updateWidth);
-    });
+        window.addEventListener('resize', updateWidth)
+    })
     onUnmounted(() => {
-        window.removeEventListener('resize', updateWidth);
-    });
+        window.removeEventListener('resize', updateWidth)
+    })
     watchEffect(() => {
         if (windowWidth.value > 1024) {
-            mobileMenuOpen.value = false;
+            mobileMenuOpen.value = false
         }
-    });
+    })
 
     return {
         currentRoute,
@@ -108,5 +108,5 @@ export function useAppLayout() {
         changeInstanceModalOpen,
         meilisearchInstanceMenuItems,
         currentMeilisearchIntanceName,
-    };
+    }
 }

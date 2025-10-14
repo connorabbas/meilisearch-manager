@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { FileText, Info, Pencil, Settings } from "lucide-vue-next";
+import { ref } from "vue"
+import { FileText, Info, Pencil, Settings } from "lucide-vue-next"
 
 const props = defineProps<{
     currentRouteName: string,
     indexUid: string,
-}>();
+}>()
 
 const items = ref([
     { route: { name: 'index-details', params: { indexUid: props.indexUid } }, label: 'Details', icon: Info },
@@ -13,7 +13,7 @@ const items = ref([
     { route: { name: 'index-settings', params: { indexUid: props.indexUid } }, label: 'Settings', icon: Settings },
     { route: { name: 'edit-index', params: { indexUid: props.indexUid } }, label: 'Edit', icon: Pencil },
 
-]);
+])
 </script>
 
 <template>

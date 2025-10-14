@@ -1,94 +1,94 @@
-import { ref, watch, computed } from 'vue';
-import { RecordAny, type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch';
-import { useToast } from 'primevue/usetoast';
-import { useConfirm } from "primevue/useconfirm";
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useTasks } from './useTasks';
-import { usePagination } from '../usePagination';
+import { ref, watch, computed } from 'vue'
+import { RecordAny, type EnqueuedTask, type Index, type IndexesQuery, type IndexesResults, type IndexOptions, type Task } from 'meilisearch'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from "primevue/useconfirm"
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import { useTasks } from './useTasks'
+import { usePagination } from '../usePagination'
 
 export function useIndexes(initialPerPage: number = 20) {
-    const toast = useToast();
-    const confirm = useConfirm();
-    const meilisearchStore = useMeilisearchStore();
-    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage);
-    const { pollTaskStatus } = useTasks();
+    const toast = useToast()
+    const confirm = useConfirm()
+    const meilisearchStore = useMeilisearchStore()
+    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage)
+    const { pollTaskStatus } = useTasks()
 
-    const indexesResults = ref<IndexesResults<Index[]> | null>(null);
-    const indexes = ref<Index[]>([]);
-    const currentIndex = ref<Index | null>(null);
-    const isFetching = ref(false);
-    const isSendingTask = ref(false);
-    const isPollingTask = ref(false);
-    const error = ref<string | null>(null);
+    const indexesResults = ref<IndexesResults<Index[]> | null>(null)
+    const indexes = ref<Index[]>([])
+    const currentIndex = ref<Index | null>(null)
+    const isFetching = ref(false)
+    const isSendingTask = ref(false)
+    const isPollingTask = ref(false)
+    const error = ref<string | null>(null)
 
-    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value);
+    const isLoadingTask = computed(() => isSendingTask.value || isPollingTask.value)
     const indexesQuery = computed<IndexesQuery>(() => {
         return {
             limit: perPage.value,
             offset: offset.value,
-        };
-    });
+        }
+    })
 
     async function fetchIndexes(params?: IndexesQuery): Promise<IndexesResults<Index[]> | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isFetching.value = true;
-        error.value = null;
+        isFetching.value = true
+        error.value = null
 
         try {
-            const results = await client.getIndexes(params);
-            indexesResults.value = results;
-            indexes.value = results.results;
+            const results = await client.getIndexes(params)
+            indexesResults.value = results
+            indexes.value = results.results
 
-            return results;
+            return results
         } catch (err) {
-            indexesResults.value = null;
-            indexes.value = [];
-            error.value = (err as Error).message;
+            indexesResults.value = null
+            indexes.value = []
+            error.value = (err as Error).message
         } finally {
-            isFetching.value = false;
+            isFetching.value = false
         }
     }
 
     function fetchIndexesPaginated(resetPagination: boolean = false): Promise<IndexesResults<Index[]> | undefined> {
         if (resetPagination) {
-            currentPage.value = 1;
+            currentPage.value = 1
         }
-        return fetchIndexes(indexesQuery.value);
+        return fetchIndexes(indexesQuery.value)
     }
 
     async function fetchAllIndexes() {
         await fetchIndexes({
             limit: 1 // Load in just one, so we can get the total amount for the actual dataset
-        }).then(() => indexes.value = []);
+        }).then(() => indexes.value = [])
         await fetchIndexes({
             limit: indexesResults.value?.total // Hacky way to load all the indexes
-        });
+        })
     }
 
     async function fetchIndex(uid: string): Promise<Index<RecordAny> | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isFetching.value = true;
-        error.value = null;
+        isFetching.value = true
+        error.value = null
 
         try {
-            const result = await client.getIndex(uid);
-            currentIndex.value = result;
-            return result;
+            const result = await client.getIndex(uid)
+            currentIndex.value = result
+            return result
         } catch (err) {
-            currentIndex.value = null;
-            error.value = (err as Error).message;
+            currentIndex.value = null
+            error.value = (err as Error).message
         } finally {
-            isFetching.value = false;
+            isFetching.value = false
         }
     }
 
@@ -97,34 +97,34 @@ export function useIndexes(initialPerPage: number = 20) {
         options?: IndexOptions,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
-            const enqueuedTask = await client.createIndex(uid, options);
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            const enqueuedTask = await client.createIndex(uid, options)
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A create task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `The new index: "${uid}" was successfully created`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -133,66 +133,66 @@ export function useIndexes(initialPerPage: number = 20) {
         primaryKey: string,
         onTaskEnqueued?: (task: EnqueuedTask) => void
     ): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
-            const enqueuedTask = await client.updateIndex(uid, { primaryKey });
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            const enqueuedTask = await client.updateIndex(uid, { primaryKey })
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `An update task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `The index primary key for index: "${uid}" was successfully updated to "${primaryKey}"`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
     async function deleteIndex(uid: string, onTaskEnqueued?: (task: EnqueuedTask) => void): Promise<Task | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isSendingTask.value = true;
-        error.value = null;
+        isSendingTask.value = true
+        error.value = null
 
         try {
-            const enqueuedTask = await client.deleteIndex(uid);
-            isSendingTask.value = false;
-            onTaskEnqueued?.(enqueuedTask);
+            const enqueuedTask = await client.deleteIndex(uid)
+            isSendingTask.value = false
+            onTaskEnqueued?.(enqueuedTask)
 
-            isPollingTask.value = true;
+            isPollingTask.value = true
             const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A delete task for index: "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 `The index: "${uid}" has been successfully deleted`,
-            );
+            )
 
-            return result;
+            return result
         } catch (err) {
-            error.value = (err as Error).message;
-            throw err;
+            error.value = (err as Error).message
+            throw err
         } finally {
-            isSendingTask.value = false;
-            isPollingTask.value = false;
+            isSendingTask.value = false
+            isPollingTask.value = false
         }
     }
 
@@ -217,12 +217,12 @@ export function useIndexes(initialPerPage: number = 20) {
             },
             accept: async () => {
                 await deleteIndex(uid, (task) => {
-                    onTaskEnqueued?.(task);
+                    onTaskEnqueued?.(task)
                 }).then(() => {
-                    onDeletedCallback?.();
-                });
+                    onDeletedCallback?.()
+                })
             },
-        });
+        })
     }
 
     watch(error, (newError) => {
@@ -232,9 +232,9 @@ export function useIndexes(initialPerPage: number = 20) {
                 summary: 'Index Data Error',
                 detail: newError,
                 life: 7500,
-            });
+            })
         }
-    });
+    })
 
     return {
         currentPage,
@@ -257,5 +257,5 @@ export function useIndexes(initialPerPage: number = 20) {
         createIndex,
         updateIndex,
         confirmDeleteIndex,
-    };
+    }
 }

@@ -1,21 +1,21 @@
-import { computed, ref, watch } from 'vue';
-import { Filter, RecordAny, type SearchParams, type SearchResponse } from 'meilisearch';
-import { useToast } from 'primevue/usetoast';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { usePagination } from '@/composables/usePagination';
+import { computed, ref, watch } from 'vue'
+import { Filter, RecordAny, type SearchParams, type SearchResponse } from 'meilisearch'
+import { useToast } from 'primevue/usetoast'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import { usePagination } from '@/composables/usePagination'
 
 export function useSearch(initialPerPage: number = 20) {
-    const toast = useToast();
-    const meilisearchStore = useMeilisearchStore();
-    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage);
+    const toast = useToast()
+    const meilisearchStore = useMeilisearchStore()
+    const { currentPage, perPage, firstDatasetIndex, offset, handlePageEvent } = usePagination(initialPerPage)
 
-    const searchResults = ref<SearchResponse | null>(null);
-    const searchQuery = ref('');
-    const searchSort = ref<string[]>([]);
-    const searchFilter = ref<Filter | null>(null);
+    const searchResults = ref<SearchResponse | null>(null)
+    const searchQuery = ref('')
+    const searchSort = ref<string[]>([])
+    const searchFilter = ref<Filter | null>(null)
 
-    const isFetching = ref(false);
-    const error = ref<string | null>(null);
+    const isFetching = ref(false)
+    const error = ref<string | null>(null)
 
     const searchParams = computed<SearchParams>(() => {
         return {
@@ -23,32 +23,32 @@ export function useSearch(initialPerPage: number = 20) {
             filter: searchFilter.value ?? undefined,
             limit: perPage.value,
             offset: offset.value,
-        };
-    });
+        }
+    })
 
     async function search(
         indexUid: string,
         query?: string,
         params?: SearchParams
     ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
-        const client = meilisearchStore.getClient();
+        const client = meilisearchStore.getClient()
         if (!client) {
-            error.value = 'MeiliSearch client not connected';
-            return;
+            error.value = 'MeiliSearch client not connected'
+            return
         }
 
-        isFetching.value = true;
-        error.value = null;
+        isFetching.value = true
+        error.value = null
 
         try {
-            const results = await client.index(indexUid).search(query, params);
-            searchResults.value = results;
-            return results;
+            const results = await client.index(indexUid).search(query, params)
+            searchResults.value = results
+            return results
         } catch (err) {
-            searchResults.value = null;
-            error.value = (err as Error).message;
+            searchResults.value = null
+            error.value = (err as Error).message
         } finally {
-            isFetching.value = false;
+            isFetching.value = false
         }
     }
 
@@ -57,9 +57,9 @@ export function useSearch(initialPerPage: number = 20) {
         resetPagination: boolean = false
     ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
         if (resetPagination) {
-            currentPage.value = 1;
+            currentPage.value = 1
         }
-        return search(indexUid, searchQuery.value, searchParams.value);
+        return search(indexUid, searchQuery.value, searchParams.value)
     }
 
     watch(error, (newError) => {
@@ -69,9 +69,9 @@ export function useSearch(initialPerPage: number = 20) {
                 summary: 'Meilisearch Search Error',
                 detail: newError,
                 life: 7500,
-            });
+            })
         }
-    });
+    })
 
     return {
         currentPage,
@@ -88,5 +88,5 @@ export function useSearch(initialPerPage: number = 20) {
         handlePageEvent,
         search,
         searchPaginated,
-    };
+    }
 }

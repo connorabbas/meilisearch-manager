@@ -1,5 +1,5 @@
-import vue from 'eslint-plugin-vue';
-import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
+import vue from 'eslint-plugin-vue'
+import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 
 
 export default [
@@ -26,9 +26,9 @@ export default [
                 'vue/html-indent': ['error', 4],
                 '@typescript-eslint/no-explicit-any': 'off',
                 indent: ['error', 4],
-                semi: ['error', 'always'],
+                semi: ['error', 'never'],
                 'linebreak-style': ['error', 'unix'],
             },
         },
     ),
-];
+]
