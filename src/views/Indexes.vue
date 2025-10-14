@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useStats } from '@/composables/meilisearch/useStats';
-import { ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
-import PageTitleSection from '@/components/PageTitleSection.vue';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import CreateIndexDrawer from '@/components/meilisearch/CreateIndexDrawer.vue';
-import NotFoundMessage from '@/components/NotFoundMessage.vue';
+import { computed, ref } from 'vue'
+import { useStats } from '@/composables/meilisearch/useStats'
+import { ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next'
+import AppLayout from '@/layouts/AppLayout.vue'
+import PageTitleSection from '@/components/PageTitleSection.vue'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import CreateIndexDrawer from '@/components/meilisearch/CreateIndexDrawer.vue'
+import NotFoundMessage from '@/components/NotFoundMessage.vue'
 //import { formatDate } from '@/utils';
 //import { Index } from 'meilisearch';
 
-const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }];
+const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Indexes' }]
 
-const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats();
+const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats()
 const {
     perPage,
     firstDatasetIndex,
@@ -21,26 +21,26 @@ const {
     isFetching: isFetchingIndexes,
     fetchIndexesPaginated,
     handlePageEvent,
-} = useIndexes();
+} = useIndexes()
 
 async function fetchData() {
     await Promise.all([
         fetchStats(),
         fetchIndexesPaginated(),
-    ]);
+    ])
 }
-await fetchData();
+await fetchData()
 
-const createIndexDrawerOpen = ref(false);
+const createIndexDrawerOpen = ref(false)
 
 const indexesData = computed(() => {
     return indexes.value.map((index) => {
         return {
             ...index,
             numberOfDocuments: instanceStats.value?.indexes[index.uid]?.numberOfDocuments ?? 0,
-        };
-    });
-});
+        }
+    })
+})
 </script>
 
 <template>

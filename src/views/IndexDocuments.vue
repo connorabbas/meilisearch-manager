@@ -1,38 +1,38 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { useSearch } from '@/composables/meilisearch/useSearch';
-import type { Index, RecordAny } from 'meilisearch';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useSearch } from '@/composables/meilisearch/useSearch'
+import type { Index, RecordAny } from 'meilisearch'
 //import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
-import DocumentHitJsonRow from '@/components/meilisearch/DocumentHitJsonRow.vue';
-import NotFoundMessage from '@/components/NotFoundMessage.vue';
-import Menu from '@/components/primevue/Menu.vue';
-import { useStats } from '@/composables/meilisearch/useStats';
-import { looksLikeAnImageUrl } from '@/utils';
-import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next';
-import type { MenuItem } from '@/types';
-import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue';
-import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue';
-import FilterDocumentsDrawer from '@/components/meilisearch/FilterDocumentsDrawer.vue';
-import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue';
-import { useDocuments } from '@/composables/meilisearch/useDocuments';
-import { useSettings } from '@/composables/meilisearch/useSettings';
+import DocumentHitJsonRow from '@/components/meilisearch/DocumentHitJsonRow.vue'
+import NotFoundMessage from '@/components/NotFoundMessage.vue'
+import Menu from '@/components/primevue/Menu.vue'
+import { useStats } from '@/composables/meilisearch/useStats'
+import { looksLikeAnImageUrl } from '@/utils'
+import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
+import type { MenuItem } from '@/types'
+import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue'
+import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue'
+import FilterDocumentsDrawer from '@/components/meilisearch/FilterDocumentsDrawer.vue'
+import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue'
+import { useDocuments } from '@/composables/meilisearch/useDocuments'
+import { useSettings } from '@/composables/meilisearch/useSettings'
 
 const props = defineProps<{
     indexUid: string,
     index: Index,
-}>();
+}>()
 
-const primaryKey = computed(() => props.index?.primaryKey);
+const primaryKey = computed(() => props.index?.primaryKey)
 
-const { isSendingTask, confirmDeleteDocument } = useDocuments();
-const { indexStats, fetchIndexStats } = useStats();
+const { isSendingTask, confirmDeleteDocument } = useDocuments()
+const { indexStats, fetchIndexStats } = useStats()
 const {
     sortableAttributes,
     filterableAttributes,
     isFetching: isFetchingSettings,
     fetchSortableAttributes,
     fetchFilterableAttributes,
-} = useSettings();
+} = useSettings()
 const {
     perPage,
     firstDatasetIndex,
@@ -43,41 +43,41 @@ const {
     isFetching: isSearching,
     searchPaginated,
     handlePageEvent,
-} = useSearch();
+} = useSearch()
 
 // Add delay to blocked UI, because the meiliclient is too fast...
 // https://github.com/primefaces/primevue/issues/7817
-const blockedJsonView = ref(false);
+const blockedJsonView = ref(false)
 watch(isSearching, (newVal) => {
     nextTick(() => {
         if (!newVal) {
             setTimeout(() => {
-                blockedJsonView.value = newVal;
-            }, 50);
+                blockedJsonView.value = newVal
+            }, 50)
         } else {
-            blockedJsonView.value = newVal;
+            blockedJsonView.value = newVal
         }
-    });
-});
+    })
+})
 
 async function fetchData() {
     await Promise.all([
         searchPaginated(props.indexUid, true),
         fetchIndexStats(props.indexUid),
-    ]);
+    ])
 }
-await fetchData();
+await fetchData()
 
-const dataView = ref<'JSON' | 'Table'>('JSON');
+const dataView = ref<'JSON' | 'Table'>('JSON')
 
 function handleClearSearchQuery() {
-    searchQuery.value = '';
-    searchPaginated(props.indexUid, true);
+    searchQuery.value = ''
+    searchPaginated(props.indexUid, true)
 }
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
-        fetchData();
-    });
+        fetchData()
+    })
 }
 
 // Sorting
@@ -87,52 +87,52 @@ type SortOptions = {
 }
 const sortMessage = computed(() => {
     if (sortableAttributes.value?.length) {
-        return 'Sort Documents';
+        return 'Sort Documents'
     }
-    return 'No sortable attributes available, please update the index settings';
-});
+    return 'No sortable attributes available, please update the index settings'
+})
 // Basic single sort, TODO: use Multiselect for multi-sort?
 const sortingOptions = computed(() => {
-    const options: SortOptions[] = [];
+    const options: SortOptions[] = []
     sortableAttributes.value?.forEach((attribute) => {
         options.push({
             value: [`${attribute}:asc`],
             label: `${attribute}:asc`,
-        });
+        })
         options.push({
             value: [`${attribute}:desc`],
             label: `${attribute}:desc`,
-        });
-    });
+        })
+    })
 
-    return options;
-});
+    return options
+})
 
 // Filtering
-const showFilteringDrawerOpen = ref(false);
+const showFilteringDrawerOpen = ref(false)
 
 // Create Drawer
-const showImportDocumentsDrawerOpen = ref(false);
+const showImportDocumentsDrawerOpen = ref(false)
 
 // Edit / Details Drawer
-const editDocumentDrawerOpen = ref(false);
-const currentDocument = ref<RecordAny | null>();
+const editDocumentDrawerOpen = ref(false)
+const currentDocument = ref<RecordAny | null>()
 function editDocument(document: RecordAny) {
-    currentDocument.value = document;
-    editDocumentDrawerOpen.value = true;
+    currentDocument.value = document
+    editDocumentDrawerOpen.value = true
 }
 function handleEditDrawerHidden() {
     if (!isSendingTask.value) {
         // delayed null reset to allow the drawer close animation to complete
         setTimeout(() => {
-            currentDocument.value = null;
-        }, 250);
+            currentDocument.value = null
+        }, 250)
     }
 }
 
 // DataTable context Menu
-const documentContextMenu = useTemplateRef('document-context-menu');
-const documentContextMenuItems = ref<MenuItem[]>([]);
+const documentContextMenu = useTemplateRef('document-context-menu')
+const documentContextMenuItems = ref<MenuItem[]>([])
 function toggleDocumentContextMenu(event: Event, document: RecordAny) {
     documentContextMenuItems.value = [
         {
@@ -148,44 +148,44 @@ function toggleDocumentContextMenu(event: Event, document: RecordAny) {
             lucideIconClass: 'text-red-500 dark:text-red-400',
             command: () => {
                 if (primaryKey.value) {
-                    handleDeleteDocument(document[primaryKey.value]);
+                    handleDeleteDocument(document[primaryKey.value])
                 }
             },
         },
-    ];
+    ]
     if (documentContextMenu.value && documentContextMenu.value?.$el) {
-        documentContextMenu.value.$el.toggle(event);
+        documentContextMenu.value.$el.toggle(event)
     }
 }
 
 // Popover
-const fieldDetail = ref<RecordAny | null>();
-const tableFieldDetailPopover = useTemplateRef('field-detail-popover');
+const fieldDetail = ref<RecordAny | null>()
+const tableFieldDetailPopover = useTemplateRef('field-detail-popover')
 function toggleTableFieldDetailPopover(event: Event, fieldName: string, fieldValue: RecordAny) {
     if (Array.isArray(fieldValue)) {
-        fieldDetail.value = {};
-        fieldDetail.value[fieldName] = fieldValue;
+        fieldDetail.value = {}
+        fieldDetail.value[fieldName] = fieldValue
     } else {
-        fieldDetail.value = fieldValue;
+        fieldDetail.value = fieldValue
     }
     if (tableFieldDetailPopover.value) {
-        tableFieldDetailPopover.value.toggle(event);
+        tableFieldDetailPopover.value.toggle(event)
     }
 }
 function handleFieldPopoverHidden() {
-    fieldDetail.value = null;
+    fieldDetail.value = null
 }
 
 watch(searchFilter, () => {
-    searchPaginated(props.indexUid, true);
-});
+    searchPaginated(props.indexUid, true)
+})
 
 onMounted(async () => {
     await Promise.all([
         fetchSortableAttributes(props.indexUid),
         fetchFilterableAttributes(props.indexUid),
-    ]);
-});
+    ])
+})
 </script>
 
 <template>

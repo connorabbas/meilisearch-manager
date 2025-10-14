@@ -1,44 +1,44 @@
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue';
-import { useKeys } from '@/composables/meilisearch/useKeys';
-import AppLayout from '@/layouts/AppLayout.vue';
-import Menu from '@/components/primevue/Menu.vue';
-import PageTitleSection from '@/components/PageTitleSection.vue';
-import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next';
-import type { Key } from 'meilisearch';
-import { formatDate, maskedApiKey } from '@/utils';
-import { useClipboard } from '@vueuse/core';
-import { useToast } from 'primevue';
-import type { MenuItem } from '@/types';
-import CreateKeyDrawer from '@/components/meilisearch/CreateKeyDrawer.vue';
-import EditKeyDrawer from '@/components/meilisearch/EditKeyDrawer.vue';
-import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue';
-import NotFoundMessage from '@/components/NotFoundMessage.vue';
+import { ref, useTemplateRef } from 'vue'
+import { useKeys } from '@/composables/meilisearch/useKeys'
+import AppLayout from '@/layouts/AppLayout.vue'
+import Menu from '@/components/primevue/Menu.vue'
+import PageTitleSection from '@/components/PageTitleSection.vue'
+import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import type { Key } from 'meilisearch'
+import { formatDate, maskedApiKey } from '@/utils'
+import { useClipboard } from '@vueuse/core'
+import { useToast } from 'primevue'
+import type { MenuItem } from '@/types'
+import CreateKeyDrawer from '@/components/meilisearch/CreateKeyDrawer.vue'
+import EditKeyDrawer from '@/components/meilisearch/EditKeyDrawer.vue'
+import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue'
+import NotFoundMessage from '@/components/NotFoundMessage.vue'
 
-const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }];
+const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }]
 
-const toast = useToast();
-const { isSupported: canCopy, copy } = useClipboard();
-const { keys, isFetching: isFetchingKeys, fetchAllKeys, confirmDeleteKey } = useKeys();
+const toast = useToast()
+const { isSupported: canCopy, copy } = useClipboard()
+const { keys, isFetching: isFetchingKeys, fetchAllKeys, confirmDeleteKey } = useKeys()
 
-await fetchAllKeys();
+await fetchAllKeys()
 
-const newKeyDrawerOpen = ref(false);
-const editKeyDrawerOpen = ref(false);
-const keyDetailsDrawerOpen = ref(false);
+const newKeyDrawerOpen = ref(false)
+const editKeyDrawerOpen = ref(false)
+const keyDetailsDrawerOpen = ref(false)
 
-const currentKey = ref<Key | null>();
+const currentKey = ref<Key | null>()
 function showKeyDetails(key: Key) {
-    currentKey.value = key;
-    keyDetailsDrawerOpen.value = true;
+    currentKey.value = key
+    keyDetailsDrawerOpen.value = true
 }
 function editKey(key: Key) {
-    currentKey.value = key;
-    editKeyDrawerOpen.value = true;
+    currentKey.value = key
+    editKeyDrawerOpen.value = true
 }
 
-const keyContextMenu = useTemplateRef('key-context-menu');
-const keyContextMenuItems = ref<MenuItem[]>([]);
+const keyContextMenu = useTemplateRef('key-context-menu')
+const keyContextMenuItems = ref<MenuItem[]>([])
 function toggleKeyContextMenu(event: Event, key: Key) {
     keyContextMenuItems.value = [
         {
@@ -63,31 +63,31 @@ function toggleKeyContextMenu(event: Event, key: Key) {
                         summary: 'API Key Deleted',
                         detail: `THe API Key: "${key.name}" was successfully deleted`,
                         life: 3000,
-                    });
-                    fetchAllKeys();
-                });
+                    })
+                    fetchAllKeys()
+                })
             },
         },
-    ];
+    ]
     if (keyContextMenu.value && keyContextMenu.value?.$el) {
-        keyContextMenu.value.$el.toggle(event);
+        keyContextMenu.value.$el.toggle(event)
     }
 }
 
 function resetCurrentKey() {
     // delayed null reset to allow the drawer close animation to complete
     setTimeout(() => {
-        currentKey.value = null;
-    }, 250);
+        currentKey.value = null
+    }, 250)
 }
 
 function copyApiKey(key: string) {
-    copy(key);
+    copy(key)
     toast.add({
         severity: 'success',
         summary: 'API key copied to clipboard',
         life: 3000,
-    });
+    })
 }
 </script>
 

@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useKeys } from '@/composables/meilisearch/useKeys';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import type { KeyCreation } from 'meilisearch';
-import { useToast } from 'primevue';
-import { CircleQuestionMark, Info } from 'lucide-vue-next';
-import { toRaw } from 'vue';
-import { keyActions } from '@/utils/data';
+import { computed, ref, watch } from 'vue'
+import { useKeys } from '@/composables/meilisearch/useKeys'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import type { KeyCreation } from 'meilisearch'
+import { useToast } from 'primevue'
+import { CircleQuestionMark, Info } from 'lucide-vue-next'
+import { toRaw } from 'vue'
+import { keyActions } from '@/utils/data'
 
-const drawerOpen = defineModel<boolean>({ default: false });
+const drawerOpen = defineModel<boolean>({ default: false })
 
-const emit = defineEmits(['hide', 'key-created']);
+const emit = defineEmits(['hide', 'key-created'])
 
-const toast = useToast();
-const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes();
-const { isLoading, createKey } = useKeys();
+const toast = useToast()
+const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes()
+const { isLoading, createKey } = useKeys()
 
 const indexOptions = computed(() => {
-    return (allIndexes.value) ? ['*'] : indexes.value.map((index) => index.uid);
-});
+    return (allIndexes.value) ? ['*'] : indexes.value.map((index) => index.uid)
+})
 const actionsOptions = computed(() => {
-    return (allActions.value) ? ['*'] : keyActions;
-});
+    return (allActions.value) ? ['*'] : keyActions
+})
 
-const defaultDate = new Date();
-defaultDate.setDate(defaultDate.getDate() + 1);
-defaultDate.setHours(0, 0, 0, 0);
+const defaultDate = new Date()
+defaultDate.setDate(defaultDate.getDate() + 1)
+defaultDate.setHours(0, 0, 0, 0)
 
 const emptyKey = {
     uid: undefined,
@@ -34,10 +34,10 @@ const emptyKey = {
     actions: [],
     indexes: [],
     expiresAt: null,
-};
-const newKey = ref<KeyCreation>(structuredClone(toRaw(emptyKey)));
-const allIndexes = ref(false);
-const allActions = ref(false);
+}
+const newKey = ref<KeyCreation>(structuredClone(toRaw(emptyKey)))
+const allIndexes = ref(false)
+const allActions = ref(false)
 function submitNewKey() {
     createKey(newKey.value).then(() => {
         toast.add({
@@ -45,42 +45,42 @@ function submitNewKey() {
             summary: 'API Key Created',
             detail: `The API key: "${newKey.value.name}" was successfully created`,
             life: 3000,
-        });
-        drawerOpen.value = false;
-        emit('key-created');
+        })
+        drawerOpen.value = false
+        emit('key-created')
     }).catch(() => {
         // TODO
-    });
+    })
 }
 
 function reset() {
-    newKey.value = structuredClone(toRaw(emptyKey));
-    allIndexes.value = false;
-    allActions.value = false;
+    newKey.value = structuredClone(toRaw(emptyKey))
+    allIndexes.value = false
+    allActions.value = false
 }
 
 function handleHideDrawer() {
-    reset();
-    emit('hide');
+    reset()
+    emit('hide')
 }
 
 watch(newKey, (newVal) => {
     if (newVal.uid === '') {
-        delete newKey.value.uid;
+        delete newKey.value.uid
     }
     if (newVal.name === '') {
-        delete newKey.value.name;
+        delete newKey.value.name
     }
     if (newVal.description === '') {
-        delete newKey.value.description;
+        delete newKey.value.description
     }
-}, { deep: true });
+}, { deep: true })
 watch(allIndexes, (newVal) => {
-    newKey.value.indexes = (newVal) ? ['*'] : [];
-});
+    newKey.value.indexes = (newVal) ? ['*'] : []
+})
 watch(allActions, (newVal) => {
-    newKey.value.actions = (newVal) ? ['*'] : [];
-});
+    newKey.value.actions = (newVal) ? ['*'] : []
+})
 </script>
 
 <template>

@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import progress from '@/utils/progress';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import { useToast } from 'primevue/usetoast';
+import { createRouter, createWebHistory } from 'vue-router'
+import progress from '@/utils/progress'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import { useToast } from 'primevue/usetoast'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.VITE_BASE_PATH),
@@ -17,9 +17,9 @@ const router = createRouter({
             name: 'new-instance',
             component: () => import('../views/NewInstance.vue'),
             beforeEnter: () => {
-                const meilisearchStore = useMeilisearchStore();
+                const meilisearchStore = useMeilisearchStore()
                 if (meilisearchStore.singleInstanceMode) {
-                    return { name: 'dashboard' };
+                    return { name: 'dashboard' }
                 }
             },
         },
@@ -83,9 +83,9 @@ const router = createRouter({
             name: 'connection-error',
             component: () => import('../views/error/MeilisearchConnection.vue'),
             beforeEnter: () => {
-                const meilisearchStore = useMeilisearchStore();
+                const meilisearchStore = useMeilisearchStore()
                 if (meilisearchStore.isConnected) {
-                    return { name: 'indexes' };
+                    return { name: 'indexes' }
                 }
             },
         },
@@ -95,17 +95,17 @@ const router = createRouter({
             component: () => import('../views/error/NotFound.vue'),
         },
     ],
-});
+})
 
-let progressTimer: number | null = null;
-let isAsyncComponentLoading = false;
+let progressTimer: number | null = null
+let isAsyncComponentLoading = false
 
 router.beforeEach(async (to, from) => {
-    const toast = useToast();
-    const meilisearchStore = useMeilisearchStore();
+    const toast = useToast()
+    const meilisearchStore = useMeilisearchStore()
     // TODO: 404 not working when no instance
     if (to.name === 'connection-error' || to.name === 'new-instance') {
-        return;
+        return
     }
     if (meilisearchStore.instances.length === 0) {
         toast.add({
@@ -113,53 +113,53 @@ router.beforeEach(async (to, from) => {
             summary: 'No Instances Found',
             detail: 'Please connect at least one Meilisearch instance',
             life: 7500,
-        });
-        return { name: 'new-instance' };
+        })
+        return { name: 'new-instance' }
     }
 
     if (progress.isStarted()) {
-        progress.done();
+        progress.done()
     }
     if (progressTimer) {
-        clearTimeout(progressTimer);
-        progressTimer = null;
+        clearTimeout(progressTimer)
+        progressTimer = null
     }
     if (to.path !== from.path) {
-        isAsyncComponentLoading = true;
+        isAsyncComponentLoading = true
         progressTimer = setTimeout(() => {
             if (isAsyncComponentLoading) {
-                progress.start();
+                progress.start()
             }
-            progressTimer = null;
-        }, 150);
+            progressTimer = null
+        }, 150)
     }
 
     try {
-        await meilisearchStore.connect();
+        await meilisearchStore.connect()
     } catch (err) {
-        console.error(err);
+        console.error(err)
     }
     if (!meilisearchStore.isConnected || meilisearchStore.connectionError) {
-        return { name: 'connection-error' };
+        return { name: 'connection-error' }
     }
-});
+})
 
 router.onError(() => {
-    isAsyncComponentLoading = false;
+    isAsyncComponentLoading = false
     if (progressTimer) {
-        clearTimeout(progressTimer);
-        progressTimer = null;
+        clearTimeout(progressTimer)
+        progressTimer = null
     }
-    progress.done();
-});
+    progress.done()
+})
 
 export function completeAsyncLoading() {
-    isAsyncComponentLoading = false;
+    isAsyncComponentLoading = false
     if (progressTimer) {
-        clearTimeout(progressTimer);
-        progressTimer = null;
+        clearTimeout(progressTimer)
+        progressTimer = null
     }
-    progress.done();
+    progress.done()
 }
 
-export default router;
+export default router

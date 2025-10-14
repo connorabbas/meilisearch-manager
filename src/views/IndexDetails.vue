@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { useStats } from '@/composables/meilisearch/useStats';
-import { formatDate, formatBytes } from '@/utils';
-import { Clock, Database, FileText, RefreshCw } from 'lucide-vue-next';
-import type { Index } from 'meilisearch';
+import { useStats } from '@/composables/meilisearch/useStats'
+import { formatDate, formatBytes } from '@/utils'
+import { Clock, Database, FileText, RefreshCw } from 'lucide-vue-next'
+import type { Index } from 'meilisearch'
 
 const props = defineProps<{
     indexUid: string,
     index: Index,
     fetching?: boolean,
-}>();
+}>()
 
-const emit = defineEmits(['refetch-index']);
+const emit = defineEmits(['refetch-index'])
 
-const { indexStats, isFetching, fetchIndexStats } = useStats();
+const { indexStats, isFetching, fetchIndexStats } = useStats()
 
-await fetchIndexStats(props.indexUid);
+await fetchIndexStats(props.indexUid)
 
 async function handleReload() {
-    emit('refetch-index');
-    fetchIndexStats(props.indexUid);
+    emit('refetch-index')
+    fetchIndexStats(props.indexUid)
 }
 </script>
 

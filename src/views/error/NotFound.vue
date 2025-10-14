@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { AlertTriangle, ArrowLeft } from 'lucide-vue-next';
-import Container from '@/components/Container.vue';
+import { AlertTriangle, ArrowLeft } from 'lucide-vue-next'
+import Container from '@/components/Container.vue'
 </script>
 
 <template>

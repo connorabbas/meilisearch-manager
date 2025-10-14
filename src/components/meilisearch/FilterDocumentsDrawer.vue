@@ -1,91 +1,91 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch';
-import { FacetHit, Filter, FilterableAttributes } from 'meilisearch';
-import { AlertTriangle } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue'
+import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch'
+import { FacetHit, Filter, FilterableAttributes } from 'meilisearch'
+import { AlertTriangle } from 'lucide-vue-next'
 
 const props = defineProps<{
     indexUid: string,
     filterableAttributes?: FilterableAttributes | null,
     searching?: boolean,
     totalHits?: number,
-}>();
+}>()
 
-const drawerOpen = defineModel<boolean>({ default: false });
-const filter = defineModel<Filter | null>('filter', { required: true });
+const drawerOpen = defineModel<boolean>({ default: false })
+const filter = defineModel<Filter | null>('filter', { required: true })
 
-const emit = defineEmits(['hide', 'searched']);
+const emit = defineEmits(['hide', 'searched'])
 
-const { searchFacetValues } = useFacetSearch();
+const { searchFacetValues } = useFacetSearch()
 
-const selectedAttributes = ref([]);
+const selectedAttributes = ref([])
 type FacetFilterGroup = {
     attribute: string,
     facetHits: FacetHit[],
     value: string[],
 }
-const facetFilters = ref<Record<string, FacetFilterGroup>>({});
-const facetFiltersEmpty = computed(() => Object.keys(facetFilters.value).length === 0);
+const facetFilters = ref<Record<string, FacetFilterGroup>>({})
+const facetFiltersEmpty = computed(() => Object.keys(facetFilters.value).length === 0)
 
 function handleHideDrawer() {
-    emit('hide');
+    emit('hide')
 }
 
 watch(selectedAttributes, async (newVal, oldVal) => {
-    const added = newVal.filter(item => !oldVal?.includes(item));
-    const removed = oldVal?.filter(item => !newVal.includes(item)) || [];
+    const added = newVal.filter(item => !oldVal?.includes(item))
+    const removed = oldVal?.filter(item => !newVal.includes(item)) || []
 
     // populate the facet filters when attributes are checked
     if (added.length > 0) {
         added.forEach(async (attributeName) => {
             const result = await searchFacetValues(props.indexUid, {
                 facetName: attributeName,
-            });
+            })
             facetFilters.value[attributeName] = {
                 attribute: attributeName,
                 facetHits: result?.facetHits ?? [],
                 value: [],
-            };
-            console.log(`fetching: ${attributeName} facet values`);
-        });
+            }
+            console.log(`fetching: ${attributeName} facet values`)
+        })
     }
 
     // remove facet filters when un-checked
     if (removed.length > 0) {
         removed.forEach((attributeName) => {
-            console.log(`Unchecked: ${attributeName}`);
-            delete facetFilters.value[attributeName];
-        });
+            console.log(`Unchecked: ${attributeName}`)
+            delete facetFilters.value[attributeName]
+        })
     }
-});
+})
 watch(facetFilters, (newVal) => {
     if (newVal && Object.keys(newVal).length > 0) {
-        const filterExpressions: string[] = [];
+        const filterExpressions: string[] = []
 
         Object.values(newVal).forEach((facetGroup) => {
             if (facetGroup.value.length > 0) {
                 // For each attribute with selected values, create OR conditions within parentheses
                 const attributeFilters = facetGroup.value
                     .map(value => `${facetGroup.attribute} = '${value}'`)
-                    .join(' OR ');
+                    .join(' OR ')
 
                 if (attributeFilters) {
-                    filterExpressions.push(`(${attributeFilters})`);
+                    filterExpressions.push(`(${attributeFilters})`)
                 }
             }
-        });
+        })
 
         // Join all attribute groups with AND
         const finalFilter = filterExpressions.length > 0
             ? filterExpressions.join(' AND ')
-            : null;
+            : null
 
-        filter.value = finalFilter;
-        console.log('Generated filter:', finalFilter);
+        filter.value = finalFilter
+        console.log('Generated filter:', finalFilter)
     } else {
-        filter.value = null;
+        filter.value = null
     }
-}, { deep: true });
+}, { deep: true })
 </script>
 
 <template>

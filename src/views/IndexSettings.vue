@@ -1,51 +1,51 @@
 <script setup lang="ts">
-import { ref, toRaw, watch } from 'vue';
-import { useSettings } from '../composables/meilisearch/useSettings';
-import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X } from 'lucide-vue-next';
-import { Mode } from 'vanilla-jsoneditor';
-import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue';
+import { ref, toRaw, watch } from 'vue'
+import { useSettings } from '../composables/meilisearch/useSettings'
+import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X } from 'lucide-vue-next'
+import { Mode } from 'vanilla-jsoneditor'
+import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue'
 
 const props = defineProps<{
     indexUid: string
-}>();
+}>()
 
-const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings();
+const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings()
 
-await fetchSettings(props.indexUid);
+await fetchSettings(props.indexUid)
 
-const originalSettings = structuredClone(toRaw(settings.value));
-const editMode = ref(false);
+const originalSettings = structuredClone(toRaw(settings.value))
+const editMode = ref(false)
 const toggleEditMode = () => {
     // if edit is canceled, reset to original value
     if (editMode.value) {
-        settings.value = originalSettings;
+        settings.value = originalSettings
     }
-    editMode.value = !editMode.value;
-};
+    editMode.value = !editMode.value
+}
 
-const invalidJsonMessage = 'Please correct the invalid settings JSON.';
-const jsonError = ref('');
+const invalidJsonMessage = 'Please correct the invalid settings JSON.'
+const jsonError = ref('')
 async function handleUpdateSettings() {
     if (!settings.value) {
-        return;
+        return
     }
     try {
-        const jsonString = JSON.stringify(settings.value);
-        JSON.parse(jsonString);
+        const jsonString = JSON.stringify(settings.value)
+        JSON.parse(jsonString)
     } catch (err) {
-        jsonError.value = invalidJsonMessage;
-        console.error("Error parsing JSON:", err);
-        return;
+        jsonError.value = invalidJsonMessage
+        console.error("Error parsing JSON:", err)
+        return
     }
 
     updateSettings(props.indexUid, settings.value).then(() => {
-        editMode.value = false;
-        fetchSettings(props.indexUid);
-    });
+        editMode.value = false
+        fetchSettings(props.indexUid)
+    })
 }
 watch(() => settings.value, (newVal) => {
-    jsonError.value = (newVal === undefined) ? invalidJsonMessage : '';
-});
+    jsonError.value = (newVal === undefined) ? invalidJsonMessage : ''
+})
 </script>
 
 <template>

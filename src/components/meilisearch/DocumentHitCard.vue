@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { looksLikeAnImageUrl } from '@/utils';
-import { Pencil, Trash2 } from 'lucide-vue-next';
-import type { Hit } from 'meilisearch';
-import ThemedJsonViewer from '../ThemedJsonViewer.vue';
+import { computed } from 'vue'
+import { looksLikeAnImageUrl } from '@/utils'
+import { Pencil, Trash2 } from 'lucide-vue-next'
+import type { Hit } from 'meilisearch'
+import ThemedJsonViewer from '../ThemedJsonViewer.vue'
 
 const props = defineProps<{
     primaryKey?: string,
     hit: Hit,
-}>();
+}>()
 
-defineEmits(['edit', 'delete']);
+defineEmits(['edit', 'delete'])
 
-const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) as string | null);
+const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) as string | null)
 </script>
 
 <template>

@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue';
-import SelectColorModeButton from '@/components/SelectColorModeButton.vue';
-import Popover from 'primevue/popover';
-import { SunMoon } from 'lucide-vue-next';
+import { computed, useTemplateRef } from 'vue'
+import SelectColorModeButton from '@/components/SelectColorModeButton.vue'
+import Popover from 'primevue/popover'
+import { SunMoon } from 'lucide-vue-next'
 
 const props = defineProps<{
     name: string,
     fixedPosition?: 'left' | 'right',
-}>();
+}>()
 
 type PopoverType = InstanceType<typeof Popover>;
-const popover = useTemplateRef<PopoverType>(props.name);
+const popover = useTemplateRef<PopoverType>(props.name)
 function togglePopover(event: Event) {
     if (popover.value) {
-        popover.value.toggle(event);
+        popover.value.toggle(event)
     }
 }
 
 const appendToId = computed(() => {
-    return props.name.replace(/[^a-zA-Z0-9]/g, '') + '_append';
-});
+    return props.name.replace(/[^a-zA-Z0-9]/g, '') + '_append'
+})
 
 const popoverPositionClasses = computed(() => {
-    let classes = '';
+    let classes = ''
     if (props?.fixedPosition) {
         switch (props?.fixedPosition) {
         case 'left':
-            classes = 'left-auto! top-0! left-0';
-            break;
+            classes = 'left-auto! top-0! left-0'
+            break
         case 'right':
-            classes = 'left-auto! top-0! right-0';
-            break;
+            classes = 'left-auto! top-0! right-0'
+            break
         default:
-            break;
+            break
         }
     }
 
-    return classes;
-});
+    return classes
+})
 </script>
 
 <template>

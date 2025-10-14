@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { Index } from 'meilisearch';
-import DeleteIndexDataDangerZone from '@/components/meilisearch/DeleteIndexDataDangerZone.vue';
-import UpdateIndexPrimaryKeyForm from '@/components/meilisearch/UpdateIndexPrimaryKeyForm.vue';
+import type { Index } from 'meilisearch'
+import DeleteIndexDataDangerZone from '@/components/meilisearch/DeleteIndexDataDangerZone.vue'
+import UpdateIndexPrimaryKeyForm from '@/components/meilisearch/UpdateIndexPrimaryKeyForm.vue'
 
 const props = defineProps<{
     indexUid: string,
     index: Index,
-}>();
+}>()
 
-defineEmits(['refetch-index']);
+defineEmits(['refetch-index'])
 </script>
 
 <template>

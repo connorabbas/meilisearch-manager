@@ -28,4 +28,4 @@ export const keyActions: string[] = [
     'webhooks.create',
     'webhooks.update',
     'webhooks.delete',
-];
+]

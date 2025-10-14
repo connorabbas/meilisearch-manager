@@ -1,40 +1,40 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import type { IndexOptions } from 'meilisearch';
+import { ref, watch } from 'vue'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import type { IndexOptions } from 'meilisearch'
 
-const drawerOpen = defineModel<boolean>({ default: false });
+const drawerOpen = defineModel<boolean>({ default: false })
 
-const emit = defineEmits(['hide', 'index-created']);
+const emit = defineEmits(['hide', 'index-created'])
 
-const { isSendingTask, createIndex } = useIndexes();
+const { isSendingTask, createIndex } = useIndexes()
 
-const uid = ref<string>('');
-const primaryKey = ref<string>();
+const uid = ref<string>('')
+const primaryKey = ref<string>()
 function submitNewIndex() {
     createIndex(uid.value, { primaryKey: primaryKey.value } as IndexOptions).then(() => {
-        drawerOpen.value = false;
-        emit('index-created');
+        drawerOpen.value = false
+        emit('index-created')
     }).catch(() => {
         // TODO
-    });
+    })
 }
 
 function reset() {
-    uid.value = '';
-    primaryKey.value = undefined;
+    uid.value = ''
+    primaryKey.value = undefined
 }
 
 function handleHideDrawer() {
-    reset();
-    emit('hide');
+    reset()
+    emit('hide')
 }
 
 watch(primaryKey, (newVal) => {
     if (newVal === '') {
-        primaryKey.value = undefined;
+        primaryKey.value = undefined
     }
-});
+})
 </script>
 
 <template>

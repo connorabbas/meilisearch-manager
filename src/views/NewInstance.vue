@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
-import { useMeilisearchStore } from '@/stores/meilisearch';
-import LogoLink from '@/components/LogoLink.vue';
-import Container from '@/components/Container.vue';
-import { Form, FormSubmitEvent } from '@primevue/forms';
-import { zodResolver } from '@primevue/forms/resolvers/zod';
-import { z } from 'zod';
-import { useRouter } from 'vue-router';
-import { useToast } from 'primevue';
-import { BookText, FolderGit2, LayoutDashboard } from 'lucide-vue-next';
+import { reactive } from 'vue'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import LogoLink from '@/components/LogoLink.vue'
+import Container from '@/components/Container.vue'
+import { Form, FormSubmitEvent } from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import { z } from 'zod'
+import { useRouter } from 'vue-router'
+import { useToast } from 'primevue'
+import { BookText, FolderGit2, LayoutDashboard } from 'lucide-vue-next'
 
-const meilisearchStore = useMeilisearchStore();
-const router = useRouter();
-const toast = useToast();
+const meilisearchStore = useMeilisearchStore()
+const router = useRouter()
+const toast = useToast()
 
 type NewInstanceForm = {
     name: string,
@@ -23,7 +23,7 @@ const formValues = reactive<NewInstanceForm>({
     name: '',
     host: '',
     apiKey: '',
-});
+})
 
 const resolver = zodResolver(
     z.object({
@@ -31,23 +31,23 @@ const resolver = zodResolver(
         host: z.string().min(1, { message: 'Please provide a host url/ip for your instance' }),
         apiKey: z.string().min(1, { message: 'Please provide a valid API key' }),
     })
-);
+)
 
 async function submitNewInstance(event: FormSubmitEvent) {
     if (event.valid) {
-        const formData = event.values as NewInstanceForm;
+        const formData = event.values as NewInstanceForm
         try {
-            await meilisearchStore.addInstance(formData);
+            await meilisearchStore.addInstance(formData)
             router.push({ name: 'dashboard' }).then(() => {
                 toast.add({
                     severity: 'success',
                     summary: 'Instance Added',
                     detail: `Successfully added MeiliSearch instance: ${formData.name}`,
                     life: 5000,
-                });
-            });
+                })
+            })
         } catch (err) {
-            console.error('Failed to add new Meilisearch instance...', err);
+            console.error('Failed to add new Meilisearch instance...', err)
         } finally {
             //
         }

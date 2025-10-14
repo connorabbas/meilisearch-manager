@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useIndexes } from '@/composables/meilisearch/useIndexes';
-import type { Index } from 'meilisearch';
-import InputErrors from '@/components/InputErrors.vue';
+import { ref, computed } from 'vue'
+import { useIndexes } from '@/composables/meilisearch/useIndexes'
+import type { Index } from 'meilisearch'
+import InputErrors from '@/components/InputErrors.vue'
 
 const props = defineProps<{
     indexUid: string,
     index: Index,
-}>();
+}>()
 
-const emit = defineEmits(['refetch-index']);
+const emit = defineEmits(['refetch-index'])
 
-const { error, isSendingTask, updateIndex } = useIndexes();
+const { error, isSendingTask, updateIndex } = useIndexes()
 
-const primaryKey = ref(props.index.primaryKey ?? '');
-const inputErrors = computed(() => error.value ? [error.value] : []);
+const primaryKey = ref(props.index.primaryKey ?? '')
+const inputErrors = computed(() => error.value ? [error.value] : [])
 
 function handleUpdatePrimaryKey() {
     // TODO: catch error?
     updateIndex(props.indexUid, primaryKey.value).then(() => {
-        emit('refetch-index');
-    });
+        emit('refetch-index')
+    })
 }
 
 </script>
