@@ -65,6 +65,7 @@ export function useDocuments() {
         }
     }
 
+    // example data: https://github.com/meilisearch/datasets/tree/main/datasets
     async function addOrUpdateDocumentsFromString(
         action: 'addition' | 'update',
         indexUid: string,
