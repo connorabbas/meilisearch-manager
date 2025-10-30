@@ -174,7 +174,6 @@ watch(uploadContentType, (newVal) => {
                                     :multiple="false"
                                     :previewWidth="0"
                                     :fileLimit="1"
-                                    :maxFileSize="20000000"
                                     :showUploadButton="false"
                                     :showCancelButton="false"
                                     :pt="{
