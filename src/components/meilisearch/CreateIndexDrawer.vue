@@ -16,7 +16,7 @@ function submitNewIndex() {
         drawerOpen.value = false
         emit('index-created')
     }).catch(() => {
-        // TODO
+        //
     })
 }
 

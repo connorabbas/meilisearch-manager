@@ -103,7 +103,6 @@ let isAsyncComponentLoading = false
 router.beforeEach(async (to, from) => {
     const toast = useToast()
     const meilisearchStore = useMeilisearchStore()
-    // TODO: 404 not working when no instance
     if (to.name === 'connection-error' || to.name === 'new-instance') {
         return
     }

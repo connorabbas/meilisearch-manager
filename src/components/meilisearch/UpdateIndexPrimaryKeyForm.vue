@@ -17,7 +17,6 @@ const primaryKey = ref(props.index.primaryKey ?? '')
 const inputErrors = computed(() => error.value ? [error.value] : [])
 
 function handleUpdatePrimaryKey() {
-    // TODO: catch error?
     updateIndex(props.indexUid, primaryKey.value).then(() => {
         emit('refetch-index')
     })

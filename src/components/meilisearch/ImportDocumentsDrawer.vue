@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef, watch } from 'vue'
 import type { ContentType, RecordAny } from 'meilisearch'
-import { Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next'
+import { AlertCircle, Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next'
 import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '../ThemedJsonEditor.vue'
 import { useDocuments } from '@/composables/meilisearch/useDocuments'
@@ -18,9 +18,8 @@ const emit = defineEmits(['hide', 'documents-imported'])
 
 const drawerOpen = defineModel<boolean>({ default: false })
 
-const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask } = useDocuments()
+const { addOrUpdateDocuments, addOrUpdateDocumentsFromString, isSendingTask, error } = useDocuments()
 
-// TODO: empty record with primary key set
 const newDocuments = ref<RecordAny[]>([])
 const newDocumentsAsString = ref('')
 
@@ -50,7 +49,11 @@ function handleUploaderReset() {
     fileUploaderChanged.value++
 }
 
+const jsonError = ref('')
 const btnDisabled = computed(() => {
+    if (jsonError.value) {
+        return true
+    }
     if (importMethod.value === 'upload') {
         return newDocumentsAsString.value?.length === 0
     } else if (importMethod.value === 'manual') {
@@ -89,6 +92,13 @@ function handleHidden() {
     reset()
 }
 
+watch(() => newDocuments.value, (newVal) => {
+    if (importMethod.value === 'manual') {
+        const invalidJsonMessage = 'Please correct the invalid documents JSON.'
+        jsonError.value = (newVal === undefined) ? invalidJsonMessage : ''
+    }
+})
+
 watch(uploadContentType, (newVal) => {
     if (newVal && fileUploader.value) {
         handleUploaderReset()
@@ -118,7 +128,6 @@ watch(uploadContentType, (newVal) => {
                     optionValue="value"
                 />
             </div>
-            <!-- TODO: error message -->
             <Message severity="info">
                 <template #icon>
                     <Info />
@@ -127,13 +136,23 @@ watch(uploadContentType, (newVal) => {
                     class="text-inherit"
                     href="https://www.meilisearch.com/docs/reference/api/documents#add-or-replace-documents"
                     target="_blank"
-                >add or
-                    replace</a> vs. <a
+                >
+                    add or replace</a> vs. <a
                     class="text-inherit"
                     href="https://www.meilisearch.com/docs/reference/api/documents#add-or-update-documents"
                     target="_blank"
-                >add or
-                    update</a> functionality.
+                >
+                    add or update</a> functionality.
+            </Message>
+            <Message
+                v-if="error"
+                severity="error"
+                :closable="false"
+            >
+                <template #icon>
+                    <AlertCircle />
+                </template>
+                <span class="font-bold">Error importing documents:</span> {{ error }}
             </Message>
             <div>
                 <Tabs v-model:value="importMethod">
@@ -153,7 +172,6 @@ watch(uploadContentType, (newVal) => {
                     </TabList>
                     <TabPanels class="p-0 pt-4">
                         <TabPanel value="upload">
-                            <!-- TODO: https://primevue.org/progressbar/#dynamic -->
                             <div class="flex flex-col gap-4">
                                 <Message
                                     v-if="uploadContentType === 'text/csv'"
@@ -226,12 +244,22 @@ watch(uploadContentType, (newVal) => {
                             </div>
                         </TabPanel>
                         <TabPanel value="manual">
-                            <ThemedJsonEditor
-                                v-model="newDocuments"
-                                :mode="Mode.text"
-                                :main-menu-bar="false"
-                                :stringified="false"
-                            />
+                            <div class="flex flex-col gap-4">
+                                <div v-if="jsonError">
+                                    <Message severity="error">
+                                        <template #icon>
+                                            <AlertCircle />
+                                        </template>
+                                        {{ jsonError }}
+                                    </Message>
+                                </div>
+                                <ThemedJsonEditor
+                                    v-model="newDocuments"
+                                    :mode="Mode.text"
+                                    :main-menu-bar="false"
+                                    :stringified="false"
+                                />
+                            </div>
                         </TabPanel>
                     </TabPanels>
                 </Tabs>

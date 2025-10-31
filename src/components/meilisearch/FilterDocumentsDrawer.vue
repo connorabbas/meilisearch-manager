@@ -46,14 +46,12 @@ watch(selectedAttributes, async (newVal, oldVal) => {
                 facetHits: result?.facetHits ?? [],
                 value: [],
             }
-            console.log(`fetching: ${attributeName} facet values`)
         })
     }
 
     // remove facet filters when un-checked
     if (removed.length > 0) {
         removed.forEach((attributeName) => {
-            console.log(`Unchecked: ${attributeName}`)
             delete facetFilters.value[attributeName]
         })
     }
@@ -81,7 +79,6 @@ watch(facetFilters, (newVal) => {
             : null
 
         filter.value = finalFilter
-        console.log('Generated filter:', finalFilter)
     } else {
         filter.value = null
     }
@@ -137,7 +134,6 @@ watch(facetFilters, (newVal) => {
                 >
                     <label :for="`${facetFilter.attribute}_id`">{{ facetFilter.attribute }}</label>
                     <div class="relative">
-                        <!-- TODO: close button to remove the facet filter -->
                         <MultiSelect
                             v-model="facetFilters[facetFilter.attribute].value"
                             :options="facetFilter.facetHits"

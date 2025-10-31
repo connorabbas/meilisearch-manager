@@ -68,7 +68,6 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
             await conn.health()
             client.value = conn
             currentInstanceId.value = targetId
-            // TODO: throw error or set connectionError.value if 400 level response
             return conn
         } catch (err) {
             client.value = null

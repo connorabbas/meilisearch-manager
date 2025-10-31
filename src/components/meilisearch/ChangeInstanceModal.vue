@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Plus } from 'lucide-vue-next'
 
 const modalOpen = defineModel<boolean>({ default: false })
 
+const route = useRoute()
 const router = useRouter()
 const meilisearchStore = useMeilisearchStore()
 
@@ -15,8 +16,7 @@ async function handleChangeInstance() {
     if (currentInstanceId.value) {
         meilisearchStore.setCurrent(currentInstanceId.value)
         modalOpen.value = false
-        await router.push({ name: 'dashboard' })
-        router.go(0)
+        await router.push(route.name === 'dashboard' ? { name: 'indexes' } : { name: 'dashboard' })
     }
 }
 </script>

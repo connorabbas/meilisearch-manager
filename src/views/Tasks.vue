@@ -32,9 +32,6 @@ function showTask(task: Task) {
     showTaskDrawerOpen.value = true
 }
 
-// TODO: poll for new tasks
-// TODO: https://vueuse.org/core/useUrlSearchParams/
-// url params for route redirect from index page tasks link, or use qs package?
 watch(tasksParams, (newValue) => {
     // Unset array typed properties if they have no values, to prevent bad query results
     if (newValue?.statuses?.length === 0) {
