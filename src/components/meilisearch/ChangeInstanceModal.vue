@@ -13,7 +13,6 @@ const meilisearchStore = useMeilisearchStore()
 const currentInstanceId = ref(meilisearchStore.currentInstance?.id)
 
 async function handleChangeInstance() {
-    console.log(route.name)
     if (currentInstanceId.value) {
         meilisearchStore.setCurrent(currentInstanceId.value)
         modalOpen.value = false
