@@ -137,7 +137,6 @@ watch(facetFilters, (newVal) => {
                 >
                     <label :for="`${facetFilter.attribute}_id`">{{ facetFilter.attribute }}</label>
                     <div class="relative">
-                        <!-- TODO: close button to remove the facet filter -->
                         <MultiSelect
                             v-model="facetFilters[facetFilter.attribute].value"
                             :options="facetFilter.facetHits"

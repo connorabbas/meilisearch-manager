@@ -40,7 +40,7 @@ function saveNewKey() {
         drawerOpen.value = false
         emit('key-updated')
     }).catch(() => {
-        // TODO
+        //
     })
 }
 
