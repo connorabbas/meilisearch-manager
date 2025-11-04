@@ -67,7 +67,7 @@ async function submitNewInstance(event: FormSubmitEvent) {
             >
                 <template #title>
                     <div class="text-center">
-                        Meilisearch Dashboard
+                        Meilisearch Manager
                     </div>
                 </template>
                 <template #subtitle>
