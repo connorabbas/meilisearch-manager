@@ -33,7 +33,7 @@ app.use(PrimeVue, {
             darkModeSelector: '.dark',
             cssLayer: {
                 name: 'primevue',
-                order: 'theme, base, primevue, utilities',
+                order: 'theme, base, primevue',
             },
         },
     },

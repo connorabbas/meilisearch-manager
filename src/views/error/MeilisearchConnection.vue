@@ -81,7 +81,8 @@ const menuItems: MenuItem[] = [
                                 >
                                     <PopupMenuButton
                                         name="failed-connection-dd"
-                                        button-label="Instance Options"
+                                        severity="secondary"
+                                        label="Instance Options"
                                         :menu-items="menuItems"
                                     />
                                 </div>

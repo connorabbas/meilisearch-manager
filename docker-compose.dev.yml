@@ -15,6 +15,35 @@ services:
       - "traefik.http.services.meilisearch-manager.loadbalancer.server.port=${VITE_APP_PORT:-5173}"
     networks:
       - proxy
+  
+  meilisearch:
+    image: "getmeili/meilisearch:latest"
+    ports:
+      - "${FORWARD_MEILISEARCH_PORT:-7700}:7700"
+    environment:
+      MEILI_NO_ANALYTICS: "${MEILISEARCH_NO_ANALYTICS:-true}"
+      MEILI_MASTER_KEY: '${MEILISEARCH_MASTER_KEY:-masterKey}'
+      MEILI_ENV: development
+    volumes:
+      - "meilisearch-data:/meili_data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.meilisearch-manager-test-instance.rule=Host(`test-instance.meilisearch-manager.localhost`)"
+      - "traefik.http.services.meilisearch-manager-test-instance.server.port=7700"
+    networks:
+      - proxy
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - "--no-verbose"
+        - "--spider"
+        - "http://127.0.0.1:7700/health"
+      retries: 3
+      timeout: 5s
+
+volumes:
+  meilisearch-data:
 
 networks:
   proxy: # setup in separate container
