@@ -64,10 +64,12 @@ onUnmounted(() => {
                     <PopupMenuButton
                         v-else
                         name="mobile-meili-instance-dd"
+                        severity="secondary"
+                        size="large"
                         :menu-items="meilisearchInstanceMenuItems"
-                        :button-label="currentMeilisearchIntanceName"
+                        :label="currentMeilisearchIntanceName"
                     >
-                        <template #toggleIcon>
+                        <template #icon>
                             <ChevronsUpDown />
                         </template>
                     </PopupMenuButton>
@@ -109,10 +111,11 @@ onUnmounted(() => {
                                         />
                                         <PopupMenuButton
                                             name="desktop-meili-instance-dd"
-                                            button-variant="text"
-                                            fixed-position="right"
+                                            side="right"
+                                            severity="secondary"
                                             :menu-items="meilisearchInstanceMenuItems"
-                                            :button-label="currentMeilisearchIntanceName"
+                                            :label="currentMeilisearchIntanceName"
+                                            text
                                         />
                                     </template>
                                 </div>

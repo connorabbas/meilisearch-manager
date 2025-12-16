@@ -15,7 +15,7 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
-    "@primeuix/themes": "^1.2.3",
+    "@primeuix/themes": "^2.0.0",
     "@primevue/forms": "^4.3.9",
     "@tailwindcss/vite": "^4.1.12",
     "@types/lodash": "^4.17.20",
@@ -39,7 +39,7 @@
     "zod": "^4.1.8"
   },
   "devDependencies": {
-    "@primevue/auto-import-resolver": "^4.3.9",
+    "@primevue/auto-import-resolver": "^4.5.0",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.16.5",
     "@vitejs/plugin-vue": "^6.0.1",

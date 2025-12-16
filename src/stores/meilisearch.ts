@@ -116,6 +116,7 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
             if (!currentInstanceId.value) {
                 currentInstanceId.value = id
             }
+            setCurrent(id)
             return id
         } catch (err) {
             toast.add({
