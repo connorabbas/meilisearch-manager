@@ -5,7 +5,7 @@ import type { Index, RecordAny } from 'meilisearch'
 //import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
 import DocumentHitJsonRow from '@/components/meilisearch/DocumentHitJsonRow.vue'
 import NotFoundMessage from '@/components/NotFoundMessage.vue'
-import Menu from '@/components/primevue/Menu.vue'
+import Menu from '@/components/router-link-menus/Menu.vue'
 import { useStats } from '@/composables/meilisearch/useStats'
 import { looksLikeAnImageUrl } from '@/utils'
 import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'

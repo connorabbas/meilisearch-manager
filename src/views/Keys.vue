@@ -2,7 +2,7 @@
 import { ref, useTemplateRef } from 'vue'
 import { useKeys } from '@/composables/meilisearch/useKeys'
 import AppLayout from '@/layouts/AppLayout.vue'
-import Menu from '@/components/primevue/Menu.vue'
+import Menu from '@/components/router-link-menus/Menu.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import type { Key } from 'meilisearch'

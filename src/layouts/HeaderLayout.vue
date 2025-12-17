@@ -7,9 +7,9 @@ import { ChevronsUpDown, Menu as MenuIcon } from 'lucide-vue-next'
 import Container from '@/components/Container.vue'
 import PopupMenuButton from '@/components/PopupMenuButton.vue'
 import LogoLink from '@/components/LogoLink.vue'
-import Menubar from '@/components/primevue/Menubar.vue'
-import PanelMenu from '@/components/primevue/PanelMenu.vue'
-import Breadcrumb from '@/components/primevue/Breadcrumb.vue'
+import Menubar from '@/components/router-link-menus/Menubar.vue'
+import PanelMenu from '@/components/router-link-menus/PanelMenu.vue'
+import Breadcrumb from '@/components/router-link-menus/Breadcrumb.vue'
 import type { MenuItem } from '@/types'
 
 const props = withDefaults(defineProps<{
