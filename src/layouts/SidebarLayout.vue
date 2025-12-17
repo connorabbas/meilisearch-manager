@@ -3,8 +3,8 @@ import { Menu as MenuIcon } from 'lucide-vue-next'
 import { useAppLayout } from '@/composables/useAppLayout'
 import Container from '@/components/Container.vue'
 import LogoLink from '@/components/LogoLink.vue'
-import PanelMenu from '@/components/primevue/PanelMenu.vue'
-import Breadcrumb from '@/components/primevue/Breadcrumb.vue'
+import PanelMenu from '@/components/router-link-menus/PanelMenu.vue'
+import Breadcrumb from '@/components/router-link-menus/Breadcrumb.vue'
 import type { MenuItem } from '@/types'
 
 const props = withDefaults(defineProps<{
