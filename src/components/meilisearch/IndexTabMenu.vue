@@ -12,13 +12,12 @@ const items = ref([
     { route: { name: 'index-documents', params: { indexUid: props.indexUid } }, label: 'Documents', icon: FileText },
     { route: { name: 'index-settings', params: { indexUid: props.indexUid } }, label: 'Settings', icon: Settings },
     { route: { name: 'edit-index', params: { indexUid: props.indexUid } }, label: 'Edit', icon: Pencil },
-
 ])
 </script>
 
 <template>
     <Tabs :value="props.currentRouteName">
-        <TabList :pt="{ tabList: { class: '[background:transparent]!' } }">
+        <TabList class="[background:transparent]!">
             <RouterLink
                 v-for="tab in items"
                 v-slot="{ href, navigate }"
