@@ -102,7 +102,7 @@ watch(facetFilters, (newVal) => {
                 severity="warn"
             >
                 <template #icon>
-                    <AlertTriangle class="size-[22px]!" />
+                    <AlertTriangle />
                 </template>
                 No facets available, please update the "filterableAttributes" index setting.
             </Message>

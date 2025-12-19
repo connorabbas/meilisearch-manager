@@ -179,7 +179,7 @@ watch(uploadContentType, (newVal) => {
                                     pt:content:class="items-start"
                                 >
                                     <template #icon>
-                                        <TriangleAlert class="text-base! size-[22px]!" />
+                                        <TriangleAlert class="text-base!" />
                                     </template>
                                     <span class="font-bold">Warning:</span>
                                     CSV uploads may not handle arrays and nested object structures correctly, this
