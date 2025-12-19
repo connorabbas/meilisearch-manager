@@ -105,7 +105,7 @@ watch(() => settings.value, (newVal) => {
                             pt:content:class="items-start"
                         >
                             <template #icon>
-                                <TriangleAlert class="size-[22px]!" />
+                                <TriangleAlert />
                             </template>
                             <span class="font-bold">Warning:</span> Updating distinct attributes, filterable attributes,
                             searchable attributes, sortable attributes, and stop words will re-index all the documents
