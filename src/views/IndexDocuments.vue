@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useSearch } from '@/composables/meilisearch/useSearch'
 import type { Index, RecordAny } from 'meilisearch'
 //import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
@@ -8,7 +9,7 @@ import NotFoundMessage from '@/components/NotFoundMessage.vue'
 import Menu from '@/components/router-link-menus/Menu.vue'
 import { useStats } from '@/composables/meilisearch/useStats'
 import { looksLikeAnImageUrl } from '@/utils'
-import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
+import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
 import type { MenuItem } from '@/types'
 import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue'
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue'
@@ -70,10 +71,18 @@ await fetchData()
 
 const dataView = ref<'JSON' | 'Table'>('JSON')
 
-function handleClearSearchQuery() {
-    searchQuery.value = ''
+// Search
+const debouncedSearch = useDebounceFn(() => {
     searchPaginated(props.indexUid, true)
-}
+}, 300)
+watch(searchQuery, (newValue) => {
+    if (newValue) {
+        debouncedSearch()
+    } else if (newValue === '') {
+        searchPaginated(props.indexUid, true)
+    }
+})
+
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
         fetchData()
@@ -229,35 +238,18 @@ onMounted(async () => {
                 <template #content>
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="grow">
-                            <InputGroup>
-                                <!-- TODO: debounced @input search -->
+                            <IconField class="flex-1">
+                                <InputIcon>
+                                    <Search />
+                                </InputIcon>
                                 <InputText
                                     v-model="searchQuery"
                                     placeholder="search query"
                                     autofocus
+                                    fluid
                                     @keyup.enter="searchPaginated(props.indexUid, true)"
                                 />
-                                <Button
-                                    v-if="searchQuery"
-                                    v-tooltip="'Clear search query'"
-                                    severity="secondary"
-                                    outlined
-                                    @click="handleClearSearchQuery"
-                                >
-                                    <template #icon>
-                                        <X />
-                                    </template>
-                                </Button>
-                                <Button
-                                    severity="secondary"
-                                    outlined
-                                    @click="searchPaginated(props.indexUid, true)"
-                                >
-                                    <template #icon>
-                                        <Search />
-                                    </template>
-                                </Button>
-                            </InputGroup>
+                            </IconField>
                         </div>
                         <div class="flex justify-end gap-4">
                             <div>
