@@ -28,8 +28,20 @@
             "@/*": [
                 "./src/*"
             ],
+            "primevue": [
+                "./node_modules/primevue/src/index.js"
+            ],
             "primevue/*": [
                 "./node_modules/primevue/src/*"
+            ],
+            "primevue/config": [
+                "./node_modules/primevue/src/config/index.js"
+            ],
+            "primevue/usetoast": [
+                "./node_modules/primevue/src/usetoast/index.js"
+            ],
+            "primevue/useconfirm": [
+                "./node_modules/primevue/src/useconfirm/index.js"
             ]
         },
     }
