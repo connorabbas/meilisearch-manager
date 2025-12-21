@@ -27,6 +27,9 @@
         "paths": {
             "@/*": [
                 "./src/*"
+            ],
+            "primevue/*": [
+                "./node_modules/primevue/src/*"
             ]
         },
     }

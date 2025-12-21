@@ -8,6 +8,7 @@ services:
     working_dir: /workspace
     volumes:
       - '.:/workspace'
+      - '../primevue/packages/primevue:/workspace/node_modules/primevue'
     tty: true
     labels:
       - "traefik.enable=true"

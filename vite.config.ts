@@ -33,7 +33,12 @@ export default defineConfig(({ mode }) => {
         resolve: {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url)),
+                'primevue': fileURLToPath(new URL('./node_modules/primevue/src', import.meta.url)),
+                '^primevue/(.*)$': fileURLToPath(new URL('./node_modules/primevue/src/$1', import.meta.url)),
             },
+        },
+        optimizeDeps: {
+            exclude: ['primevue'] // Forces Vite to pull from the bind mount, not cache
         },
         server: {
             host: true,
