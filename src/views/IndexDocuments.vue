@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useSearch } from '@/composables/meilisearch/useSearch'
 import type { Index, RecordAny } from 'meilisearch'
@@ -45,21 +45,6 @@ const {
     searchPaginated,
     handlePageEvent,
 } = useSearch()
-
-// Add delay to blocked UI, because the meiliclient is too fast...
-// https://github.com/primefaces/primevue/issues/7817
-const blockedJsonView = ref(false)
-watch(isSearching, (newVal) => {
-    nextTick(() => {
-        if (!newVal) {
-            setTimeout(() => {
-                blockedJsonView.value = newVal
-            }, 50)
-        } else {
-            blockedJsonView.value = newVal
-        }
-    })
-})
 
 async function fetchData() {
     await Promise.all([
@@ -424,64 +409,59 @@ onMounted(async () => {
                     </DataTable>
                 </template>
             </Card>
-            <!-- Grid View -->
+            <!-- JSON View -->
             <div
                 v-show="dataView === 'JSON'"
                 class="relative"
             >
-                <BlockUI
-                    :blocked="blockedJsonView"
-                    pt:mask:class="z-1!"
-                >
-                    <div class="space-y-4">
-                        <div v-if="!searchResults?.hits.length && isSearching">
-                            <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
-                                <ProgressSpinner
-                                    pt:root:class="h-15"
-                                    strokeWidth="4"
-                                    animationDuration=".5s"
-                                />
-                                <div class="text-sm text-muted-color">
-                                    Loading Documents...
-                                </div>
+                <div class="space-y-4">
+                    <div v-if="!searchResults?.hits.length && isSearching">
+                        <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
+                            <ProgressSpinner
+                                pt:root:class="h-15"
+                                strokeWidth="4"
+                                animationDuration=".5s"
+                            />
+                            <div class="text-sm text-muted-color">
+                                Loading Documents...
                             </div>
                         </div>
+                    </div>
+                    <div
+                        v-else-if="searchResults?.hits.length"
+                        class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+                    >
+                        <!-- When using card -->
+                        <!-- sm:col-span-6 lg:col-span-3 -->
                         <div
-                            v-else-if="searchResults?.hits.length"
-                            class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+                            v-for="hit, hitIndex in searchResults.hits"
+                            :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
+                            class="col-span-12"
                         >
-                            <!-- When using card -->
-                            <!-- sm:col-span-6 lg:col-span-3 -->
-                            <div
-                                v-for="hit, hitIndex in searchResults.hits"
-                                :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
-                                class="col-span-12"
-                            >
-                                <DocumentHitJsonRow
-                                    :hit
-                                    :primary-key="primaryKey"
-                                    @edit="editDocument"
-                                    @delete="handleDeleteDocument"
-                                />
-                            </div>
-                        </div>
-                        <div v-else-if="!searchResults?.hits.length && !isSearching">
-                            <NotFoundMessage subject="Document" />
-                        </div>
-                        <div v-if="searchResults?.hits.length">
-                            <Paginator
-                                :rows="perPage"
-                                :first="firstDatasetIndex"
-                                :totalRecords="searchResults?.estimatedTotalHits"
-                                :rowsPerPageOptions="[20, 50, 100]"
-                                pt:root:class="shadow-sm border dynamic-border rounded-xl"
-                                template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                                @page="handlePageEvent($event, () => searchPaginated(props.indexUid))"
+                            <DocumentHitJsonRow
+                                :hit
+                                :primary-key="primaryKey"
+                                @edit="editDocument"
+                                @delete="handleDeleteDocument"
                             />
                         </div>
                     </div>
-                </BlockUI>
+                    <div v-else-if="!searchResults?.hits.length && !isSearching">
+                        <NotFoundMessage subject="Document" />
+                    </div>
+                    <div v-if="searchResults?.hits.length">
+                        <Paginator
+                            :rows="perPage"
+                            :first="firstDatasetIndex"
+                            :totalRecords="searchResults?.estimatedTotalHits"
+                            :rowsPerPageOptions="[20, 50, 100]"
+                            pt:root:class="shadow-sm border dynamic-border rounded-xl"
+                            template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                            @page="handlePageEvent($event, () => searchPaginated(props.indexUid))"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </div>
