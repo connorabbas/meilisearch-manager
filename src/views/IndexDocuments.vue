@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useSearch } from '@/composables/meilisearch/useSearch'
 import type { Index, RecordAny } from 'meilisearch'
 //import DocumentHitCard from '@/components/meilisearch/DocumentHitCard.vue';
@@ -8,7 +9,7 @@ import NotFoundMessage from '@/components/NotFoundMessage.vue'
 import Menu from '@/components/router-link-menus/Menu.vue'
 import { useStats } from '@/composables/meilisearch/useStats'
 import { looksLikeAnImageUrl } from '@/utils'
-import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
+import { EllipsisVertical, Funnel, Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
 import type { MenuItem } from '@/types'
 import ImportDocumentsDrawer from '@/components/meilisearch/ImportDocumentsDrawer.vue'
 import EditDocumentDrawer from '@/components/meilisearch/EditDocumentDrawer.vue'
@@ -45,21 +46,6 @@ const {
     handlePageEvent,
 } = useSearch()
 
-// Add delay to blocked UI, because the meiliclient is too fast...
-// https://github.com/primefaces/primevue/issues/7817
-const blockedJsonView = ref(false)
-watch(isSearching, (newVal) => {
-    nextTick(() => {
-        if (!newVal) {
-            setTimeout(() => {
-                blockedJsonView.value = newVal
-            }, 50)
-        } else {
-            blockedJsonView.value = newVal
-        }
-    })
-})
-
 async function fetchData() {
     await Promise.all([
         searchPaginated(props.indexUid, true),
@@ -70,10 +56,18 @@ await fetchData()
 
 const dataView = ref<'JSON' | 'Table'>('JSON')
 
-function handleClearSearchQuery() {
-    searchQuery.value = ''
+// Search
+const debouncedSearch = useDebounceFn(() => {
     searchPaginated(props.indexUid, true)
-}
+}, 300)
+watch(searchQuery, (newValue) => {
+    if (newValue) {
+        debouncedSearch()
+    } else if (newValue === '') {
+        searchPaginated(props.indexUid, true)
+    }
+})
+
 function handleDeleteDocument(documentId: string | number) {
     confirmDeleteDocument(props.indexUid, documentId, () => {
         fetchData()
@@ -229,35 +223,18 @@ onMounted(async () => {
                 <template #content>
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="grow">
-                            <InputGroup>
-                                <!-- TODO: debounced @input search -->
+                            <IconField class="flex-1">
+                                <InputIcon>
+                                    <Search />
+                                </InputIcon>
                                 <InputText
                                     v-model="searchQuery"
                                     placeholder="search query"
                                     autofocus
+                                    fluid
                                     @keyup.enter="searchPaginated(props.indexUid, true)"
                                 />
-                                <Button
-                                    v-if="searchQuery"
-                                    v-tooltip="'Clear search query'"
-                                    severity="secondary"
-                                    outlined
-                                    @click="handleClearSearchQuery"
-                                >
-                                    <template #icon>
-                                        <X />
-                                    </template>
-                                </Button>
-                                <Button
-                                    severity="secondary"
-                                    outlined
-                                    @click="searchPaginated(props.indexUid, true)"
-                                >
-                                    <template #icon>
-                                        <Search />
-                                    </template>
-                                </Button>
-                            </InputGroup>
+                            </IconField>
                         </div>
                         <div class="flex justify-end gap-4">
                             <div>
@@ -432,64 +409,59 @@ onMounted(async () => {
                     </DataTable>
                 </template>
             </Card>
-            <!-- Grid View -->
+            <!-- JSON View -->
             <div
                 v-show="dataView === 'JSON'"
                 class="relative"
             >
-                <BlockUI
-                    :blocked="blockedJsonView"
-                    pt:mask:class="z-1!"
-                >
-                    <div class="space-y-4">
-                        <div v-if="!searchResults?.hits.length && isSearching">
-                            <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
-                                <ProgressSpinner
-                                    pt:root:class="h-15"
-                                    strokeWidth="4"
-                                    animationDuration=".5s"
-                                />
-                                <div class="text-sm text-muted-color">
-                                    Loading Documents...
-                                </div>
+                <div class="space-y-4">
+                    <div v-if="!searchResults?.hits.length && isSearching">
+                        <div class="h-full flex flex-col items-center justify-center p-8 gap-4">
+                            <ProgressSpinner
+                                pt:root:class="h-15"
+                                strokeWidth="4"
+                                animationDuration=".5s"
+                            />
+                            <div class="text-sm text-muted-color">
+                                Loading Documents...
                             </div>
                         </div>
+                    </div>
+                    <div
+                        v-else-if="searchResults?.hits.length"
+                        class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+                    >
+                        <!-- When using card -->
+                        <!-- sm:col-span-6 lg:col-span-3 -->
                         <div
-                            v-else-if="searchResults?.hits.length"
-                            class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+                            v-for="hit, hitIndex in searchResults.hits"
+                            :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
+                            class="col-span-12"
                         >
-                            <!-- When using card -->
-                            <!-- sm:col-span-6 lg:col-span-3 -->
-                            <div
-                                v-for="hit, hitIndex in searchResults.hits"
-                                :key="(primaryKey && hit[primaryKey]) ?? hitIndex"
-                                class="col-span-12"
-                            >
-                                <DocumentHitJsonRow
-                                    :hit
-                                    :primary-key="primaryKey"
-                                    @edit="editDocument"
-                                    @delete="handleDeleteDocument"
-                                />
-                            </div>
-                        </div>
-                        <div v-else-if="!searchResults?.hits.length && !isSearching">
-                            <NotFoundMessage subject="Document" />
-                        </div>
-                        <div v-if="searchResults?.hits.length">
-                            <Paginator
-                                :rows="perPage"
-                                :first="firstDatasetIndex"
-                                :totalRecords="searchResults?.estimatedTotalHits"
-                                :rowsPerPageOptions="[20, 50, 100]"
-                                pt:root:class="shadow-sm border dynamic-border rounded-xl"
-                                template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                                @page="handlePageEvent($event, () => searchPaginated(props.indexUid))"
+                            <DocumentHitJsonRow
+                                :hit
+                                :primary-key="primaryKey"
+                                @edit="editDocument"
+                                @delete="handleDeleteDocument"
                             />
                         </div>
                     </div>
-                </BlockUI>
+                    <div v-else-if="!searchResults?.hits.length && !isSearching">
+                        <NotFoundMessage subject="Document" />
+                    </div>
+                    <div v-if="searchResults?.hits.length">
+                        <Paginator
+                            :rows="perPage"
+                            :first="firstDatasetIndex"
+                            :totalRecords="searchResults?.estimatedTotalHits"
+                            :rowsPerPageOptions="[20, 50, 100]"
+                            pt:root:class="shadow-sm border dynamic-border rounded-xl"
+                            template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                            @page="handlePageEvent($event, () => searchPaginated(props.indexUid))"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </div>

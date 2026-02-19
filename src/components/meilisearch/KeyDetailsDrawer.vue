@@ -3,17 +3,20 @@ import { computed } from 'vue'
 import type { Key } from 'meilisearch'
 import { formatDate, maskedApiKey } from '@/utils'
 import { useClipboard } from '@vueuse/core'
-import { Copy } from 'lucide-vue-next'
+import { Check, Copy } from 'lucide-vue-next'
 
 const drawerOpen = defineModel<boolean>({ default: false })
 
 const props = defineProps<{
     apiKey: Key,
+    copiedKeyUid: string,
 }>()
 
 defineEmits(['hide', 'copy-key'])
 
 const { isSupported: canCopy } = useClipboard()
+
+const keyCopied = computed(() => props.copiedKeyUid === props.apiKey.uid)
 
 const keyName = computed(() => props.apiKey?.name ?? 'API Key Details')
 const keyExpired = computed(() => {
@@ -62,9 +65,10 @@ const keyExpired = computed(() => {
                         severity="secondary"
                         size="small"
                         text
-                        @click="$emit('copy-key', props.apiKey.key)"
+                        @click="$emit('copy-key', props.apiKey.key, props.apiKey.uid)"
                     >
-                        <Copy />
+                        <Check v-if="keyCopied" />
+                        <Copy v-else />
                     </Button>
                 </div>
             </Fieldset>
