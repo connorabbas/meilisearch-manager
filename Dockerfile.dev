@@ -2,7 +2,7 @@ FROM node:22-alpine
 
 USER root
 
-RUN apk add --no-cache git openssh
+RUN apk add --no-cache git openssh ncurses
 
 USER node
 RUN git config --global --add safe.directory /workspace

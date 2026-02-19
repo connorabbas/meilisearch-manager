@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useKeys } from '@/composables/meilisearch/useKeys'
 import AppLayout from '@/layouts/AppLayout.vue'
 import Menu from '@/components/router-link-menus/Menu.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
-import { Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { Check, Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import type { Key } from 'meilisearch'
 import { formatDate, maskedApiKey } from '@/utils'
 import { useClipboard } from '@vueuse/core'
@@ -18,7 +18,7 @@ import NotFoundMessage from '@/components/NotFoundMessage.vue'
 const breadcrumbs = [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }]
 
 const toast = useToast()
-const { isSupported: canCopy, copy } = useClipboard()
+const { isSupported: canCopy, copy, copied } = useClipboard()
 const { keys, isFetching: isFetchingKeys, fetchAllKeys, confirmDeleteKey } = useKeys()
 
 await fetchAllKeys()
@@ -81,14 +81,17 @@ function resetCurrentKey() {
     }, 250)
 }
 
-function copyApiKey(key: string) {
-    copy(key)
+const lastCopiedKeyUid = ref()
+async function copyApiKey(key: string, uid: string) {
+    await copy(key)
+    lastCopiedKeyUid.value = uid
     toast.add({
         severity: 'success',
         summary: 'API key copied to clipboard',
         life: 3000,
     })
 }
+const keyCopiedUid = computed(() => (copied.value && lastCopiedKeyUid.value) ? lastCopiedKeyUid.value : null)
 </script>
 
 <template>
@@ -97,6 +100,7 @@ function copyApiKey(key: string) {
             v-if="currentKey"
             v-model="keyDetailsDrawerOpen"
             :api-key="currentKey"
+            :copied-key-uid="keyCopiedUid"
             @hide="resetCurrentKey"
             @copy-key="copyApiKey"
         />
@@ -156,7 +160,7 @@ function copyApiKey(key: string) {
                         field="key"
                         header="Key"
                     >
-                        <template #body="{ data }">
+                        <template #body="{ data }: { data: Key }">
                             <div class="flex items-center gap-2">
                                 <Inplace pt:display:class="p-0">
                                     <template #display>
@@ -179,9 +183,10 @@ function copyApiKey(key: string) {
                                     severity="secondary"
                                     size="small"
                                     text
-                                    @click="copyApiKey(data.key)"
+                                    @click="copyApiKey(data.key, data.uid)"
                                 >
-                                    <Copy />
+                                    <Check v-if="keyCopiedUid === data.uid" />
+                                    <Copy v-else />
                                 </Button>
                             </div>
                         </template>
