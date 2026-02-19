@@ -4,7 +4,7 @@ import Menu, { type MenuProps } from 'primevue/menu'
 import type { MenuItem } from '@/types'
 import { ptViewMerge } from '@/utils'
 
-interface ExtendedMenuProps extends Omit<MenuProps, 'model'> {
+interface ExtendedMenuProps extends /* @vue-ignore */ Omit<MenuProps, 'model'> {
     model?: MenuItem[] | undefined;
 }
 const componentProps = defineProps<ExtendedMenuProps>()

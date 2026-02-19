@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight } from 'lucide-vue-next'
 import type { MenuItem } from '@/types'
 import { ptViewMerge } from '@/utils'
 
-interface ExtendedMenubarProps extends Omit<MenubarProps, 'model'> {
+interface ExtendedMenubarProps extends /* @vue-ignore */ Omit<MenubarProps, 'model'> {
     model?: MenuItem[] | undefined;
 }
 const componentProps = withDefaults(
