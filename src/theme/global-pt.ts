@@ -13,6 +13,11 @@ export default {
             class: 'm-4 sm:m-0'
         },
     },
+    datatable: {
+        root: {
+            class: 'border dynamic-border'
+        }
+    },
     toast: {
         root: {
             // Full width/centered on mobile, bottom right desktop

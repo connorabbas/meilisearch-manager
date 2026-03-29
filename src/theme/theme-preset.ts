@@ -1,4 +1,4 @@
-import Preset from '@primeuix/themes/aura'
+import Preset from '@primeuix/themes/lara'
 import { definePreset } from '@primeuix/themes'
 
 const customThemePreset = definePreset(Preset, {
@@ -34,17 +34,17 @@ const customThemePreset = definePreset(Preset, {
             },
             dark: {
                 surface: {
-                    50: 'var(--meili-theme-50)',
-                    100: 'var(--meili-theme-100)',
-                    200: 'var(--meili-theme-200)',
-                    300: 'var(--meili-theme-300)',
-                    400: 'var(--meili-theme-400)',
-                    500: 'var(--meili-theme-500)',
-                    600: 'var(--meili-theme-600)',
-                    700: 'var(--meili-theme-700)',
-                    800: 'var(--meili-theme-800)',
-                    900: 'var(--meili-theme-900)',
-                    950: 'var(--meili-theme-950)',
+                    50: 'var(--color-meili-50)',
+                    100: 'var(--color-meili-100)',
+                    200: 'var(--color-meili-200)',
+                    300: 'var(--color-meili-300)',
+                    400: 'var(--color-meili-400)',
+                    500: 'var(--color-meili-500)',
+                    600: 'var(--color-meili-600)',
+                    700: 'var(--color-meili-700)',
+                    800: 'var(--color-meili-800)',
+                    900: 'var(--color-meili-900)',
+                    950: 'var(--color-meili-950)',
                 },
             },
         },

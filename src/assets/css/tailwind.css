@@ -5,19 +5,19 @@
 
 @theme {
     --font-sans: Inter, sans-serif;
-    --meili-theme-50: rgb(247, 247, 252);
-    --meili-theme-100: rgb(229, 227, 243);
-    --meili-theme-200: rgb(203, 199, 230);
-    --meili-theme-300: rgb(172, 166, 212);
-    --meili-theme-400: rgb(140, 130, 190);
-    --meili-theme-500: rgb(104, 90, 160);
-    --meili-theme-600: rgb(73, 55, 125);
-    --meili-theme-700: rgb(51, 33, 95);
-    --meili-theme-800: rgb(39, 20, 75);
-    --meili-theme-900: rgb(31, 10, 65);
-    --meili-theme-950: rgb(26, 0, 59);
-
     --header-height: 4rem;
+
+    --color-meili-50: oklch(0.949 0.011 292.08);
+    --color-meili-100: oklch(0.898 0.022 291.76);
+    --color-meili-200: oklch(0.805 0.043 291.34);
+    --color-meili-300: oklch(0.703 0.068 292.37);
+    --color-meili-400: oklch(0.61 0.09 291.92);
+    --color-meili-500: oklch(0.513 0.109 291.27);
+    --color-meili-600: oklch(0.44 0.104 291.42);
+    --color-meili-700: oklch(0.361 0.084 290.75);
+    --color-meili-800: oklch(0.29 0.069 290.87);
+    --color-meili-900: oklch(0.212 0.048 290.89);
+    --color-meili-950: oklch(0.167 0.041 290.5);
 }
 
 @utility dynamic-bg {
