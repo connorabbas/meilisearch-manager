@@ -1,4 +1,4 @@
-import Preset from '@primeuix/themes/lara'
+import Preset from '@primeuix/themes/aura'
 import { definePreset } from '@primeuix/themes'
 
 const customThemePreset = definePreset(Preset, {
