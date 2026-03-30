@@ -177,7 +177,7 @@ watch(allActions, (newVal) => {
                 >
                     <span>Actions</span>
                     <a
-                        href="https://www.meilisearch.com/docs/reference/api/keys#actions"
+                        href="https://www.meilisearch.com/docs/reference/api/keys/create-api-key#body-actions"
                         target="_blank"
                         class="text-inherit"
                     >
