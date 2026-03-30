@@ -56,7 +56,7 @@ watch(() => settings.value, (newVal) => {
                     <div class="flex items-center gap-3">
                         <span>JSON Index Configuration</span>
                         <a
-                            href="https://www.meilisearch.com/docs/reference/api/settings#settings-object"
+                            href="https://www.meilisearch.com/docs/reference/api/settings/list-all-settings"
                             target="_blank"
                             class="text-inherit"
                         >
@@ -111,7 +111,7 @@ watch(() => settings.value, (newVal) => {
                             searchable attributes, sortable attributes, and stop words will re-index all the documents
                             in this index, which can take some time. Reference the
                             <a
-                                href="https://www.meilisearch.com/docs/reference/api/settings#update-settings"
+                                href="https://www.meilisearch.com/docs/reference/api/settings/update-all-settings"
                                 target="_blank"
                                 class="text-inherit"
                             >

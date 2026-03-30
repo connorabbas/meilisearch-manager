@@ -142,7 +142,7 @@ watch(() => props.apiKey, (newVal: Key | null) => {
                 >
                     <span>Actions</span>
                     <a
-                        href="https://www.meilisearch.com/docs/reference/api/keys#actions"
+                        href="https://www.meilisearch.com/docs/reference/api/keys/update-api-key#response-actions"
                         target="_blank"
                         class="text-inherit"
                     >

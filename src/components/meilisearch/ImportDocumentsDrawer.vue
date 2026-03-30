@@ -134,12 +134,12 @@ watch(uploadContentType, (newVal) => {
                 </template>
                 <span class="font-bold">Note:</span> reference the Meilisearch docs for the difference between <a
                     class="text-inherit"
-                    href="https://www.meilisearch.com/docs/reference/api/documents#add-or-replace-documents"
+                    href="https://www.meilisearch.com/docs/reference/api/documents/add-or-replace-documents"
                     target="_blank"
                 >
                     add or replace</a> vs. <a
                     class="text-inherit"
-                    href="https://www.meilisearch.com/docs/reference/api/documents#add-or-update-documents"
+                    href="https://www.meilisearch.com/docs/reference/api/documents/add-or-update-documents"
                     target="_blank"
                 >
                     add or update</a> functionality.
