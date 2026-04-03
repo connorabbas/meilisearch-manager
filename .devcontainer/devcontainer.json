@@ -7,7 +7,8 @@
     "service": "web",
     "workspaceFolder": "/workspace",
     "mounts": [
-        "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly"
+        "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly",
+        "type=bind,source=/home/${localEnv:USER}/.gitconfig,target=/home/node/.gitconfig,readonly"
     ],
     "customizations": {
         "vscode": {
@@ -26,8 +27,10 @@
                 "pmneo.tsimporter"
             ],
             "settings": {
-                "terminal.integrated.shell.linux": "/bin/sh",
+                "terminal.integrated.shell.linux": "/bin/bash",
                 "html.format.wrapAttributes": "force-expand-multiline",
+                "js/ts.preferences.quoteStyle": "single",
+                "js/ts.format.semicolons": "remove",
                 "[vue]": {
                     "editor.defaultFormatter": "Vue.volar",
                     "editor.tabSize": 4

@@ -47,5 +47,5 @@ volumes:
 
 networks:
   proxy: # setup in separate container
-    name: "traefik_network"
+    name: "traefik_proxy"
     external: true
