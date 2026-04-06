@@ -4,7 +4,7 @@
     "dockerComposeFile": [
         "../docker-compose.dev.yml"
     ],
-    "service": "web",
+    "service": "app",
     "workspaceFolder": "/workspace",
     "mounts": [
         "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue"
-import { FileText, Info, Pencil, Settings } from "lucide-vue-next"
+import { ref } from 'vue'
+import { FileText, Info, Pencil, Settings } from 'lucide-vue-next'
 
 const props = defineProps<{
     currentRouteName: string,

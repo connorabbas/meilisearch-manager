@@ -34,7 +34,7 @@ async function handleUpdateSettings() {
         JSON.parse(jsonString)
     } catch (err) {
         jsonError.value = invalidJsonMessage
-        console.error("Error parsing JSON:", err)
+        console.error('Error parsing JSON:', err)
         return
     }
 
