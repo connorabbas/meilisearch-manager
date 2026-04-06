@@ -1,4 +1,4 @@
-name: ESLint
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "master", "main" ]
 
 jobs:
-  eslint:
+  lint-and-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,4 +22,7 @@ jobs:
         run: npm ci
       
       - name: Run ESLint
-        run: npx eslint .
+        run: npx eslint . --max-warnings=0
+
+      - name: Run Typecheck
+        run: npm run typecheck
