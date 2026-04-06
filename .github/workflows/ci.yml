@@ -25,4 +25,4 @@ jobs:
         run: npx eslint . --max-warnings=0
 
       - name: Run Typecheck
-        run: npm run typecheck
+        run: npm run type-check
