@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue'
 import { formatDate, formatBytes } from '@/utils'
-import { Clock, Database, FolderSearch, GitPullRequestArrow } from 'lucide-vue-next'
+import { Clock, Database, FolderSearch, GitPullRequestArrow } from '@lucide/vue'
 import { useStats } from '@/composables/meilisearch/useStats'
 
 const breadcrumbs = [{ label: 'Dashboard' }]

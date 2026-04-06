@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef, watch } from 'vue'
 import type { ContentType, RecordAny } from 'meilisearch'
-import { AlertCircle, Braces, Info, Plus, TriangleAlert, Upload } from 'lucide-vue-next'
+import { AlertCircle, Braces, Info, Plus, TriangleAlert, Upload } from '@lucide/vue'
 import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '../ThemedJsonEditor.vue'
 import { useDocuments } from '@/composables/meilisearch/useDocuments'

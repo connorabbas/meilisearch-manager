@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { Key } from 'meilisearch'
 import { formatDate, maskedApiKey } from '@/utils'
 import { useClipboard } from '@vueuse/core'
-import { Check, Copy } from 'lucide-vue-next'
+import { Check, Copy } from '@lucide/vue'
 
 const drawerOpen = defineModel<boolean>({ default: false })
 

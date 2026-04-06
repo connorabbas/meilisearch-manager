@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useStats } from '@/composables/meilisearch/useStats'
-import { ArrowRight, Home, Plus, RefreshCw } from 'lucide-vue-next'
+import { ArrowRight, Home, Plus, RefreshCw } from '@lucide/vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'

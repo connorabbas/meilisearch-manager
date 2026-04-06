@@ -4,7 +4,7 @@ import type { RecordAny } from 'meilisearch'
 import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '../ThemedJsonEditor.vue'
 import { useDocuments } from '@/composables/meilisearch/useDocuments'
-import { AlertCircle } from 'lucide-vue-next'
+import { AlertCircle } from '@lucide/vue'
 
 const props = withDefaults(defineProps<{
     indexUid: string,

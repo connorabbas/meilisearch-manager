@@ -1,14 +1,23 @@
+# Intended for local/development use
+
 FROM node:22-alpine
 
 USER root
 
-RUN apk add --no-cache git openssh ncurses
+RUN apk add --no-cache git openssh ncurses libc6-compat bash shadow
+
+RUN chsh -s /bin/bash node
+
+RUN npm install -g opencode-ai
 
 USER node
+
+COPY --chown=node:node .devcontainer/.bashrc /home/node/.bashrc
+
 RUN git config --global --add safe.directory /workspace
 
 WORKDIR /workspace
 
 EXPOSE 80
 
-CMD ["sh"]
+CMD ["bash"]

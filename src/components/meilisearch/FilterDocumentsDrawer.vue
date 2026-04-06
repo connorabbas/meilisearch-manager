@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch'
 import { FacetHit, Filter, FilterableAttributes } from 'meilisearch'
-import { AlertTriangle } from 'lucide-vue-next'
+import { AlertTriangle } from '@lucide/vue'
 
 const props = defineProps<{
     indexUid: string,

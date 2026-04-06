@@ -4,7 +4,7 @@ import { useKeys } from '@/composables/meilisearch/useKeys'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import type { Key, KeyUpdate } from 'meilisearch'
 import { useToast } from 'primevue'
-import { CircleQuestionMark } from 'lucide-vue-next'
+import { CircleQuestionMark } from '@lucide/vue'
 import { keyActions } from '@/utils/data'
 
 const props = withDefaults(defineProps<{

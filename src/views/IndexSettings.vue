@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, toRaw, watch } from 'vue'
 import { useSettings } from '../composables/meilisearch/useSettings'
-import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X } from 'lucide-vue-next'
+import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X } from '@lucide/vue'
 import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '@/components/ThemedJsonEditor.vue'
 
@@ -34,7 +34,7 @@ async function handleUpdateSettings() {
         JSON.parse(jsonString)
     } catch (err) {
         jsonError.value = invalidJsonMessage
-        console.error("Error parsing JSON:", err)
+        console.error('Error parsing JSON:', err)
         return
     }
 

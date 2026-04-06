@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, shallowRef, computed, readonly } from 'vue'
 import { MeiliSearch } from 'meilisearch'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from "primevue/useconfirm"
+import { useConfirm } from 'primevue/useconfirm'
 import { useStorage } from '@vueuse/core'
 
 export interface MeilisearchInstanceConfig {
