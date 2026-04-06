@@ -1,10 +1,14 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import progress from '@/utils/progress'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useToast } from 'primevue/usetoast'
 
+const historyMode = import.meta.env.VITE_ROUTER_HISTORY ?? 'web'
+
 const router = createRouter({
-    history: createWebHistory(import.meta.env.VITE_BASE_PATH),
+    history: historyMode === 'hash'
+        ? createWebHashHistory(import.meta.env.VITE_BASE_PATH)
+        : createWebHistory(import.meta.env.VITE_BASE_PATH),
     linkActiveClass: 'text-primary!',
     routes: [
         {
