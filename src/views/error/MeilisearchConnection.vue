@@ -4,7 +4,7 @@ import Container from '@/components/Container.vue'
 import PopupMenuButton from '@/components/PopupMenuButton.vue'
 import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue'
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { ArrowLeftRight, CircleX, Plus, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { ArrowLeftRight, CircleX, Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 import { MenuItem } from '@/types'
 

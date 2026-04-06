@@ -2,7 +2,7 @@
 import { RouterView } from 'vue-router'
 import { completeAsyncLoading } from '@/router'
 import AppToast from './components/AppToast.vue'
-import { AlertCircle } from 'lucide-vue-next'
+import { AlertCircle } from '@lucide/vue'
 </script>
 
 <template>

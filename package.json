@@ -15,6 +15,7 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "@lucide/vue": "^1.7.0",
     "@primeuix/themes": "^2.0.0",
     "@primevue/forms": "^4.3.9",
     "@tailwindcss/vite": "^4.1.12",
@@ -25,7 +26,6 @@
     "clipboard": "^2.0.11",
     "json-editor-vue": "^0.18.1",
     "lodash": "^4.17.21",
-    "lucide-vue-next": "^0.542.0",
     "meilisearch": "^0.52.0",
     "nprogress": "^0.2.0",
     "pinia": "^3.0.3",

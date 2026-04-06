@@ -4,7 +4,7 @@ import { useKeys } from '@/composables/meilisearch/useKeys'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import type { KeyCreation } from 'meilisearch'
 import { useToast } from 'primevue'
-import { CircleQuestionMark, Info } from 'lucide-vue-next'
+import { CircleQuestionMark, Info } from '@lucide/vue'
 import { toRaw } from 'vue'
 import { keyActions } from '@/utils/data'
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { looksLikeAnImageUrl } from '@/utils'
-import { Pencil, Trash2 } from 'lucide-vue-next'
+import { Pencil, Trash2 } from '@lucide/vue'
 import type { Hit } from 'meilisearch'
 import ThemedJsonViewer from '../ThemedJsonViewer.vue'
 

@@ -2,7 +2,7 @@
 import { computed, useTemplateRef } from 'vue'
 import SelectColorModeButton from '@/components/SelectColorModeButton.vue'
 import Popover from 'primevue/popover'
-import { SunMoon } from 'lucide-vue-next'
+import { SunMoon } from '@lucide/vue'
 
 const props = defineProps<{
     name: string,

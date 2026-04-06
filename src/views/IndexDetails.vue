@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStats } from '@/composables/meilisearch/useStats'
 import { formatDate, formatBytes } from '@/utils'
-import { Clock, Database, FileText, RefreshCw } from 'lucide-vue-next'
+import { Clock, Database, FileText, RefreshCw } from '@lucide/vue'
 import type { Index } from 'meilisearch'
 
 const props = defineProps<{

@@ -8,7 +8,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue'
-import { BookText, FolderGit2, LayoutDashboard } from 'lucide-vue-next'
+import { BookText, FolderGit2, LayoutDashboard } from '@lucide/vue'
 
 const meilisearchStore = useMeilisearchStore()
 const router = useRouter()

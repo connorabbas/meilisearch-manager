@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useTasks } from '@/composables/meilisearch/useTasks'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
-import { Home, Info, RefreshCw } from 'lucide-vue-next'
+import { Home, Info, RefreshCw } from '@lucide/vue'
 import type { Task, TasksOrBatchesQuery } from 'meilisearch'
 import { Mode } from 'vanilla-jsoneditor'
 import { formatDate, getStatusSeverity } from '@/utils'

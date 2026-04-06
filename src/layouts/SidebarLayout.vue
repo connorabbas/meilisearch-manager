@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu as MenuIcon } from 'lucide-vue-next'
+import { Menu as MenuIcon } from '@lucide/vue'
 import { useAppLayout } from '@/composables/useAppLayout'
 import Container from '@/components/Container.vue'
 import LogoLink from '@/components/LogoLink.vue'
