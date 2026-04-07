@@ -4,12 +4,12 @@ import { definePreset } from '@primeuix/themes'
 const customThemePreset = definePreset(Preset, {
     semantic: {
         borderRadius: {
-            none: '.35rem',
-            xs: '.5rem',
-            sm: '.625rem',
+            none: '0',
+            xs: '.25rem',
+            sm: '.5rem',
             md: '.75rem',
-            lg: '.825rem',
-            xl: '1rem'
+            lg: '1rem',
+            xl: '1.25rem'
         },
         primary: {
             50: '{pink.50}',
