@@ -3,25 +3,27 @@
 A modern web-based UI for managing Meilisearch instances.
 
 > [!WARNING]
-> This project is still a work in progress, development and improvements will continue in the pursuit to reach a `v1.0.0` version.
+> This repository is no longer maintained.  
+> It has been rewritten as a Nuxt application.
+> Check out the new version: [connorabbas/meilisearch-manager-next](https://github.com/connorabbas/meilisearch-manager-next)
 
 ## Features
 
--   :rocket: **Multiple instances** management
--   :open_file_folder: **Indexes** CRUD operations, settings
--   :page_facing_up: **Documents** bulk imports, CRUD operations, search, filter, sort
--   :lock: **API keys** management
--   :ballot_box_with_check: **Tasks** history with filtering & sorting
--   :iphone: **Responsive** design
--   :waning_crescent_moon: **Dark Mode** toggle
+- :rocket: **Multiple instances** management
+- :open_file_folder: **Indexes** CRUD operations, settings
+- :page_facing_up: **Documents** bulk imports, CRUD operations, search, filter, sort
+- :lock: **API keys** management
+- :ballot_box_with_check: **Tasks** history with filtering & sorting
+- :iphone: **Responsive** design
+- :waning_crescent_moon: **Dark Mode** toggle
 
 ### Roadmap
 
--   Documents - geo search, manual filtering option
--   Backups - Ability to create snapshots and dumps
--   Indexes - field distribution graph, [index swapping](https://www.meilisearch.com/docs/learn/getting_started/indexes#swapping-indexes)
--   Hosted demo on dedicated domain/server
--   General improvements...
+- Documents - geo search, manual filtering option
+- Backups - Ability to create snapshots and dumps
+- Indexes - field distribution graph, [index swapping](https://www.meilisearch.com/docs/learn/getting_started/indexes#swapping-indexes)
+- Hosted demo on dedicated domain/server
+- General improvements...
 
 ## Demo
 
@@ -46,13 +48,13 @@ VITE_MEILISEARCH_API_KEY=yourInstanceKey
 
 ## Tech Stack
 
--   [Vite](https://vite.dev/) local dev server and bundler
--   [Vue 3](https://vuejs.org/) w/ Composition API + [TypeScript](https://www.typescriptlang.org/)
--   [Vue Router](https://router.vuejs.org/) client side navigation
--   [PrimeVue](https://primevue.org/) components
--   [Pinia](https://pinia.vuejs.org/) state management store
--   [VueUse](https://vueuse.org/) utilities
--   [Tailwind CSS](https://tailwindcss.com/) utility styles
--   [Lucide](https://lucide.dev/) icons
--   [Meilisearch client](https://github.com/meilisearch/meilisearch-js) for TypeScript
--   [Zod](https://zod.dev/) schema validation
+- [Vite](https://vite.dev/) local dev server and bundler
+- [Vue 3](https://vuejs.org/) w/ Composition API + [TypeScript](https://www.typescriptlang.org/)
+- [Vue Router](https://router.vuejs.org/) client side navigation
+- [PrimeVue](https://primevue.org/) components
+- [Pinia](https://pinia.vuejs.org/) state management store
+- [VueUse](https://vueuse.org/) utilities
+- [Tailwind CSS](https://tailwindcss.com/) utility styles
+- [Lucide](https://lucide.dev/) icons
+- [Meilisearch client](https://github.com/meilisearch/meilisearch-js) for TypeScript
+- [Zod](https://zod.dev/) schema validation
