@@ -23,3 +23,6 @@ meili_data
 .env
 .env.*
 !.env.example
+
+# AI
+.agents

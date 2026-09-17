@@ -18,6 +18,11 @@
                 "@primevue/mcp@4.5.4",
                 "primevue-mcp"
             ]
+        },
+        "nuxt-ui": {
+            "type": "remote",
+            "url": "https://ui.nuxt.com/mcp",
+            "enabled": true
         }
     }
 }
