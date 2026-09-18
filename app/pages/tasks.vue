@@ -222,6 +222,7 @@ onMounted(() => {
                         <template #filter>
                             <MultiSelect
                                 v-model="tasksParams.statuses"
+                                aria-label="Filter tasks by status"
                                 pt:label:class="flex flex-wrap"
                                 pt:overlay:class="z-1!"
                                 :options="[...TASK_STATUSES]"
@@ -255,6 +256,7 @@ onMounted(() => {
                         <template #filter>
                             <MultiSelect
                                 v-model="tasksParams.types"
+                                aria-label="Filter tasks by type"
                                 pt:label:class="flex flex-wrap"
                                 pt:overlay:class="z-1!"
                                 :options="[...TASK_TYPES]"
@@ -275,6 +277,7 @@ onMounted(() => {
                         <template #filter>
                             <MultiSelect
                                 v-model="tasksParams.indexUids"
+                                aria-label="Filter tasks by index"
                                 pt:label:class="flex flex-wrap"
                                 pt:overlay:class="z-1!"
                                 :options="indexUids"

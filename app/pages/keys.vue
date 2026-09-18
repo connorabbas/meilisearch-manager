@@ -271,6 +271,7 @@ const keyCopiedUid = computed(() => (copied.value && lastCopiedKeyUid.value) ? l
                         <template #body="{ data }">
                             <Button
                                 v-tooltip.top="'Show Key Actions'"
+                                aria-label="Show key actions"
                                 type="button"
                                 severity="secondary"
                                 rounded

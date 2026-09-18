@@ -43,6 +43,7 @@ const popoverPositionClasses = computed(() => {
     <div class="flex flex-col">
         <Button
             v-tooltip.left="'Change color mode'"
+            aria-label="Change color mode"
             severity="secondary"
             text
             rounded

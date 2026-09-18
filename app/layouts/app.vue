@@ -144,6 +144,7 @@ onUnmounted(() => {
                                     <div class="flex gap-4">
                                         <SelectColorModePopoverButton name="mobile-color-mode" />
                                         <Button
+                                            aria-label="Open navigation"
                                             severity="secondary"
                                             class="p-1!"
                                             text
