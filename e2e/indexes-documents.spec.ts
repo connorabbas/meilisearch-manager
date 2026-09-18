@@ -65,5 +65,5 @@ test('destructive confirmation cancels safely and awaits accepted work', async (
 
     await expect.poll(() => deleteRequests).toBe(1)
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.getByText('Task Succeeded')).toBeVisible()
+    await expect(page.getByText('Task Succeeded', { exact: true })).toBeVisible()
 })
