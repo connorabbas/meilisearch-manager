@@ -56,6 +56,7 @@ export type MeilisearchMockOptions = {
     dynamicSearchRules?: boolean,
     onSearchRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
+    onDeleteIndexRequest?: (request: Request) => void,
 }
 
 function json(route: Route, body: unknown, status = 200) {
@@ -108,6 +109,9 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, { results: [index], offset: 0, limit: 20, total: 1 })
         } else if (path === '/indexes/movies' && request.method() === 'GET') {
             await json(route, index)
+        } else if (path === '/indexes/movies' && request.method() === 'DELETE') {
+            options.onDeleteIndexRequest?.(request)
+            await json(route, { taskUid: task.uid, indexUid: index.uid, status: 'enqueued', type: 'indexDeletion' })
         } else if (path === '/indexes/movies/stats') {
             await json(route, indexStats)
         } else if (path === '/indexes/movies/search') {
@@ -138,6 +142,8 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         } else if (path === '/tasks') {
             options.onTasksRequest?.(request)
             await json(route, { results: [task], total: 1, limit: 50, from: 101, next: null })
+        } else if (path === `/tasks/${task.uid}`) {
+            await json(route, { ...task, type: 'indexDeletion' })
         } else if (path === '/keys') {
             await json(route, { results: [key], offset: 0, limit: 20, total: 1 })
         } else if (path === '/experimental-features') {

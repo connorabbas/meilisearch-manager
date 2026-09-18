@@ -43,3 +43,27 @@ test('representative modal and drawer close with Escape', async ({ page }) => {
     await page.keyboard.press('Escape')
     await expect(page.getByRole('button', { name: 'Choose file' })).toBeHidden()
 })
+
+test('destructive confirmation cancels safely and awaits accepted work', async ({ page }) => {
+    let deleteRequests = 0
+    await page.unroute('**/__meili/**')
+    await installMeilisearchMock(page, {
+        onDeleteIndexRequest: () => deleteRequests++,
+    })
+
+    await page.goto('/indexes/movies/edit')
+    await page.getByRole('button', { name: 'Delete this index' }).click()
+
+    const confirmation = page.getByRole('dialog', { name: 'Danger Zone' })
+    await expect(confirmation).toBeVisible()
+    await confirmation.getByRole('button', { name: 'Cancel' }).click()
+    await expect(confirmation).toBeHidden()
+    expect(deleteRequests).toBe(0)
+
+    await page.getByRole('button', { name: 'Delete this index' }).click()
+    await confirmation.getByRole('button', { name: 'Delete' }).click()
+
+    await expect.poll(() => deleteRequests).toBe(1)
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByText('Task Succeeded')).toBeVisible()
+})
