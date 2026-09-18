@@ -1,12 +1,10 @@
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '../usePagination'
 import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload } from 'meilisearch'
 
 export function useDynamicSearchRules(initialPerPage: number = 20) {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
     const meilisearchStore = useMeilisearchStore()
     const {
         currentPage,
@@ -120,10 +118,11 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         try {
             const result = await client.updateDynamicSearchRule(uid, payload)
             toast.add({
-                severity: 'success',
-                summary: 'Rule Saved',
-                detail: `Search rule "${uid}" was saved successfully`,
-                life: 3000,
+                color: 'success',
+                icon: 'i-lucide-circle-check',
+                title: 'Rule Saved',
+                description: `Search rule "${uid}" was saved successfully`,
+                duration: 3000,
             })
             return result
         } catch (err) {
@@ -158,35 +157,25 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         uid: string,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: 'Are you sure you want to delete this search rule?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteRule(uid).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you sure you want to delete this search rule?',
+            confirmLabel: 'Delete',
+        }, async () => {
+            await deleteRule(uid).then(() => {
+                onDeletedCallback?.()
+            })
         })
     }
 
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Search Rules Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Search Rules Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

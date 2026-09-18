@@ -1,6 +1,5 @@
 import type { RecordAny, ResourceResults } from 'meilisearch'
 import Papa from 'papaparse'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { downloadFile } from '@/utils'
 
@@ -158,18 +157,20 @@ export function useExportDocuments() {
             }
 
             toast.add({
-                severity: 'success',
-                summary: 'Export Complete',
-                detail: `${totalDocs} document${totalDocs === 1 ? '' : 's'} exported as ${format.toUpperCase()}`,
-                life: 5000,
+                color: 'success',
+                icon: 'i-lucide-circle-check',
+                title: 'Export Complete',
+                description: `${totalDocs} document${totalDocs === 1 ? '' : 's'} exported as ${format.toUpperCase()}`,
+                duration: 5000,
             })
         } catch (err) {
             error.value = (err as Error).message
             toast.add({
-                severity: 'error',
-                summary: 'Export Failed',
-                detail: error.value,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Export Failed',
+                description: error.value,
+                duration: 7500,
             })
         } finally {
             isExporting.value = false

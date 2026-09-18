@@ -1,5 +1,4 @@
 import type { Filter, HybridSearch, RecordAny, SearchParams, SearchResponse } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '@/composables/usePagination'
 
@@ -97,10 +96,11 @@ export function useSearch(initialPerPage: number = 20) {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Search Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Search Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

@@ -1,13 +1,11 @@
 import type { RecordAny, EnqueuedTask, Index, IndexesQuery, IndexesResults, IndexOptions, IndexObject, Task } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useTasks } from './useTasks'
 import { usePagination } from '../usePagination'
 
 export function useIndexes(initialPerPage: number = 20) {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
     const meilisearchStore = useMeilisearchStore()
     const {
         currentPage,
@@ -217,37 +215,27 @@ export function useIndexes(initialPerPage: number = 20) {
         onTaskEnqueued?: (task: EnqueuedTask) => void,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: 'Are you absolutely sure you want to delete this index?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteIndex(uid, (task) => {
-                    onTaskEnqueued?.(task)
-                }).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you absolutely sure you want to delete this index?',
+            confirmLabel: 'Delete',
+        }, async () => {
+            await deleteIndex(uid, (task) => {
+                onTaskEnqueued?.(task)
+            }).then(() => {
+                onDeletedCallback?.()
+            })
         })
     }
 
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Index Data Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Index Data Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

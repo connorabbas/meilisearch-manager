@@ -1,5 +1,4 @@
 import type { Embedders, FilterableAttributes, SortableAttributes, EnqueuedTask, Settings, Task } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useTasks } from './useTasks'
 
@@ -151,10 +150,11 @@ export function useSettings() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Settings Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Settings Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

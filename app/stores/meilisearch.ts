@@ -1,6 +1,4 @@
 import { Meilisearch } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 
@@ -13,7 +11,7 @@ export interface MeilisearchInstanceConfig {
 
 export const useMeilisearchStore = defineStore('meilisearch', () => {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
 
     // -- State --
     const singleInstanceProxyMode = ref(false)
@@ -122,10 +120,11 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
             client.value = null
             connectionError.value = (err as Error).message
             toast.add({
-                severity: 'error',
-                summary: 'Connection Failed',
-                detail: connectionError.value,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Connection Failed',
+                description: connectionError.value,
+                duration: 7500,
             })
             throw err
         } finally {
@@ -153,10 +152,11 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         if (instances.value.some(i => i.host === config.host)) {
             const errorMessage = `An instance with host "${config.host}" already exists`
             toast.add({
-                severity: 'error',
-                summary: 'Connection Failed',
-                detail: errorMessage,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Connection Failed',
+                description: errorMessage,
+                duration: 7500,
             })
             throw new Error(errorMessage)
         }
@@ -173,10 +173,11 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
             return id
         } catch (err) {
             toast.add({
-                severity: 'error',
-                summary: 'Failed to Add New Instance',
-                detail: (err as Error).message,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Failed to Add New Instance',
+                description: (err as Error).message,
+                duration: 7500,
             })
             throw err
         }
@@ -197,24 +198,13 @@ export const useMeilisearchStore = defineStore('meilisearch', () => {
         onRemovedCallback?: () => void | Promise<void>
     ) {
         if (singleInstanceProxyMode.value) return
-        confirm.require({
-            group: 'delete',
-            message: 'Are you sure you want to remove this instance?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Remove',
-                severity: 'danger',
-            },
-            accept: async () => {
-                removeInstance(id)
-                await onRemovedCallback?.()
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you sure you want to remove this instance?',
+            confirmLabel: 'Remove',
+        }, async () => {
+            removeInstance(id)
+            await onRemovedCallback?.()
         })
     }
 

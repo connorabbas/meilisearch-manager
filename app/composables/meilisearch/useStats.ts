@@ -1,5 +1,4 @@
 import type { IndexStats, Stats, Version } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useStats() {
@@ -81,10 +80,11 @@ export function useStats() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Stats Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Stats Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

@@ -1,12 +1,10 @@
 import type { Key, KeyCreation, KeysQuery, KeysResults, KeyUpdate } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { useConfirm } from 'primevue'
 import { usePagination } from '../usePagination'
 
 export function useKeys() {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
     const meilisearchStore = useMeilisearchStore()
     const {
         currentPage,
@@ -135,35 +133,25 @@ export function useKeys() {
         id: string,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: 'Are you absolutely sure you want to delete this key?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteKey(id).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you absolutely sure you want to delete this key?',
+            confirmLabel: 'Delete',
+        }, async () => {
+            await deleteKey(id).then(() => {
+                onDeletedCallback?.()
+            })
         })
     }
 
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Keys Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Keys Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

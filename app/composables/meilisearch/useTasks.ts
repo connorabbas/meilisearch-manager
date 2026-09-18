@@ -1,4 +1,3 @@
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import type { Task, TasksOrBatchesQuery, TasksResults, DeleteOrCancelTasksQuery, TaskType, TaskStatus, EnqueuedTask } from 'meilisearch'
 
@@ -222,16 +221,19 @@ export function useTasks() {
             return
         }
 
-        const taskToastOptions = {
-            severity: 'secondary',
-            summary: 'Task Enqueued',
-            detail: taskEnqueuedMessage,
-        }
-
         checkingTaskStatus.value = true
         let attempts = 0
+        let taskToast: ReturnType<typeof toast.add> | undefined
         try {
-            toast.add(taskToastOptions)
+            taskToast = toast.add({
+                color: 'neutral',
+                icon: 'i-lucide-loader-circle',
+                title: 'Task Enqueued',
+                description: taskEnqueuedMessage,
+                duration: 0,
+                progress: false,
+                ui: { icon: 'motion-safe:animate-spin' },
+            })
             // Wait just a moment to show the task enqueued toast
             await new Promise(resolve => setTimeout(resolve, 1500))
             while (attempts < maxAttempts) {
@@ -241,10 +243,11 @@ export function useTasks() {
                 }
                 if (taskResponse.status === 'succeeded') {
                     toast.add({
-                        severity: 'success',
-                        summary: 'Task Succeeded',
-                        detail: successMessage,
-                        life: 5000,
+                        color: 'success',
+                        icon: 'i-lucide-circle-check',
+                        title: 'Task Succeeded',
+                        description: successMessage,
+                        duration: 5000,
                     })
                     return taskResponse
                 }
@@ -267,7 +270,9 @@ export function useTasks() {
             checkingTaskStatus.value = false
             // Add slight delay as not to clash with potential error toasts
             setTimeout(() => {
-                toast.remove(taskToastOptions)
+                if (taskToast) {
+                    toast.remove(taskToast.id)
+                }
             }, 100)
         }
     }
@@ -303,10 +308,11 @@ export function useTasks() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Task Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Task Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
