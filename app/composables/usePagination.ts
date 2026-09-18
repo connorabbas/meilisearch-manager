@@ -1,4 +1,7 @@
-import type { DataTablePageEvent, PageState } from 'primevue'
+export interface PaginationEvent {
+    page: number;
+    rows: number;
+}
 
 export function usePagination(initialPerPage: number = 20) {
     const currentPage = ref(1)
@@ -23,29 +26,38 @@ export function usePagination(initialPerPage: number = 20) {
         return false
     }
 
-    function handlePageEvent<T>(
-        event: PageState | DataTablePageEvent,
+    async function paginate<T>(
+        page: number,
+        pageSize: number,
         onPaginatedCallback?: () => Promise<T>,
         scrollTop: boolean = true,
         scrollTopContainerId?: string,
-    ): Promise<void> | undefined {
-        if (event.rows !== perPage.value) {
+    ): Promise<void> {
+        if (pageSize !== perPage.value) {
             currentPage.value = 1
         } else {
-            currentPage.value = event.page + 1
+            currentPage.value = page
         }
-        perPage.value = event.rows
+        perPage.value = pageSize
 
-        return onPaginatedCallback?.().then(() => {
-            if (scrollTop && scrollTopContainerId) {
-                const scrollTopContainer = document.getElementById(scrollTopContainerId)
-                if (scrollTopContainer) {
-                    scrollTopContainer.scrollTop = 0
-                }
-            } else if (scrollTop) {
-                window.scrollTo({ top: 0 })
+        await onPaginatedCallback?.()
+        if (scrollTop && scrollTopContainerId) {
+            const scrollTopContainer = document.getElementById(scrollTopContainerId)
+            if (scrollTopContainer) {
+                scrollTopContainer.scrollTop = 0
             }
-        })
+        } else if (scrollTop) {
+            window.scrollTo({ top: 0 })
+        }
+    }
+
+    function handlePageEvent<T>(
+        event: PaginationEvent,
+        onPaginatedCallback?: () => Promise<T>,
+        scrollTop: boolean = true,
+        scrollTopContainerId?: string,
+    ): Promise<void> {
+        return paginate(event.page + 1, event.rows, onPaginatedCallback, scrollTop, scrollTopContainerId)
     }
 
     return {
@@ -54,6 +66,7 @@ export function usePagination(initialPerPage: number = 20) {
         firstDatasetIndex,
         offset,
         syncCurrentPageWithinTotal,
+        paginate,
         handlePageEvent,
     }
 }
