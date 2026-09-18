@@ -210,12 +210,12 @@ Do not create a universal table wrapper in the first table migration. Establish 
 
 PrimeVue currently leaks into the Pinia store and Meilisearch composables through `useToast()` and `useConfirm()`.
 
-Introduce small application-owned interfaces before migrating complex pages:
+Use Nuxt UI's feedback service directly and introduce one application-owned confirmation interface before migrating complex pages:
 
-- `useAppToast()` normalizes success, error, warning, and information notifications.
+- Nuxt UI `useToast()` is available through the root `UApp`; stores and composables call it directly with semantic colors.
 - `useConfirmAction()` opens a shared confirmation modal through Nuxt UI `useOverlay()` and resolves a promise or callback.
 
-These wrappers should be small. Their purpose is to prevent domain composables from constructing library-specific payloads, not to recreate PrimeVue APIs.
+The confirmation wrapper should remain small and must not recreate PrimeVue's confirmation API. Do not wrap Nuxt UI `useToast()` without a demonstrated application-specific need.
 
 Map notification concepts consistently:
 
@@ -268,7 +268,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 
 - [x] Phase 0: Characterization tests and migration harness
 - [x] Phase 1: Nuxt UI foundation and design system
-- [ ] Phase 2: Feedback, confirmation, and pagination decoupling
+- [~] Phase 2: Feedback, confirmation, and pagination decoupling
 - [ ] Phase 3: Dashboard application shell
 - [ ] Phase 4: Connection and low-complexity pages
 - [ ] Phase 5: Index list and canonical table pattern
@@ -413,18 +413,18 @@ Remove PrimeVue service and event-type dependencies from stores and domain compo
 - `app/stores/meilisearch.ts`
 - `app/composables/usePagination.ts`
 - `app/composables/meilisearch/*.ts`
-- Shared confirmation modal and feedback composables created in this phase
+- Shared confirmation modal and composable created in this phase
 
 ### Tasks
 
-1. Implement `useAppToast()` using Nuxt UI `useToast()`.
+1. Replace PrimeVue toast calls with Nuxt UI `useToast()` directly.
 2. Implement one reusable destructive confirmation modal.
 3. Implement `useConfirmAction()` with Nuxt UI `useOverlay()`.
 4. Replace PrimeVue toast imports in stores and Meilisearch composables.
 5. Replace PrimeVue confirmation calls without changing when actions run.
 6. Replace PrimeVue pagination event types with an application-owned event or direct `page`/`pageSize` methods.
 7. Preserve current page reset, offset calculation, scrolling, and total-clamping behavior.
-8. Add targeted tests for wrappers and pagination logic where practical.
+8. Add targeted tests for confirmation and pagination logic where practical.
 
 ### Behavioral requirements
 
@@ -454,7 +454,14 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Implementation completed 2026-09-18. Stores and domain composables use Nuxt UI `useToast()` directly with semantic colors and matching Lucide icons, readable durations, and native ID-based removal for task-polling notifications. Pending tasks use a reduced-motion-safe spinning loader because the toast progress API only represents remaining duration and cannot be indeterminate. No application toast wrapper is needed because the root `UApp` provides the toast infrastructure.
+- Added a reusable destructive `ConfirmActionModal.vue` and promise-based `useConfirmAction()` using Nuxt UI `useOverlay()`. The modal uses `defineModel<boolean>('open')` bound directly to `UModal`'s `v-model:open`; dismissals resolve once as cancellation. Instance, index, document, key, and dynamic search-rule confirmations invoke their existing asynchronous actions only after acceptance.
+- Removed PrimeVue service imports from `app/stores/meilisearch.ts` and every file under `app/composables/meilisearch/`. Existing notification text, task polling, refresh callbacks, and post-action navigation remain intact.
+- Replaced PrimeVue pagination event types with the application-owned `PaginationEvent`. `paginate()` accepts one-based pages for future `UPagination` migrations, while `handlePageEvent()` preserves the current PrimeVue zero-based adapter, page-size reset to page 1, offset calculation, post-fetch scrolling, and total clamping.
+- Added Playwright coverage for destructive confirmation cancellation and accepted asynchronous index deletion, including task polling and post-delete navigation. Extended the deterministic fixture only with the required delete-index and task-status responses.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, and `git diff --check`. Source audits found no PrimeVue imports in the Phase 2 domain/store/pagination targets.
+- `npm run test:e2e` built successfully but all 11 Chromium tests were blocked before execution because the host is missing browser shared libraries (starting with `libglib-2.0.so.0`). `npx playwright install-deps chromium` could not install them because root authentication is unavailable; the Playwright MCP browser is also unavailable because `/opt/google/chrome/chrome` is not installed. No browser viewport checks could run in this environment.
+- Keep Phase 2 marked in progress until `npm run test:e2e` passes on a host with Playwright Chromium system dependencies. No implementation tasks are otherwise known to remain.
 
 ## Phase 3: Dashboard Application Shell
 
