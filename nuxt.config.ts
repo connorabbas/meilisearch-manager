@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite'
 import themePreset from './app/theme/theme-preset'
 import globalPt from './app/theme/global-pt'
 
@@ -7,7 +6,7 @@ export default defineNuxtConfig({
     app: {
         head: {
             bodyAttrs: {
-                class: 'antialiased font-sans h-full bg-surface-100 dark:bg-surface-950'
+                class: 'antialiased font-sans h-full bg-default text-default'
             },
             link: [
                 { rel: 'icon', type: 'image/x-icon', href: '/meili-logo.svg' }
@@ -17,7 +16,7 @@ export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/css/main.css'],
     devtools: { enabled: false },
-    modules: ['@primevue/nuxt-module', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint', 'nuxt-maplibre'],
+    modules: ['@primevue/nuxt-module', '@nuxt/ui', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint', 'nuxt-maplibre'],
     nitro: {
         prerender: {
             crawlLinks: false,
@@ -34,6 +33,9 @@ export default defineNuxtConfig({
         },
     },
     primevue: {
+        composables: {
+            exclude: ['useToast']
+        },
         options: {
             theme: {
                 preset: themePreset,
@@ -48,10 +50,9 @@ export default defineNuxtConfig({
             pt: globalPt
         }
     },
+    ui: {
+        fonts: false,
+        colorMode: false,
+    },
     ssr: false,
-    vite: {
-        plugins: [
-            tailwindcss()
-        ]
-    }
 })

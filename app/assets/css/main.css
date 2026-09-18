@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
+@import "@nuxt/ui";
 
 html {
     /* font size will determine the component/utility scaling */
@@ -20,7 +21,7 @@ body {
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
+@theme static {
     --font-sans: "Inter", sans-serif;
     --header-height: 4rem;
 
@@ -35,6 +36,10 @@ body {
     --color-meili-800: oklch(0.29 0.069 290.87);
     --color-meili-900: oklch(0.212 0.048 290.89);
     --color-meili-950: oklch(0.167 0.041 290.5);
+}
+
+:root {
+    --ui-radius: 0.5rem;
 }
 
 @utility dynamic-bg {

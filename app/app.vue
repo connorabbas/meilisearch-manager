@@ -12,21 +12,21 @@ useHead(() => ({
 </script>
 
 <template>
-    <AppToast />
-    <ConfirmDialog
-        group="delete"
-        :draggable="false"
-        blockScroll
-    >
-        <template #icon>
-            <AlertCircle />
-        </template>
-    </ConfirmDialog>
-    <NuxtLoadingIndicator color="var(--p-primary-500)" />
-    <NuxtLayout>
-        <!-- include tailwind css classes defined in nuxt.config.ts for body tag -->
-        <!-- antialiased font-sans h-full bg-surface-100 dark:bg-surface-950 -->
-        <NuxtRouteAnnouncer />
-        <NuxtPage />
-    </NuxtLayout>
+    <UApp>
+        <AppToast />
+        <ConfirmDialog
+            group="delete"
+            :draggable="false"
+            blockScroll
+        >
+            <template #icon>
+                <AlertCircle />
+            </template>
+        </ConfirmDialog>
+        <NuxtLoadingIndicator color="var(--ui-primary)" />
+        <NuxtLayout>
+            <NuxtRouteAnnouncer />
+            <NuxtPage />
+        </NuxtLayout>
+    </UApp>
 </template>
