@@ -9,6 +9,8 @@
         "lint": "eslint . --fix",
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare",
+        "test:e2e": "npm run build && playwright test --project=chromium",
+        "test:e2e:cross-browser": "npm run build && playwright test --project=firefox --project=webkit",
         "typecheck": "nuxt typecheck"
     },
     "dependencies": {

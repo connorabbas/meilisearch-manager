@@ -5,6 +5,9 @@
 .nitro
 .cache
 dist
+playwright-report
+test-results
+blob-report
 
 # Node dependencies
 node_modules
