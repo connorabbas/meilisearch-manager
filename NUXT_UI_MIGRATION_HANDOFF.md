@@ -266,8 +266,8 @@ Current screenshots should be reference material for content and behavior, not s
 
 Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for in progress, and `[x]` for complete.
 
-- [ ] Phase 0: Characterization tests and migration harness
-- [ ] Phase 1: Nuxt UI foundation and design system
+- [x] Phase 0: Characterization tests and migration harness
+- [x] Phase 1: Nuxt UI foundation and design system
 - [ ] Phase 2: Feedback, confirmation, and pagination decoupling
 - [ ] Phase 3: Dashboard application shell
 - [ ] Phase 4: Connection and low-complexity pages
@@ -331,7 +331,13 @@ npm run test:e2e
 
 Record fixture credentials, startup commands, and any intentionally deferred coverage here.
 
-- None yet.
+- Completed 2026-09-17. Playwright is configured in `playwright.config.ts`; `npm run test:e2e` builds the production application, starts `nuxt preview`, and runs the blocking Chromium project.
+- The deterministic fixture lives in `e2e/fixtures/meilisearch.ts` and intercepts the real Meilisearch JavaScript client's requests. It requires no external Meilisearch process. Its instance is `Playwright Instance` at `http://127.0.0.1:3000/__meili` with API key `playwright-key`; values are test-only and never leave the intercepted browser context.
+- Committed smoke coverage includes empty-instance redirect, connection setup and persistence, every top-level navigation route, index opening, document search and pagination payloads, task filtering/details, key details, supported and unsupported search-rule gates, color mode, and keyboard dismissal of a modal and drawer.
+- Firefox and WebKit projects run only tests tagged `@cross-browser` through `npm run test:e2e:cross-browser`. Browser binaries were not installed or run in this session; Chromium remains the Phase 0 blocking browser as specified.
+- CI now runs non-mutating ESLint, typecheck, production build, installs Chromium with system dependencies, and runs the Chromium smoke suite.
+- Playwright artifacts are ignored. The Playwright MCP entry was added to `opencode.json` and validated with `opencode debug config`; restart OpenCode before expecting the new MCP server in an existing session.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (10 passed), and `opencode debug config`.
 
 ## Phase 1: Nuxt UI Foundation and Design System
 
@@ -387,7 +393,14 @@ NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-17. Added exact `@nuxt/ui` 4.11.0, local `@iconify-json/lucide`, and Tailwind CSS 4.3.3 dependencies while retaining PrimeVue for unmigrated views.
+- Registered `@nuxt/ui`, removed the duplicate manual Tailwind Vite plugin, and disabled Nuxt UI's automatic font and color-mode integrations. The existing explicit `@nuxt/fonts` module and VueUse `.dark` controller remain authoritative.
+- PrimeVue's auto-imported `useToast` is excluded to avoid colliding with Nuxt UI's composable; existing PrimeVue toast imports, toast renderer, confirmation provider, Aura-derived theme, global pass-through configuration, and `tailwindcss-primeui` remain in place.
+- `UApp` now wraps the active application tree. Nuxt UI's toast, tooltip, icon, and overlay providers are mounted without replacing current PrimeVue feedback behavior.
+- `app/app.config.ts` assigns the existing `meili` purple palette to `primary`, uses `slate` as the neutral palette, defines semantic status colors, and pins global Lucide icon defaults. The body and loading indicator now use Nuxt UI semantic tokens.
+- Global MapLibre, JSON viewer, and dark JSON editor styles remain loaded. Existing PrimeVue routes passed the Chromium characterization suite in light mode, and the color-mode test switched the application to dark mode successfully.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate`, and `npm run test:e2e` (10 passed).
+- `npm audit --omit=dev` reports 10 transitive advisories, including the existing unfixable critical `nuxt-maplibre`/`maplibre-gl` chain. Dependency remediation was not mixed into this UI foundation phase.
 
 ## Phase 2: Feedback, Confirmation, and Pagination Decoupling
 
