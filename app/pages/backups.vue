@@ -1,120 +1,138 @@
 <script setup lang="ts">
+import type { TabsItem } from '@nuxt/ui'
 import { useDumps } from '@/composables/meilisearch/useDumps'
 import { useSnapshots } from '@/composables/meilisearch/useSnapshots'
-import PageTitleSection from '@/components/PageTitleSection.vue'
-import { Plus } from '@lucide/vue'
 
 definePageMeta({
     layout: 'app',
     title: 'Backups',
+    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Backups' }]
 })
 
 const currentTab = ref('dumps')
+const tabs: TabsItem[] = [
+    { label: 'Dumps', value: 'dumps', slot: 'dumps' },
+    { label: 'Snapshots', value: 'snapshots', slot: 'snapshots' },
+]
 const dumpsDocsUrl = 'https://www.meilisearch.com/docs/resources/self_hosting/data_backup/dumps'
 const snapshotsDocsUrl = 'https://www.meilisearch.com/docs/resources/self_hosting/data_backup/snapshots'
 
-const { isLoadingTask, createDump } = useDumps()
-const { isLoadingTask: isLoadingSnapshotTask, createSnapshot } = useSnapshots()
+const { isLoadingTask, error: dumpsError, createDump } = useDumps()
+const { isLoadingTask: isLoadingSnapshotTask, error: snapshotsError, createSnapshot } = useSnapshots()
+
+async function createCurrentBackup() {
+    try {
+        if (currentTab.value === 'dumps') {
+            await createDump()
+        } else {
+            await createSnapshot()
+        }
+    } catch {
+        // The composables expose the error inline and through a toast.
+    }
+}
+
+const currentActionLabel = computed(() => currentTab.value === 'dumps' ? 'Create Dump' : 'Create Snapshot')
+const currentActionLoading = computed(() => currentTab.value === 'dumps' ? isLoadingTask.value : isLoadingSnapshotTask.value)
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <PageTitleSection>
-            <template #title>
-                Backups
-            </template>
-        </PageTitleSection>
+    <AppDashboardPanel id="backups">
+        <template #actions>
+            <UButton
+                :label="currentActionLabel"
+                icon="i-lucide-plus"
+                :loading="currentActionLoading"
+                @click="createCurrentBackup"
+            />
+        </template>
 
-        <Tabs
-            v-model:value="currentTab"
-            lazy
+        <UTabs
+            v-model="currentTab"
+            :items="tabs"
+            variant="link"
+            class="w-full"
         >
-            <TabList class="[background:transparent]!">
-                <Tab value="dumps">
-                    Dumps
-                </Tab>
-                <Tab value="snapshots">
-                    Snapshots
-                </Tab>
-            </TabList>
-            <TabPanels class="[background:transparent]! p-0 pt-4 sm:pt-8">
-                <TabPanel
-                    value="dumps"
-                    class="p-0"
-                >
-                    <Card>
-                        <template #title>
-                            Export a dump
-                        </template>
-                        <template #subtitle>
-                            Dumps are portable backups best suited for migrating data between Meilisearch
-                            versions.
-                        </template>
-                        <template #content>
-                            <div class="pt-4 flex flex-wrap items-center gap-4">
-                                <Button
-                                    label="Create Dump"
-                                    :loading="isLoadingTask"
-                                    @click="createDump()"
-                                >
-                                    <template #icon>
-                                        <Plus />
-                                    </template>
-                                </Button>
+            <template #dumps>
+                <div class="pt-4">
+                    <UAlert
+                        v-if="dumpsError"
+                        color="error"
+                        variant="subtle"
+                        icon="i-lucide-circle-x"
+                        title="Unable to create dump"
+                        :description="dumpsError"
+                        class="mb-4"
+                    />
 
-                                <Button
-                                    as="a"
-                                    label="Read dumps docs"
-                                    variant="link"
+                    <UCard
+                        title="Export a dump"
+                        description="Dumps are portable backups best suited for migrating data between Meilisearch versions."
+                    >
+                        <template #footer>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <UButton
+                                    label="Create Dump"
+                                    icon="i-lucide-plus"
+                                    :loading="isLoadingTask"
+                                    class="sm:hidden"
+                                    @click="createCurrentBackup"
+                                />
+                                <UButton
                                     :href="dumpsDocsUrl"
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="no-underline rounded-none!"
+                                    label="Read dumps docs"
+                                    trailing-icon="i-lucide-arrow-up-right"
+                                    color="neutral"
+                                    variant="link"
+                                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                                 />
                             </div>
                         </template>
-                    </Card>
-                </TabPanel>
+                    </UCard>
+                </div>
+            </template>
 
-                <TabPanel
-                    value="snapshots"
-                    class="p-0"
-                >
-                    <Card>
-                        <template #title>
-                            Export a snapshot
-                        </template>
-                        <template #subtitle>
-                            Snapshots are exact database copies intended for fast recovery on the same Meilisearch
-                            version.
-                        </template>
-                        <template #content>
-                            <div class="pt-4 flex flex-wrap items-center gap-4">
-                                <Button
+            <template #snapshots>
+                <div class="pt-4">
+                    <UAlert
+                        v-if="snapshotsError"
+                        color="error"
+                        variant="subtle"
+                        icon="i-lucide-circle-x"
+                        title="Unable to create snapshot"
+                        :description="snapshotsError"
+                        class="mb-4"
+                    />
+
+                    <UCard
+                        title="Export a snapshot"
+                        description="Snapshots are exact database copies intended for fast recovery on the same Meilisearch version."
+                    >
+                        <template #footer>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <UButton
                                     label="Create Snapshot"
+                                    icon="i-lucide-plus"
                                     :loading="isLoadingSnapshotTask"
-                                    @click="createSnapshot()"
-                                >
-                                    <template #icon>
-                                        <Plus />
-                                    </template>
-                                </Button>
-
-                                <Button
-                                    as="a"
-                                    label="Read snapshots docs"
-                                    variant="link"
+                                    class="sm:hidden"
+                                    @click="createCurrentBackup"
+                                />
+                                <UButton
                                     :href="snapshotsDocsUrl"
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="no-underline rounded-none!"
+                                    label="Read snapshots docs"
+                                    trailing-icon="i-lucide-arrow-up-right"
+                                    color="neutral"
+                                    variant="link"
+                                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                                 />
                             </div>
                         </template>
-                    </Card>
-                </TabPanel>
-            </TabPanels>
-        </Tabs>
-    </div>
+                    </UCard>
+                </div>
+            </template>
+        </UTabs>
+    </AppDashboardPanel>
 </template>

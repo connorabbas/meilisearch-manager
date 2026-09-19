@@ -7,7 +7,7 @@ export function useAppLayout() {
     const navigationItems = computed<NavigationMenuItem[]>(() => [
         {
             label: 'Dashboard',
-            icon: 'i-lucide-layout-grid',
+            icon: 'i-lucide-layout-dashboard',
             to: '/dashboard',
             active: route.path === '/dashboard',
         },
