@@ -1,13 +1,9 @@
 export default defineAppConfig({
     ui: {
         colors: {
-            primary: 'meili',
-            secondary: 'purple',
-            success: 'emerald',
-            info: 'sky',
-            warning: 'amber',
-            error: 'red',
-            neutral: 'slate',
+            primary: 'pink',
+            secondary: 'violet',
+            neutral: 'saturated-purple',
         },
         icons: {
             loading: 'i-lucide-loader-circle',
