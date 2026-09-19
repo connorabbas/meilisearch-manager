@@ -20,7 +20,7 @@ test('a valid instance can be added and selected', async ({ page }) => {
     await page.getByRole('button', { name: 'Connect' }).click()
 
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.getByText('Instance Added')).toBeVisible()
+    await expect(page.getByText('Instance Added', { exact: true })).toBeVisible()
     await expect.poll(() => page.evaluate(() => {
         const stored = JSON.parse(localStorage.getItem('meilisearch-instances') ?? '[]')
         const selectedId = localStorage.getItem('meilisearch-current-id')

@@ -39,7 +39,11 @@ test('tablet dashboard uses the panel scroll container in dark mode', async ({ p
     await page.getByRole('option', { name: 'Dark' }).click()
 
     await expect(page.locator('html')).toHaveClass(/dark/)
-    await expect(page.locator('#app-scroll-container')).toBeVisible()
+    const panelBody = page.locator('.app-scroll-container')
+    await expect(panelBody).toBeVisible()
+    expect(await panelBody.evaluate((element) => {
+        return Math.abs(element.getBoundingClientRect().right - document.documentElement.clientWidth) < 1
+    })).toBe(true)
     expect(await page.locator('body').evaluate((body) => body.scrollWidth <= body.clientWidth)).toBe(true)
 })
 

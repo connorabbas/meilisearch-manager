@@ -61,10 +61,16 @@ const key = {
 export type MeilisearchMockOptions = {
     version?: string,
     dynamicSearchRules?: boolean,
+    experimentalFeatures?: Record<string, boolean | null>,
     singleInstanceProxyMode?: boolean,
+    healthFailures?: number,
+    onStatsRequest?: (request: Request) => void,
     onSearchRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
     onDeleteIndexRequest?: (request: Request) => void,
+    onCreateDumpRequest?: (request: Request) => void,
+    onCreateSnapshotRequest?: (request: Request) => void,
+    onExperimentalFeaturesRequest?: (request: Request) => void,
 }
 
 function json(route: Route, body: unknown, status = 200) {
@@ -80,6 +86,8 @@ function json(route: Route, body: unknown, status = 200) {
 }
 
 export async function installMeilisearchMock(page: Page, options: MeilisearchMockOptions = {}) {
+    let healthFailuresRemaining = options.healthFailures ?? 0
+
     await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
     await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
         const request = route.request()
@@ -99,8 +107,19 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         }
 
         if (path === '/health') {
-            await json(route, { status: 'available' })
+            if (healthFailuresRemaining > 0) {
+                healthFailuresRemaining--
+                await json(route, {
+                    message: 'Playwright fixture connection failure',
+                    code: 'fixture_connection_failure',
+                    type: 'system',
+                    link: 'https://example.test/fixture-connection-failure',
+                }, 503)
+            } else {
+                await json(route, { status: 'available' })
+            }
         } else if (path === '/stats') {
+            options.onStatsRequest?.(request)
             await json(route, {
                 databaseSize: 4096,
                 usedDatabaseSize: 2048,
@@ -154,8 +173,17 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, { ...task, type: 'indexDeletion' })
         } else if (path === '/keys') {
             await json(route, { results: [key], offset: 0, limit: 20, total: 1 })
-        } else if (path === '/experimental-features') {
-            await json(route, { dynamicSearchRules: options.dynamicSearchRules ?? true })
+        } else if (path === '/dumps' && request.method() === 'POST') {
+            options.onCreateDumpRequest?.(request)
+            await json(route, { taskUid: task.uid, status: 'enqueued', type: 'dumpCreation' })
+        } else if (path === '/snapshots' && request.method() === 'POST') {
+            options.onCreateSnapshotRequest?.(request)
+            await json(route, { taskUid: task.uid, status: 'enqueued', type: 'snapshotCreation' })
+        } else if (path === '/experimental-features' && request.method() === 'GET') {
+            await json(route, options.experimentalFeatures ?? { dynamicSearchRules: options.dynamicSearchRules ?? true })
+        } else if (path === '/experimental-features' && request.method() === 'PATCH') {
+            options.onExperimentalFeaturesRequest?.(request)
+            await json(route, request.postDataJSON())
         } else if (path === '/dynamic-search-rules' && request.method() === 'POST') {
             await json(route, {
                 results: [{
