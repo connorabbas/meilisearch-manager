@@ -15,7 +15,7 @@ test('every top-level route is reachable from navigation @cross-browser', async 
         { link: 'Indexes', path: '/indexes', heading: 'Indexes' },
         { link: 'Tasks', path: '/tasks', heading: 'Tasks' },
         { link: 'Keys', path: '/keys', heading: 'API Keys' },
-        { link: 'Backups', path: '/backups', heading: 'Backups' },
+        { link: 'Dumps', path: '/backups/dumps', heading: 'Dumps' },
         { link: 'Search Rules', path: '/search-rules', heading: 'Search Rules' },
         { link: 'Experimental Features', path: '/experimental-features', heading: 'Experimental Features' },
     ]
@@ -23,7 +23,7 @@ test('every top-level route is reachable from navigation @cross-browser', async 
     for (const route of routes) {
         await page.getByRole('link', { name: route.link, exact: true }).first().click()
         await expect(page).toHaveURL(new RegExp(`${route.path}$`))
-        if (route.path === '/backups' || route.path === '/experimental-features') {
+        if (route.path === '/indexes' || route.path.startsWith('/backups/') || route.path === '/experimental-features') {
             await expect(page.getByRole('navigation', { name: 'breadcrumb' }).getByText(route.heading, { exact: true })).toBeVisible()
         } else {
             await expect(page.getByRole('heading', { name: route.heading, exact: true })).toBeVisible()
