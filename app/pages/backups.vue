@@ -15,6 +15,12 @@ const links = [{
 
 <template>
     <AppDashboardPanel id="backups">
+        <template #actions>
+            <div
+                id="sub-page-actions"
+                class="contents"
+            />
+        </template>
 
         <template #toolbar>
             <UDashboardToolbar>

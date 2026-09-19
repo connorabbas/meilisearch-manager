@@ -23,6 +23,15 @@ async function createCurrentBackup() {
 
 <template>
     <div>
+        <Teleport to="#sub-page-actions">
+            <UButton
+                label="Create Dump"
+                icon="i-lucide-plus"
+                :loading="isLoadingTask"
+                @click="createCurrentBackup"
+            />
+        </Teleport>
+
         <UAlert
             v-if="dumpsError"
             color="error"
@@ -47,16 +56,6 @@ async function createCurrentBackup() {
                 variant="soft"
                 :ui="{ trailingIcon: 'size-3 text-dimmed' }"
             />
-            <template #footer>
-                <div class="flex justify-end">
-                    <UButton
-                        label="Create Dump"
-                        icon="i-lucide-plus"
-                        :loading="isLoadingTask"
-                        @click="createCurrentBackup"
-                    />
-                </div>
-            </template>
         </UCard>
     </div>
 </template>
