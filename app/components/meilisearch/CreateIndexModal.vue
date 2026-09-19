@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
+import { z } from 'zod'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import type { IndexOptions } from 'meilisearch'
 
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 
 const emit = defineEmits<{
     'index-created': []
@@ -10,93 +12,136 @@ const emit = defineEmits<{
 
 const { isSendingTask, createIndex } = useIndexes()
 
-const uid = ref<string>('')
-const primaryKey = ref<string>()
+const schema = z.object({
+    uid: z.string().trim().min(1, { message: 'Please provide an index UID' }),
+    primaryKey: z.string().trim().optional(),
+})
 
-function submitNewIndex() {
-    createIndex(uid.value, { primaryKey: primaryKey.value } as IndexOptions).then(() => {
-        visible.value = false
+type CreateIndexForm = z.output<typeof schema>
+
+const formState = reactive<CreateIndexForm>({
+    uid: '',
+    primaryKey: '',
+})
+const form = useTemplateRef('form')
+const submitError = ref<string | null>(null)
+
+async function submitNewIndex(event: FormSubmitEvent<CreateIndexForm>) {
+    submitError.value = null
+
+    try {
+        const primaryKey = event.data.primaryKey || undefined
+        const options: IndexOptions | undefined = primaryKey ? { primaryKey } : undefined
+
+        await createIndex(event.data.uid, options)
+        open.value = false
         emit('index-created')
-    }).catch(() => {
-        //
-    })
+    } catch (error) {
+        submitError.value = (error as Error).message
+    }
 }
 
 function reset() {
-    uid.value = ''
-    primaryKey.value = undefined
+    formState.uid = ''
+    formState.primaryKey = ''
+    submitError.value = null
 }
 
-function handleCancel() {
-    visible.value = false
-    reset()
+function focusFirstInvalidField(_event: FormErrorEvent) {
+    // Let the dialog finish its focus handling before returning focus to the invalid field.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+        })
+    })
 }
 
-watch(visible, (isVisible) => {
-    if (isVisible) {
+async function submitForm() {
+    await form.value?.submit()
+}
+
+watch(open, (isOpen) => {
+    if (isOpen) {
         reset()
-    }
-})
-
-watch(primaryKey, (newVal) => {
-    if (newVal === '') {
-        primaryKey.value = undefined
     }
 })
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="visible"
-        class="w-full sm:w-[30rem]"
-        position="center"
-        header="New Index"
-        :draggable="false"
-        dismissable-mask
-        modal
+    <UModal
+        v-model:open="open"
+        title="New Index"
+        description="Create an index on the current Meilisearch instance."
+        :ui="{ content: 'max-w-md' }"
     >
-        <form
-            id="create-index-form"
-            class="flex flex-col gap-6"
-            @submit.prevent="submitNewIndex"
-        >
-            <div class="flex flex-col gap-2">
-                <label for="new-index-uid">UID</label>
-                <InputText
-                    id="new-index-uid"
-                    v-model="uid"
-                    placeholder="uid of the requested index"
-                    type="text"
-                    autofocus
-                    fluid
+        <template #body>
+            <UForm
+                id="create-index-form"
+                ref="form"
+                :schema="schema"
+                :state="formState"
+                :loading-auto="false"
+                novalidate
+                class="space-y-4"
+                @submit="submitNewIndex"
+                @error="focusFirstInvalidField"
+            >
+                <UAlert
+                    v-if="submitError"
+                    color="error"
+                    variant="subtle"
+                    icon="i-lucide-circle-x"
+                    title="Unable to create index"
+                    :description="submitError"
                 />
-            </div>
-            <div class="flex flex-col gap-2">
-                <label for="new-index-pk">Primary Key</label>
-                <InputText
-                    id="new-index-pk"
-                    v-model="primaryKey"
-                    placeholder="optional - primary key of the requested index"
-                    type="text"
-                    fluid
-                />
-            </div>
-        </form>
+
+                <UFormField
+                    name="uid"
+                    label="UID"
+                    required
+                >
+                    <UInput
+                        v-model="formState.uid"
+                        placeholder="uid of the requested index"
+                        autocomplete="off"
+                        autofocus
+                        class="w-full"
+                    />
+                </UFormField>
+
+                <UFormField
+                    name="primaryKey"
+                    label="Primary Key"
+                    hint="Optional"
+                >
+                    <UInput
+                        v-model="formState.primaryKey"
+                        placeholder="primary key of the requested index"
+                        autocomplete="off"
+                        class="w-full"
+                    />
+                </UFormField>
+            </UForm>
+        </template>
+
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <div class="flex w-full justify-end gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
-                    @click="handleCancel"
+                    color="neutral"
+                    variant="outline"
+                    :disabled="isSendingTask"
+                    @click="open = false"
                 />
-                <Button
-                    type="submit"
-                    form="create-index-form"
-                    label="Submit"
+                <UButton
+                    type="button"
+                    label="Create index"
+                    icon="i-lucide-plus"
                     :loading="isSendingTask"
+                    :disabled="isSendingTask"
+                    @click="submitForm"
                 />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>

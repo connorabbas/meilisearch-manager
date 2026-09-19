@@ -7,17 +7,21 @@ export function useIndexes(initialPerPage: number = 20) {
     const toast = useToast()
     const { confirmAction } = useConfirmAction()
     const meilisearchStore = useMeilisearchStore()
+    const indexesResults = ref<IndexesResults<IndexObject[]> | null>(null)
     const {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        totalRecords: totalIndexes,
+        resultText: paginationSummary,
         syncCurrentPageWithinTotal,
-        handlePageEvent,
-    } = usePagination(initialPerPage)
+        paginate,
+    } = usePagination(initialPerPage, {
+        total: () => indexesResults.value?.total,
+        itemLabel: 'indexes',
+    })
     const { pollTaskStatus } = useTasks()
 
-    const indexesResults = ref<IndexesResults<IndexObject[]> | null>(null)
     const indexes = ref<IndexObject[]>([])
     const currentIndex = ref<Index | null>(null)
     const isFetching = ref(false)
@@ -243,8 +247,9 @@ export function useIndexes(initialPerPage: number = 20) {
     return {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        totalIndexes,
+        paginationSummary,
         indexesResults,
         indexes,
         currentIndex,
@@ -253,7 +258,7 @@ export function useIndexes(initialPerPage: number = 20) {
         isPollingTask,
         isLoadingTask,
         error,
-        handlePageEvent,
+        paginate,
         fetchIndexes,
         fetchIndexesPaginated,
         fetchAllIndexes,

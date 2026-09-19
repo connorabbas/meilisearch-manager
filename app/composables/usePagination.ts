@@ -3,14 +3,26 @@ export interface PaginationEvent {
     rows: number;
 }
 
-export function usePagination(initialPerPage: number = 20) {
+export interface PaginationOptions {
+    total?: () => number | null | undefined;
+    itemLabel?: string;
+}
+
+export function usePagination(initialPerPage: number = 20, options: PaginationOptions = {}) {
     const currentPage = ref(1)
     const perPage = ref(initialPerPage)
+    const totalRecords = computed(() => options.total?.() ?? 0)
+    const itemLabel = options.itemLabel ?? 'records'
 
     const firstDatasetIndex = computed(() => {
         return (currentPage.value - 1) * perPage.value
     })
     const offset = computed(() => (perPage.value * currentPage.value) - perPage.value)
+    const rangeStart = computed(() => totalRecords.value === 0 ? 0 : offset.value + 1)
+    const rangeEnd = computed(() => Math.min(currentPage.value * perPage.value, totalRecords.value))
+    const resultText = computed(() => {
+        return `Showing ${rangeStart.value} to ${rangeEnd.value} of ${totalRecords.value} ${itemLabel}`
+    })
 
     function syncCurrentPageWithinTotal(totalRecords?: number | null): boolean {
         if (totalRecords === null || totalRecords === undefined) {
@@ -68,8 +80,12 @@ export function usePagination(initialPerPage: number = 20) {
     return {
         currentPage,
         perPage,
+        totalRecords,
         firstDatasetIndex,
         offset,
+        rangeStart,
+        rangeEnd,
+        resultText,
         syncCurrentPageWithinTotal,
         paginate,
         handlePageEvent,
