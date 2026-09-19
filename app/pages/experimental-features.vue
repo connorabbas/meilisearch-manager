@@ -54,7 +54,7 @@ async function handleSave() {
 
 <template>
     <AppDashboardPanel id="experimental-features">
-        <div class="max-w-3xl space-y-4 md:space-y-6">
+        <div class="mx-auto max-w-xl space-y-4 md:space-y-6">
             <UAlert
                 v-if="error"
                 color="error"

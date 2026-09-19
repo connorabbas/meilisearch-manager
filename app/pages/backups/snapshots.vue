@@ -22,7 +22,7 @@ async function createCurrentBackup() {
 </script>
 
 <template>
-    <div>
+    <div class="mx-auto max-w-xl">
         <Teleport to="#sub-page-actions">
             <UButton
                 label="Create Snapshot"
