@@ -269,7 +269,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 0: Characterization tests and migration harness
 - [x] Phase 1: Nuxt UI foundation and design system
 - [x] Phase 2: Feedback, confirmation, and pagination decoupling
-- [ ] Phase 3: Dashboard application shell
+- [x] Phase 3: Dashboard application shell
 - [ ] Phase 4: Connection and low-complexity pages
 - [ ] Phase 5: Index list and canonical table pattern
 - [ ] Phase 6: Index detail, stats, settings, and danger zone
@@ -331,7 +331,7 @@ npm run test:e2e
 
 Record fixture credentials, startup commands, and any intentionally deferred coverage here.
 
-- Completed 2026-09-17. Playwright is configured in `playwright.config.ts`; `npm run test:e2e` builds the production application, starts `nuxt preview`, and runs the blocking Chromium project.
+- Completed 2026-09-17. Playwright is configured in `playwright.config.ts`; `npm run test:e2e` builds the production application, starts an isolated `nuxt preview` on `127.0.0.1:3100`, and runs the blocking Chromium project. Use `npm run dev:traefik` for the development server exposed through Traefik at `http://meilisearch-manager.localhost` on port 3000.
 - The deterministic fixture lives in `e2e/fixtures/meilisearch.ts` and intercepts the real Meilisearch JavaScript client's requests. It requires no external Meilisearch process. Its instance is `Playwright Instance` at `http://127.0.0.1:3000/__meili` with API key `playwright-key`; values are test-only and never leave the intercepted browser context.
 - Committed smoke coverage includes empty-instance redirect, connection setup and persistence, every top-level navigation route, index opening, document search and pagination payloads, task filtering/details, key details, supported and unsupported search-rule gates, color mode, and keyboard dismissal of a modal and drawer.
 - Firefox and WebKit projects run only tests tagged `@cross-browser` through `npm run test:e2e:cross-browser`. Browser binaries were not installed or run in this session; Chromium remains the Phase 0 blocking browser as specified.
@@ -528,7 +528,12 @@ Perform browser checks at 375, 768, and 1440 pixel widths in light and dark mode
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-18. The app layout now uses `UDashboardGroup`, a local-persisted, resizable `UDashboardSidebar`, `UNavigationMenu`, `UDashboardPanel`, `UDashboardNavbar`, and `UBreadcrumb`. The dashboard owns scrolling through `#app-scroll-container`, and pagination/task infinite scrolling use that container when it exists.
+- Navigation uses Nuxt UI menu types and Iconify Lucide icons. Explicit active state keeps Indexes and Search Rules highlighted on nested routes. The sidebar supports responsive drawer behavior without manual width watchers and includes instance actions in multi-instance mode only.
+- Instance switching uses `UDropdownMenu` and `UModal`/`USelect`; the new fixture also intercepts proxy-mode `/api/meilisearch/**` calls. The shell remains available in proxy mode without instance-management controls.
+- Nuxt UI automatic color mode is authoritative: legacy VueUse controller/plugins and Prime color-mode controls were removed, `ui.colorMode: false` was removed, `UColorModeSelect` is used in the sidebar footer, and JSON/map/chart consumers use Nuxt `useColorMode()`.
+- PrimeVue remains intentionally mounted for unmigrated routes, including `AppToast`, `ConfirmDialog`, `router-link-menus/Menu.vue`, and shared Prime menu types. Removed router wrappers were only used by the replaced shell.
+- Added dashboard E2E coverage for 375px keyboard navigation, 768px dark-mode panel scrolling/no horizontal overflow, 1440px nested active state and breadcrumbs, multi-instance switching, and proxy-mode behavior. Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (16 passed), and `git diff --check`.
 
 ## Phase 4: Connection and Low-Complexity Pages
 
