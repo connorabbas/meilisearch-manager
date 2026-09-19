@@ -41,6 +41,7 @@ watch(currentInstanceId, async (instanceId, previousInstanceId) => {
             <UButton
                 label="Refresh"
                 icon="i-lucide-refresh-cw"
+                loading-icon="i-lucide-refresh-cw"
                 color="neutral"
                 variant="outline"
                 :loading="isFetching"

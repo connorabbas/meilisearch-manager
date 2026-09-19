@@ -34,6 +34,7 @@ async function retryConnection() {
             <UButton
                 label="Retry Connection"
                 icon="i-lucide-refresh-cw"
+                loading-icon="i-lucide-refresh-cw"
                 :loading="meilisearchStore.isConnecting"
                 @click="retryConnection"
             />
@@ -43,7 +44,10 @@ async function retryConnection() {
             <UCard class="w-full max-w-2xl">
                 <section class="flex flex-col items-center gap-6 py-6 text-center sm:py-10">
                     <div class="flex size-14 items-center justify-center rounded-full bg-error/10 text-error">
-                        <UIcon name="i-lucide-circle-x" class="size-7" />
+                        <UIcon
+                            name="i-lucide-circle-x"
+                            class="size-7"
+                        />
                     </div>
                     <div class="space-y-2">
                         <h2 class="text-xl font-semibold text-highlighted">
