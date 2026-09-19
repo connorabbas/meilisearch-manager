@@ -19,7 +19,7 @@ export function useAppLayout() {
         },
         {
             label: 'Tasks',
-            icon: 'i-lucide-list-check',
+            icon: 'i-lucide-list-todo',
             to: '/tasks',
             active: route.path === '/tasks',
         },
