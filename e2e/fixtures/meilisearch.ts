@@ -21,6 +21,13 @@ const index = {
     updatedAt: '2026-01-02T00:00:00.000Z',
 }
 
+type FixtureIndex = {
+    uid: string;
+    primaryKey: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
 const indexStats = {
     numberOfDocuments: 21,
     isIndexing: false,
@@ -65,6 +72,10 @@ export type MeilisearchMockOptions = {
     singleInstanceProxyMode?: boolean,
     healthFailures?: number,
     onStatsRequest?: (request: Request) => void,
+    onIndexesRequest?: (request: Request) => void,
+    onCreateIndexRequest?: (request: Request) => void,
+    indexes?: FixtureIndex[],
+    getIndexes?: (request: Request, indexes: FixtureIndex[]) => FixtureIndex[],
     onSearchRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
     onDeleteIndexRequest?: (request: Request) => void,
@@ -87,6 +98,7 @@ function json(route: Route, body: unknown, status = 200) {
 
 export async function installMeilisearchMock(page: Page, options: MeilisearchMockOptions = {}) {
     let healthFailuresRemaining = options.healthFailures ?? 0
+    const indexes = [...(options.indexes ?? [index])]
 
     await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
     await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
@@ -124,7 +136,10 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 databaseSize: 4096,
                 usedDatabaseSize: 2048,
                 lastUpdate: '2026-01-02T00:00:00.000Z',
-                indexes: { movies: indexStats },
+                indexes: Object.fromEntries(indexes.map(item => [item.uid, item.uid === 'movies' ? indexStats : {
+                    ...indexStats,
+                    numberOfDocuments: 0,
+                }])),
             })
         } else if (path === '/version') {
             await json(route, {
@@ -133,7 +148,32 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 pkgVersion: options.version ?? '1.41.0',
             })
         } else if (path === '/indexes' && request.method() === 'GET') {
-            await json(route, { results: [index], offset: 0, limit: 20, total: 1 })
+            options.onIndexesRequest?.(request)
+            const availableIndexes = options.getIndexes?.(request, indexes) ?? indexes
+            const offset = Number(url.searchParams.get('offset') ?? 0)
+            const limit = Number(url.searchParams.get('limit') ?? 20)
+            await json(route, {
+                results: availableIndexes.slice(offset, offset + limit),
+                offset,
+                limit,
+                total: availableIndexes.length,
+            })
+        } else if (path === '/indexes' && request.method() === 'POST') {
+            options.onCreateIndexRequest?.(request)
+            const payload = request.postDataJSON() as { uid: string, primaryKey?: string }
+            const createdIndex: FixtureIndex = {
+                uid: payload.uid,
+                primaryKey: payload.primaryKey ?? null,
+                createdAt: '2026-01-03T00:00:00.000Z',
+                updatedAt: '2026-01-03T00:00:00.000Z',
+            }
+            indexes.push(createdIndex)
+            await json(route, {
+                taskUid: 102,
+                indexUid: payload.uid,
+                status: 'enqueued',
+                type: 'indexCreation',
+            })
         } else if (path === '/indexes/movies' && request.method() === 'GET') {
             await json(route, index)
         } else if (path === '/indexes/movies' && request.method() === 'DELETE') {
@@ -169,8 +209,14 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         } else if (path === '/tasks') {
             options.onTasksRequest?.(request)
             await json(route, { results: [task], total: 1, limit: 50, from: 101, next: null })
-        } else if (path === `/tasks/${task.uid}`) {
-            await json(route, { ...task, type: 'indexDeletion' })
+        } else if (/^\/tasks\/\d+$/.test(path)) {
+            const taskUid = Number(path.split('/').at(-1))
+            await json(route, {
+                ...task,
+                uid: taskUid,
+                indexUid: taskUid === 102 ? 'created-index' : task.indexUid,
+                type: taskUid === 102 ? 'indexCreation' : 'indexDeletion',
+            })
         } else if (path === '/keys') {
             await json(route, { results: [key], offset: 0, limit: 20, total: 1 })
         } else if (path === '/dumps' && request.method() === 'POST') {
