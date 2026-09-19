@@ -271,7 +271,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 2: Feedback, confirmation, and pagination decoupling
 - [x] Phase 3: Dashboard application shell
 - [x] Phase 4: Connection and low-complexity pages
-- [ ] Phase 5: Index list and canonical table pattern
+- [x] Phase 5: Index list and canonical table pattern
 - [ ] Phase 6: Index detail, stats, settings, and danger zone
 - [ ] Phase 7: API keys
 - [ ] Phase 8: Tasks
@@ -596,6 +596,7 @@ npm run test:e2e
 - Phase 4 routes own their `UDashboardPanel` through `AppDashboardPanel`. Breadcrumbs intentionally provide navbar identity instead of duplicate page titles, and page bodies own native scrolling so the scrollbar remains flush with the panel edge. Legacy routes retain the layout-owned panel until migrated.
 - New-instance setup uses `UForm`, `UFormField`, the existing Zod schema, first-invalid-field focus, and the existing persistence and health-check flow. Proxy-mode bypass and duplicate-host rejection remain covered.
 - Dashboard statistics use stock subtle `UPageCard` components in `UPageGrid`. Backups use `UTabs` and preserve distinct dump/snapshot task polling; experimental features use `USwitch` and continue submitting every returned feature key.
+- The backups nested route is the canonical child-action pattern: its parent route owns `AppDashboardPanel`, route navigation, and the generic `#sub-page-actions` navbar outlet. Each child teleports its stateful primary action into that outlet, so action controls remain outside the scroll body and are replaced on sub-route navigation. Reuse this pattern for later nested route families rather than adding a sub-layout.
 - External documentation links use Nuxt UI's NavigationMenu external-link treatment: `i-lucide-arrow-up-right` at `size-3 text-dimmed`.
 - Added Phase 4 fixture support and Playwright coverage for setup validation, duplicate hosts, connection retry, proxy mode, dashboard refresh, backup endpoints/task polling, experimental-feature payloads, responsive sidebar behavior, and flush panel scrolling.
 - Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (23 passed), and `git diff --check`.
@@ -654,7 +655,15 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-19. The indexes route now owns an `AppDashboardPanel` and implements the canonical remote-table pattern with typed `TableColumn<IndexRow>[]`, stable UID row IDs, a fixed-width right-pinned action column, external `UPagination`, and an explicit 20/50/100 `USelect` page-size control. `UTable` only renders the server response; it has no client pagination configuration.
+- `AppTablePagination` now provides the reusable Nuxt UI footer layout: a labelled page-size `USelect` in a `UFieldGroup` and an externally controlled `UPagination`. Pages keep remote-fetch callbacks local, while `usePagination()` derives the normalized total and result summary from an optional total getter.
+- Index loading, empty, error, and total-report states are explicit. Document counts continue to be enriched from instance statistics, primary keys use semantic badges with a `Not set` state, and pagination preserves offset calculation, page-size reset, panel scrolling, and total-shrink clamping.
+- `AppDashboardPanel` constrains its body as the sole vertical scroll viewport. The index card does not shrink, `UTable` retains only local horizontal overflow, and pagination returns the dashboard body to its top after a remote page change.
+- `CreateIndexModal.vue` now uses `UModal`, `UForm`, `UFormField`, and `UInput` with Zod UID validation, returned focus for invalid fields, visible server errors, and programmatic form submission from the modal footer. Empty primary keys are omitted from the create request; the existing task poll completes before the modal closes and the list/statistics refresh.
+- `useIndexes()` now exposes the one-based `paginate()` interface used by Nuxt UI controls. The PrimeVue `handlePageEvent()` adapter and legacy first-record index remain available in `usePagination()` for future unmigrated pages, but are no longer exposed by the index composable.
+- The deterministic fixture now supports indexed datasets, query-based index pagination, dynamic total changes, and stateful index creation. Added Phase 5 Playwright coverage for offsets, page-size reset, total clamping, optional-primary-key payloads, task-polled creation, validation focus, and a 375px pinned action/no-overflow check.
+- Corrected stale E2E routes introduced by the Phase 4 backup route split: navigation now targets `/backups/dumps`, and the backup smoke test targets the distinct dumps and snapshots routes.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (28 passed), and `git diff --check`.
 
 ## Phase 6: Index Detail, Stats, Settings, and Danger Zone
 
@@ -713,7 +722,7 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Do not modify index sub-pages while completing the backups pattern. When Phase 6 begins, make `app/pages/indexes/[uid].vue` the nested shell with the same `#sub-page-actions` action outlet, dashboard toolbar route navigation, and child-owned teleported actions.
 
 ## Phase 7: API Keys
 
