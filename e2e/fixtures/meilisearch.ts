@@ -7,6 +7,13 @@ export const instance = {
     apiKey: 'playwright-key',
 }
 
+export const secondaryInstance = {
+    id: 'playwright-instance-secondary',
+    name: 'Secondary Playwright Instance',
+    host: 'http://127.0.0.1:3000/__meili',
+    apiKey: 'playwright-key-secondary',
+}
+
 const index = {
     uid: 'movies',
     primaryKey: 'id',
@@ -54,6 +61,7 @@ const key = {
 export type MeilisearchMockOptions = {
     version?: string,
     dynamicSearchRules?: boolean,
+    singleInstanceProxyMode?: boolean,
     onSearchRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
     onDeleteIndexRequest?: (request: Request) => void,
@@ -72,11 +80,11 @@ function json(route: Route, body: unknown, status = 200) {
 }
 
 export async function installMeilisearchMock(page: Page, options: MeilisearchMockOptions = {}) {
-    await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: false }))
-    await page.route('**/__meili/**', async (route) => {
+    await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
+    await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
         const request = route.request()
         const url = new URL(request.url())
-        const path = url.pathname.replace('/__meili', '')
+        const path = url.pathname.replace(/^\/(?:__meili|api\/meilisearch)/, '')
 
         if (request.method() === 'OPTIONS') {
             await route.fulfill({
@@ -177,10 +185,14 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
 }
 
 export async function seedInstance(page: Page) {
+    await seedInstances(page, [instance])
+}
+
+export async function seedInstances(page: Page, instances: typeof instance[], currentInstanceId = instances[0]?.id) {
     await page.addInitScript((seededInstance) => {
-        localStorage.setItem('meilisearch-instances', JSON.stringify([seededInstance]))
-        localStorage.setItem('meilisearch-current-id', seededInstance.id)
+        localStorage.setItem('meilisearch-instances', JSON.stringify(seededInstance.instances))
+        localStorage.setItem('meilisearch-current-id', seededInstance.currentInstanceId)
         localStorage.setItem('meilisearch-tasks-polling-enabled', 'false')
-        localStorage.setItem('vueuse-color-scheme', 'light')
-    }, instance)
+        localStorage.setItem('nuxt-color-mode', 'light')
+    }, { instances, currentInstanceId })
 }

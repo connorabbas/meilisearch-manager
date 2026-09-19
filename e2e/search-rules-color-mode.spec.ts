@@ -20,14 +20,13 @@ test('supported search rules load', async ({ page }) => {
     await expect(page.getByRole('cell', { name: 'featured-movie' })).toBeVisible()
 })
 
-test('color mode can be changed @cross-browser', async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit', 'The current mobile color-mode control is covered in Chromium.')
+test('color mode can be changed @cross-browser', async ({ page }) => {
     await installMeilisearchMock(page)
     await seedInstance(page)
     await page.goto('/dashboard')
 
-    await page.getByRole('button', { name: 'Change color mode' }).click()
-    await page.getByRole('button', { name: 'Dark' }).click()
+    await page.getByRole('button', { name: 'Color mode' }).click()
+    await page.getByRole('option', { name: 'Dark' }).click()
     await expect(page.locator('html')).toHaveClass(/dark/)
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('vueuse-color-scheme'))).toBe('dark')
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('nuxt-color-mode'))).toBe('dark')
 })

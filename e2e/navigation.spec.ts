@@ -17,7 +17,7 @@ test('every top-level route is reachable from navigation @cross-browser', async 
         { link: 'Keys', path: '/keys', heading: 'API Keys' },
         { link: 'Backups', path: '/backups', heading: 'Backups' },
         { link: 'Search Rules', path: '/search-rules', heading: 'Search Rules' },
-        { link: 'Experimental', path: '/experimental-features', heading: 'Experimental Features' },
+        { link: 'Experimental Features', path: '/experimental-features', heading: 'Experimental Features' },
     ]
 
     for (const route of routes) {
