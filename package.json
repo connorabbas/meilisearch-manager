@@ -5,6 +5,7 @@
     "scripts": {
         "build": "nuxt build",
         "dev": "nuxt dev",
+        "dev:traefik": "nuxt dev --host 0.0.0.0 --port 3000",
         "generate": "nuxt generate",
         "lint": "eslint . --fix",
         "preview": "nuxt preview",

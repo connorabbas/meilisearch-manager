@@ -16,4 +16,4 @@ npx playwright install firefox webkit
 npm run test:e2e:cross-browser
 ```
 
-The fixture instance is stored under the existing `meilisearch-instances` and `meilisearch-current-id` local-storage keys. Requests use the same-origin `http://127.0.0.1:3000/__meili` host and are fulfilled by `e2e/fixtures/meilisearch.ts`.
+The fixture instance is stored under the existing `meilisearch-instances` and `meilisearch-current-id` local-storage keys. The suite starts an isolated preview at `http://127.0.0.1:3100`; requests use its same-origin `/__meili` host and are fulfilled by `e2e/fixtures/meilisearch.ts`.

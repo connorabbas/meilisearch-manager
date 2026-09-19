@@ -26,6 +26,16 @@ This project is the refactored Nuxt version of the original Vue SPA project: [co
 
 Check out the live demo (hosted with GitHub pages): [https://connorabbas.github.io/meilisearch-manager/](https://connorabbas.github.io/meilisearch-manager/)
 
+### Local Development
+
+When running the Docker development environment behind the included Traefik route, start Nuxt with:
+
+```bash
+npm run dev:traefik
+```
+
+This listens on port 3000 and is available at `http://meilisearch-manager.localhost`. The Playwright suite uses an isolated production preview on `127.0.0.1:3100`, so it does not reuse or stop the development server.
+
 ## Configuration
 
 The app supports two distinct operational modes, each designed for a different use case.

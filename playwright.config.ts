@@ -8,7 +8,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: process.env.CI ? [['html', { open: 'never' }], ['github']] : 'list',
     use: {
-        baseURL: 'http://127.0.0.1:3000',
+        baseURL: 'http://127.0.0.1:3100',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
@@ -39,9 +39,9 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: 'npm run preview -- --host=127.0.0.1 --port=3000',
-        url: 'http://127.0.0.1:3000/up',
-        reuseExistingServer: !process.env.CI,
+        command: 'npm run preview -- --host=127.0.0.1 --port=3100',
+        url: 'http://127.0.0.1:3100/up',
+        reuseExistingServer: false,
         timeout: 120_000,
     },
 })
