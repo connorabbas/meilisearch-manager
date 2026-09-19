@@ -270,7 +270,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 1: Nuxt UI foundation and design system
 - [x] Phase 2: Feedback, confirmation, and pagination decoupling
 - [x] Phase 3: Dashboard application shell
-- [ ] Phase 4: Connection and low-complexity pages
+- [x] Phase 4: Connection and low-complexity pages
 - [ ] Phase 5: Index list and canonical table pattern
 - [ ] Phase 6: Index detail, stats, settings, and danger zone
 - [ ] Phase 7: API keys
@@ -592,7 +592,13 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-19. Connection error, new-instance setup, dashboard, backups, and experimental-feature pages now use Nuxt UI components with no PrimeVue references in the migrated pages.
+- Phase 4 routes own their `UDashboardPanel` through `AppDashboardPanel`. Breadcrumbs intentionally provide navbar identity instead of duplicate page titles, and page bodies own native scrolling so the scrollbar remains flush with the panel edge. Legacy routes retain the layout-owned panel until migrated.
+- New-instance setup uses `UForm`, `UFormField`, the existing Zod schema, first-invalid-field focus, and the existing persistence and health-check flow. Proxy-mode bypass and duplicate-host rejection remain covered.
+- Dashboard statistics use stock subtle `UPageCard` components in `UPageGrid`. Backups use `UTabs` and preserve distinct dump/snapshot task polling; experimental features use `USwitch` and continue submitting every returned feature key.
+- External documentation links use Nuxt UI's NavigationMenu external-link treatment: `i-lucide-arrow-up-right` at `size-3 text-dimmed`.
+- Added Phase 4 fixture support and Playwright coverage for setup validation, duplicate hosts, connection retry, proxy mode, dashboard refresh, backup endpoints/task polling, experimental-feature payloads, responsive sidebar behavior, and flush panel scrolling.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (23 passed), and `git diff --check`.
 
 ## Phase 5: Index List and Canonical Table Pattern
 
