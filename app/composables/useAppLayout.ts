@@ -46,16 +46,13 @@ export function useAppLayout() {
             icon: 'i-lucide-database-backup',
             active: route.path.startsWith('/backups'),
             defaultOpen: true,
-            children: [
-                {
-                    label: 'Dumps',
-                    to: '/backups/dumps',
-                },
-                {
-                    label: 'Snapshots',
-                    to: '/backups/snapshots',
-                },
-            ]
+            children: [{
+                label: 'Dumps',
+                to: '/backups/dumps'
+            }, {
+                label: 'Snapshots',
+                to: '/backups/snapshots'
+            }]
         },
     ])
 

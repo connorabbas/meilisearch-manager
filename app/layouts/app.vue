@@ -110,6 +110,7 @@ onUnmounted(() => {
                         :items="navigationItems"
                         orientation="vertical"
                         tooltip
+                        popover
                     />
                     <UTooltip
                         v-if="collapsed"
