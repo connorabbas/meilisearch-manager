@@ -65,7 +65,10 @@ async function handleSave() {
                 :actions="[{ label: 'Retry', onClick: fetchExperimentalFeatures }]"
             />
 
-            <UCard title="Configure Experimental Features">
+            <UCard
+                title="Configure Experimental Features"
+                variant="subtle"
+            >
                 <template #description>
                     Enable API-backed experimental features. Some features instead require a CLI flag or environment
                     variable.

@@ -36,6 +36,7 @@ async function createCurrentBackup() {
         <UCard
             title="Export a dump"
             description="Dumps are portable backups best suited for migrating data between Meilisearch versions."
+            variant="subtle"
         >
             <UButton
                 :href="dumpsDocsUrl"

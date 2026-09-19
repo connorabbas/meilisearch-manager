@@ -36,6 +36,7 @@ async function createCurrentBackup() {
         <UCard
             title="Export a snapshot"
             description="Snapshots are exact database copies intended for fast recovery on the same Meilisearch version."
+            variant="subtle"
         >
             <UButton
                 :href="snapshotsDocsUrl"
