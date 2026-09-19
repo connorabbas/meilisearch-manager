@@ -121,7 +121,7 @@ watch(tasksPollingEnabled, async (enabled) => {
 }, { immediate: true })
 
 onMounted(() => {
-    scrollTarget.value = document.getElementById('app-scroll-container')
+    scrollTarget.value = document.querySelector<HTMLElement>('.app-scroll-container, .legacy-app-scroll-container')
     fetchAllIndexes() // for filtering options
 })
 </script>

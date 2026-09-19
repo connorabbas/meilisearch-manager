@@ -47,7 +47,7 @@ export function usePagination(initialPerPage: number = 20) {
                 scrollTopContainer.scrollTop = 0
             }
         } else if (scrollTop) {
-            const appScrollContainer = document.getElementById('app-scroll-container')
+            const appScrollContainer = document.querySelector<HTMLElement>('.app-scroll-container, .legacy-app-scroll-container')
             if (appScrollContainer) {
                 appScrollContainer.scrollTo({ top: 0 })
             } else {

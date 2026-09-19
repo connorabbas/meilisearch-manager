@@ -4,8 +4,9 @@ import { useAppLayout } from '@/composables/useAppLayout'
 import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue'
 
 const route = useRoute()
-const appScrollContainer = useTemplateRef<HTMLElement>('app-scroll-container')
+const appScrollContainer = shallowRef<HTMLElement | null>(null)
 const showScrollTop = ref(false)
+const usesPagePanel = computed(() => route.meta.dashboardPanel === true)
 
 const staticBreadcrumbs = computed(() => route.meta.breadcrumbs as BreadcrumbItem[] | undefined)
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
@@ -48,9 +49,20 @@ function scrollToTop() {
     appScrollContainer.value?.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(() => {
+async function attachLegacyScrollContainer() {
+    appScrollContainer.value?.removeEventListener('scroll', updateScrollTopVisibility)
+    appScrollContainer.value = null
+    showScrollTop.value = false
+
+    if (usesPagePanel.value) return
+
+    await nextTick()
+    appScrollContainer.value = document.querySelector<HTMLElement>('.legacy-app-scroll-container')
     appScrollContainer.value?.addEventListener('scroll', updateScrollTopVisibility, { passive: true })
-})
+}
+
+onMounted(attachLegacyScrollContainer)
+watch(usesPagePanel, attachLegacyScrollContainer)
 
 onUnmounted(() => {
     appScrollContainer.value?.removeEventListener('scroll', updateScrollTopVisibility)
@@ -151,7 +163,12 @@ onUnmounted(() => {
             </template>
         </UDashboardSidebar>
 
-        <UDashboardPanel :ui="{ body: 'overflow-hidden p-0' }">
+        <slot v-if="usesPagePanel" />
+
+        <UDashboardPanel
+            v-else
+            :ui="{ body: 'legacy-app-scroll-container' }"
+        >
             <template #header>
                 <UDashboardNavbar>
                     <template #left>
@@ -166,22 +183,14 @@ onUnmounted(() => {
             </template>
 
             <template #body>
-                <div
-                    id="app-scroll-container"
-                    ref="app-scroll-container"
-                    class="flex flex-1 flex-col overflow-y-auto"
-                >
-                    <Container vertical>
-                        <slot />
-                    </Container>
-                </div>
+                <slot />
             </template>
         </UDashboardPanel>
 
         <ChangeInstanceModal v-model="changeInstanceModalOpen" />
 
         <UButton
-            v-if="showScrollTop"
+            v-if="!usesPagePanel && showScrollTop"
             aria-label="Scroll to top"
             icon="i-lucide-arrow-up"
             color="primary"
