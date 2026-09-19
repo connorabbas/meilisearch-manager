@@ -296,7 +296,7 @@ onMounted(() => {
 
 <template>
     <div class="flex flex-col gap-4 md:gap-8">
-        <Teleport to="#index-page-actions">
+        <Teleport to="#sub-page-actions">
             <div class="flex gap-3">
                 <Button
                     v-if="indexStats?.numberOfDocuments"

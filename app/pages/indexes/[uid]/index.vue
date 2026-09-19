@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Brain, Clock, Database, FileCheck, FileText } from '@lucide/vue'
 import FieldDistributionChart from '@/components/meilisearch/FieldDistributionChart.vue'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import { useStats } from '@/composables/meilisearch/useStats'
@@ -12,8 +11,8 @@ definePageMeta({
 
 const route = useRoute()
 const indexUid = computed(() => String(route.params.uid ?? ''))
-const { currentIndex, isFetching: fetchingIndexData, error, fetchIndex } = useIndexes()
-const { indexStats, isFetching: fetchingStatsData, fetchIndexStats } = useStats()
+const { currentIndex, isFetching: fetchingIndexData, error: indexError, fetchIndex } = useIndexes()
+const { indexStats, isFetching: fetchingStatsData, error: statsError, fetchIndexStats } = useStats()
 
 async function fetchData() {
     await Promise.all([
@@ -27,166 +26,73 @@ watch(indexUid, () => {
 }, { immediate: true })
 
 const fetching = computed(() => fetchingIndexData.value || fetchingStatsData.value)
+const error = computed(() => indexError.value ?? statsError.value)
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <Teleport to="#index-page-actions">
-            <RefreshButton
+    <div class="space-y-4 md:space-y-6">
+        <Teleport to="#sub-page-actions">
+            <UButton
+                label="Refresh"
+                icon="i-lucide-refresh-cw"
+                loading-icon="i-lucide-refresh-cw"
+                color="neutral"
+                variant="outline"
                 :loading="fetching"
                 @click="fetchData"
             />
         </Teleport>
 
-        <Message
+        <UAlert
             v-if="error"
-            severity="error"
-            :closable="false"
-        >
-            {{ error }}
-        </Message>
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-x"
+            title="Unable to load index statistics"
+            :description="error"
+            :actions="[{ label: 'Retry', onClick: fetchData }]"
+        />
 
         <div
-            v-if="fetching"
-            class="grid grid-cols-12 items-stretch gap-4"
+            v-if="fetching && !currentIndex && !indexStats"
+            aria-label="Loading index statistics"
+            class="grid gap-4 lg:grid-cols-2"
         >
-            <div class="col-span-12 md:col-span-6 grid grid-cols-2 gap-4 content-start">
-                <div
+            <div class="grid gap-4 sm:grid-cols-2">
+                <USkeleton
                     v-for="card in 6"
                     :key="card"
-                    class="col-span-2 sm:col-span-1"
-                >
-                    <Card class="h-full">
-                        <template #subtitle>
-                            <Skeleton
-                                width="7rem"
-                                height="1rem"
-                            />
-                        </template>
-                        <template #content>
-                            <Skeleton
-                                width="100%"
-                                height="2rem"
-                            />
-                        </template>
-                    </Card>
-                </div>
+                    class="h-32 rounded-lg"
+                />
             </div>
-            <div class="col-span-12 md:col-span-6">
-                <Card class="h-full">
-                    <template #title>
-                        <Skeleton
-                            width="10rem"
-                            height="1.5rem"
-                        />
-                    </template>
-                    <template #content>
-                        <div class="flex justify-center items-center h-64">
-                            <Skeleton
-                                shape="circle"
-                                size="16rem"
-                            />
-                        </div>
-                    </template>
-                </Card>
-            </div>
+            <USkeleton class="h-96 rounded-lg" />
         </div>
 
         <div
             v-else-if="currentIndex && indexStats"
-            class="grid grid-cols-12 items-stretch gap-4"
+            class="grid items-start gap-6 lg:grid-cols-2"
         >
-            <div class="col-span-12 md:col-span-6 grid grid-cols-2 gap-4 content-start">
-                <div class="col-span-2 sm:col-span-1">
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Total Documents
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-2xl font-semibold">
-                                <FileText class="size-6!" /> {{ formatNumber(indexStats.numberOfDocuments || 0) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Index Size
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-2xl font-semibold">
-                                <Database class="size-6!" /> {{ formatBytes(indexStats.rawDocumentDbSize || 0) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Total Embeddings
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-2xl font-semibold">
-                                <Brain class="size-6!" /> {{ formatNumber(indexStats.numberOfEmbeddings || 0) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Embedded Documents
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-2xl font-semibold">
-                                <FileCheck class="size-6!" /> {{ formatNumber(indexStats.numberOfEmbeddedDocuments || 0) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-                <div
-                    v-if="currentIndex.createdAt"
-                    class="col-span-2 sm:col-span-1"
-                >
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Created
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-xl font-semibold">
-                                <Clock class="size-6!" /> {{ formatDate(currentIndex.createdAt) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-                <div
-                    v-if="currentIndex.updatedAt"
-                    class="col-span-2 sm:col-span-1"
-                >
-                    <Card class="h-full">
-                        <template #subtitle>
-                            Last Updated
-                        </template>
-                        <template #content>
-                            <div class="flex gap-3 items-center text-xl font-semibold">
-                                <Clock class="size-6!" /> {{ formatDate(currentIndex.updatedAt) }}
-                            </div>
-                        </template>
-                    </Card>
-                </div>
-            </div>
+            <UPageGrid class="gap-4 sm:grid-cols-2">
+                <UPageCard icon="i-lucide-file-text" title="Total Documents" :description="formatNumber(indexStats.numberOfDocuments || 0)" variant="subtle" />
+                <UPageCard icon="i-lucide-database" title="Index Size" :description="formatBytes(indexStats.rawDocumentDbSize || 0)" variant="subtle" />
+                <UPageCard icon="i-lucide-brain" title="Total Embeddings" :description="formatNumber(indexStats.numberOfEmbeddings || 0)" variant="subtle" />
+                <UPageCard icon="i-lucide-file-check" title="Embedded Documents" :description="formatNumber(indexStats.numberOfEmbeddedDocuments || 0)" variant="subtle" />
+                <UPageCard v-if="currentIndex.createdAt" icon="i-lucide-clock" title="Created" :description="formatDate(currentIndex.createdAt)" variant="subtle" />
+                <UPageCard v-if="currentIndex.updatedAt" icon="i-lucide-clock" title="Last Updated" :description="formatDate(currentIndex.updatedAt)" variant="subtle" />
+            </UPageGrid>
 
-            <div class="col-span-12 md:col-span-6">
-                <Card class="h-full">
-                    <template #title>
-                        Field Distribution
-                    </template>
-                    <template #content>
-                        <FieldDistributionChart :field-distribution="indexStats.fieldDistribution" />
-                    </template>
-                </Card>
-            </div>
+            <UCard title="Field Distribution" variant="subtle">
+                <FieldDistributionChart :field-distribution="indexStats.fieldDistribution" />
+            </UCard>
         </div>
+
+        <UAlert
+            v-else-if="!fetching && !error"
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-chart-pie"
+            title="No index statistics available"
+            description="Refresh the page to request statistics for this index."
+        />
     </div>
 </template>

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
 
-defineProps<{
-    id: string,
-}>()
-
 const route = useRoute()
 const scrollContainer = shallowRef<HTMLElement | null>(null)
 const showScrollTop = ref(false)
-const breadcrumbs = computed(() => route.meta.breadcrumbs as BreadcrumbItem[] | undefined)
+const props = defineProps<{
+    id: string,
+    breadcrumbs?: BreadcrumbItem[],
+}>()
+const breadcrumbs = computed(() => props.breadcrumbs ?? route.meta.breadcrumbs as BreadcrumbItem[] | undefined)
 
 function updateScrollTopVisibility() {
     showScrollTop.value = (scrollContainer.value?.scrollTop ?? 0) > 200
