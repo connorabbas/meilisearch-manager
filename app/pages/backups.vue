@@ -2,12 +2,12 @@
 import { useDumps } from '@/composables/meilisearch/useDumps'
 import { useSnapshots } from '@/composables/meilisearch/useSnapshots'
 import PageTitleSection from '@/components/PageTitleSection.vue'
-import { Home, Plus } from '@lucide/vue'
+import { Plus } from '@lucide/vue'
 
 definePageMeta({
     layout: 'app',
     title: 'Backups',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Backups' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Backups' }]
 })
 
 const currentTab = ref('dumps')

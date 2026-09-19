@@ -5,7 +5,6 @@ import { useStats } from '@/composables/meilisearch/useStats'
 import SearchRuleForm from '@/components/meilisearch/SearchRuleForm.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { isVersionAtLeast } from '@/utils'
-import { Home } from '@lucide/vue'
 import type { SearchRuleUpdatePayload, SearchRuleCondition, SearchRuleAction } from 'meilisearch'
 import type { SearchRuleFormState } from '@/components/meilisearch/SearchRuleForm.vue'
 
@@ -13,8 +12,8 @@ definePageMeta({
     layout: 'app',
     title: 'Search Rules',
     breadcrumbs: [
-        { route: { name: 'dashboard' }, lucideIcon: Home },
-        { route: '/search-rules', label: 'Search Rules' },
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Search Rules', to: '/search-rules' },
         { label: 'Create' }
     ]
 })

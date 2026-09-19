@@ -126,13 +126,6 @@ export function looksLikeAnImageUrl(value: any) {
     return hasImageExtension || isImageHost
 };
 
-export function prefersDarkColorScheme() {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-    return false
-}
-
 export function readFileAsText(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -185,6 +178,5 @@ export function downloadFile(blob: Blob, filename: string) {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 }
-
 
 

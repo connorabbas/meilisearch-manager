@@ -1,88 +1,74 @@
-import { FolderSearch, Plus, ArrowLeftRight, Trash2, ListCheck, KeyRound, DatabaseBackup, LayoutGrid, FlaskConical, SearchCheck } from '@lucide/vue'
-import type { MenuItem } from '@/types'
+import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useAppLayout() {
     const meilisearchStore = useMeilisearchStore()
     const route = useRoute()
-
-    const currentRoute = computed(() => route.name)
-    const currentPath = computed(() => route.path)
-
-    const isActiveRoute = (routeName: string, path?: string) => {
-        if (currentRoute.value === routeName) return true
-        if (path && currentPath.value.startsWith(path)) return true
-
-        return false
-    }
-
-    // Main menu items
-    const menuItems = computed<MenuItem[]>(() => [
+    const navigationItems = computed<NavigationMenuItem[]>(() => [
         {
             label: 'Dashboard',
-            lucideIcon: LayoutGrid,
-            route: '/dashboard',
-            active: isActiveRoute('dashboard'),
+            icon: 'i-lucide-layout-grid',
+            to: '/dashboard',
+            active: route.path === '/dashboard',
         },
         {
             label: 'Indexes',
-            lucideIcon: FolderSearch,
-            route: '/indexes',
-            active: isActiveRoute('indexes') || currentPath.value.startsWith('/indexes'),
+            icon: 'i-lucide-folder-search',
+            to: '/indexes',
+            active: route.path.startsWith('/indexes'),
         },
         {
             label: 'Tasks',
-            lucideIcon: ListCheck,
-            route: '/tasks',
-            active: isActiveRoute('tasks')
+            icon: 'i-lucide-list-check',
+            to: '/tasks',
+            active: route.path === '/tasks',
         },
         {
             label: 'Keys',
-            lucideIcon: KeyRound,
-            route: '/keys',
-            active: isActiveRoute('keys'),
+            icon: 'i-lucide-key-round',
+            to: '/keys',
+            active: route.path === '/keys',
         },
         {
             label: 'Backups',
-            lucideIcon: DatabaseBackup,
-            route: '/backups',
-            active: isActiveRoute('backups'),
+            icon: 'i-lucide-database-backup',
+            to: '/backups',
+            active: route.path === '/backups',
         },
         {
             label: 'Search Rules',
-            lucideIcon: SearchCheck,
-            route: '/search-rules',
-            active: isActiveRoute('search-rules') || currentPath.value.startsWith('/search-rules'),
+            icon: 'i-lucide-search-check',
+            to: '/search-rules',
+            active: route.path.startsWith('/search-rules'),
         },
         {
-            label: 'Experimental',
-            lucideIcon: FlaskConical,
-            route: '/experimental-features',
-            active: isActiveRoute('experimental-features'),
+            label: 'Experimental Features',
+            icon: 'i-lucide-flask-conical',
+            to: '/experimental-features',
+            active: route.path === '/experimental-features',
         },
     ])
 
-    // Meilisearch instance
     const changeInstanceModalOpen = ref(false)
-    const currentMeilisearchIntanceName = computed(() => meilisearchStore?.currentInstance?.name ?? 'Default')
-    const meilisearchInstanceMenuItems = computed<MenuItem[]>(() => [
+    const currentMeilisearchInstanceName = computed(() => meilisearchStore.currentInstance?.name ?? 'Default')
+    const instanceMenuItems = computed<DropdownMenuItem[][]>(() => [[
         {
             label: 'New Instance',
-            lucideIcon: Plus,
-            route: '/new-instance',
+            icon: 'i-lucide-plus',
+            to: '/new-instance',
         },
         {
             label: 'Change Instance',
-            lucideIcon: ArrowLeftRight,
-            command: () => changeInstanceModalOpen.value = true,
+            icon: 'i-lucide-arrow-left-right',
+            onSelect: () => changeInstanceModalOpen.value = true,
         },
+    ], [
         {
             label: 'Remove Instance',
-            lucideIcon: Trash2,
-            class: 'delete-menu-item',
-            lucideIconClass: 'text-red-500 dark:text-red-400',
-            command: async () => {
-                if (meilisearchStore?.currentInstance?.id) {
+            icon: 'i-lucide-trash-2',
+            color: 'error',
+            onSelect: async () => {
+                if (meilisearchStore.currentInstance?.id) {
                     meilisearchStore.confirmRemoveInstance(meilisearchStore.currentInstance.id, async () => {
                         if (!meilisearchStore.hasConfiguredInstance) {
                             await navigateTo('/new-instance', { replace: true })
@@ -100,42 +86,13 @@ export function useAppLayout() {
                 }
             },
         },
-    ])
-
-    // Mobile menu
-    const mobileMenuOpen = ref(false)
-    const windowWidth = ref(0)
-    const updateWidth = () => {
-        if (typeof window === 'undefined') {
-            return
-        }
-
-        windowWidth.value = window.innerWidth
-    }
-    onMounted(() => {
-        updateWidth()
-        window.addEventListener('resize', updateWidth)
-    })
-    onUnmounted(() => {
-        window.removeEventListener('resize', updateWidth)
-    })
-    watchEffect(() => {
-        if (windowWidth.value > 1024) {
-            mobileMenuOpen.value = false
-        }
-    })
-
-    watch(currentPath, () => {
-        mobileMenuOpen.value = false
-    })
+    ]])
 
     return {
-        currentRoute,
-        menuItems,
-        mobileMenuOpen,
+        navigationItems,
         isSingleInstanceProxyMode: meilisearchStore.isSingleInstanceProxyMode,
         changeInstanceModalOpen,
-        meilisearchInstanceMenuItems,
-        currentMeilisearchIntanceName,
+        instanceMenuItems,
+        currentMeilisearchInstanceName,
     }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useStats } from '@/composables/meilisearch/useStats'
-import { ArrowRight, Home, Plus } from '@lucide/vue'
+import { ArrowRight, Plus } from '@lucide/vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import CreateIndexModal from '@/components/meilisearch/CreateIndexModal.vue'
@@ -10,7 +10,7 @@ import { formatNumber, formatDate } from '@/utils'
 definePageMeta({
     layout: 'app',
     title: 'Indexes',
-    breadcrumbs: [{ route: '/dashboard', lucideIcon: Home }, { label: 'Indexes' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Indexes' }]
 })
 
 const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats()

@@ -5,21 +5,15 @@ const props = defineProps<{
 </script>
 
 <template>
-    <Button
-        v-slot="slotProps"
-        asChild
-        variant="link"
+    <NuxtLink
+        to="/"
+        aria-label="Meilisearch Manager home"
+        class="flex items-center justify-start rounded-md"
     >
-        <NuxtLink
-            to="/"
-            :class="slotProps?.class"
-            class="flex items-center justify-start gap-4 no-underline! p-0 rounded-none"
+        <img
+            :class="['block h-6 w-auto', props.imgClasses]"
+            src="/meili-logo.svg"
+            alt=""
         >
-            <img
-                :class="['block h-4 lg:h-6 w-auto', props.imgClasses]"
-                src="/meili-logo.svg"
-                alt="Meili Logo"
-            >
-        </NuxtLink>
-    </Button>
+    </NuxtLink>
 </template>

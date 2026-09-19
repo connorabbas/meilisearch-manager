@@ -27,8 +27,8 @@ const runtimeConfig = useRuntimeConfig()
 const mapLightStyleUrl = joinURL(runtimeConfig.app.baseURL, 'styles/light-map.json')
 const mapDarkStyleUrl = joinURL(runtimeConfig.app.baseURL, 'styles/dark-map.json')
 
-const { isDark } = useAppColorMode()
-const mapStyleUrl = computed(() => isDark.value ? mapDarkStyleUrl : mapLightStyleUrl)
+const colorMode = useColorMode()
+const mapStyleUrl = computed(() => colorMode.value === 'dark' ? mapDarkStyleUrl : mapLightStyleUrl)
 
 const hoveredMarkerKey = ref<string | null>(null)
 const selectedMarkerKey = ref<string | null>(null)

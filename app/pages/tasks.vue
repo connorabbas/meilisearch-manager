@@ -2,7 +2,7 @@
 import { useInfiniteScroll, useIntervalFn, useStorage } from '@vueuse/core'
 import { useTasks, TASK_TYPES, TASK_STATUSES } from '@/composables/meilisearch/useTasks'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
-import { Home, Info, Trash2 } from '@lucide/vue'
+import { Info, Trash2 } from '@lucide/vue'
 import type { Task, TasksOrBatchesQuery } from 'meilisearch'
 import { formatDate, getStatusSeverity } from '@/utils'
 import TaskDetailsDrawer from '@/components/meilisearch/TaskDetailsDrawer.vue'
@@ -11,7 +11,7 @@ import DeleteTasksModal from '@/components/meilisearch/DeleteTasksModal.vue'
 definePageMeta({
     layout: 'app',
     title: 'Tasks',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Tasks' }]
 })
 
 const { tasks, isFetching: isFetchingTasks, isPollingLatest, hasMore, fetchTasks, fetchAndAppendTasks, pollLatestTasks, deleteTasksQuery, isDeletingTasks, deleteTasks } = useTasks()
@@ -42,7 +42,7 @@ const currentTasksQuery = computed<TasksOrBatchesQuery>(() => {
     return query
 })
 
-const scrollTarget = shallowRef<Window | null>(null)
+const scrollTarget = shallowRef<HTMLElement | null>(null)
 const { reset: resetInfiniteScroll } = useInfiniteScroll(
     scrollTarget,
     async () => {
@@ -121,7 +121,7 @@ watch(tasksPollingEnabled, async (enabled) => {
 }, { immediate: true })
 
 onMounted(() => {
-    scrollTarget.value = window
+    scrollTarget.value = document.getElementById('app-scroll-container')
     fetchAllIndexes() // for filtering options
 })
 </script>

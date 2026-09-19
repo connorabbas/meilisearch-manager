@@ -6,8 +6,8 @@ const props = defineProps<{
     expanded?: boolean,
 }>()
 
-const { isDark } = useAppColorMode()
-const theme = computed(() => isDark.value ? 'dark' : 'light')
+const colorMode = useColorMode()
+const theme = computed(() => colorMode.value === 'dark' ? 'dark' : 'light')
 
 const expandToggled = ref(0)
 const expandedDataDepth = ref(1)

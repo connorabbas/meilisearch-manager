@@ -2,7 +2,7 @@
 import { useKeys } from '@/composables/meilisearch/useKeys'
 import Menu from '@/components/router-link-menus/Menu.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
-import { Check, Copy, EllipsisVertical, Home, Info, Pencil, Plus, Trash2 } from '@lucide/vue'
+import { Check, Copy, EllipsisVertical, Info, Pencil, Plus, Trash2 } from '@lucide/vue'
 import type { Key } from 'meilisearch'
 import { formatDate, maskedApiKey } from '@/utils'
 import { useClipboard } from '@vueuse/core'
@@ -15,7 +15,7 @@ import KeyDetailsDrawer from '@/components/meilisearch/KeyDetailsDrawer.vue'
 definePageMeta({
     layout: 'app',
     title: 'Tasks',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Keys' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Keys' }]
 })
 
 const toast = useToast()

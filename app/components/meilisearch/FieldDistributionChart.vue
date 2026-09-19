@@ -5,7 +5,8 @@ const props = defineProps<{
     fieldDistribution: Record<string, number> | null | undefined
 }>()
 
-const { isDark } = useAppColorMode()
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 const chartColors = [
     '--color-cyan-500',

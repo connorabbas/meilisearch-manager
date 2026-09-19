@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { Plus } from '@lucide/vue'
-
 const modalOpen = defineModel<boolean>({ default: false })
 
 const meilisearchStore = useMeilisearchStore()
@@ -24,56 +22,40 @@ async function handleChangeInstance() {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="modalOpen"
-        class="w-[30rem]"
-        position="center"
-        header="Change Instance"
-        :draggable="false"
-        dismissableMask
-        modal
+    <UModal
+        v-model:open="modalOpen"
+        title="Change Instance"
+        description="Select the Meilisearch instance to use."
     >
-        <div>
-            <Select
-                v-if="!meilisearchStore.isSingleInstanceProxyMode && meilisearchStore.instances.length"
-                v-model="currentInstanceId"
-                :options="(meilisearchStore.instances as any[])"
-                optionLabel="name"
-                optionValue="id"
-                fluid
-            >
-                <template #footer>
-                    <div class="p-2">
-                        <NuxtLink to="/new-instance">
-                            <Button
-                                label="Add new instance"
-                                severity="secondary"
-                                size="small"
-                                text
-                                fluid
-                            >
-                                <template #icon>
-                                    <Plus />
-                                </template>
-                            </Button>
-                        </NuxtLink>
-                    </div>
-                </template>
-            </Select>
-        </div>
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <UButton
+                label="Add new instance"
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="ghost"
+                to="/new-instance"
+            />
+            <div class="ms-auto flex gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
+                    color="neutral"
+                    variant="outline"
                     @click="modalOpen = false"
                 />
-                <Button
-                    label="Submit"
+                <UButton
+                    label="Change instance"
+                    :disabled="!currentInstanceId"
                     @click="handleChangeInstance"
                 />
             </div>
         </template>
-    </Dialog>
+        <template #body>
+            <USelect
+                v-if="!meilisearchStore.isSingleInstanceProxyMode && meilisearchStore.instances.length"
+                v-model="currentInstanceId"
+                :items="meilisearchStore.instances.map(instance => ({ label: instance.name, value: instance.id }))"
+                class="w-full"
+            />
+        </template>
+    </UModal>
 </template>

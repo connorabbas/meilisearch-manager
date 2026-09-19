@@ -5,7 +5,7 @@ import { useStats } from '@/composables/meilisearch/useStats'
 import Menu from '@/components/router-link-menus/Menu.vue'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { isVersionAtLeast } from '@/utils'
-import { Home, Plus, Pencil, Trash2, EllipsisVertical, Search } from '@lucide/vue'
+import { Plus, Pencil, Trash2, EllipsisVertical, Search } from '@lucide/vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import type { SearchRule } from 'meilisearch'
@@ -15,7 +15,7 @@ import type { DataTableSortEvent } from 'primevue/datatable'
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Search Rules' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Search Rules' }]
 })
 
 const toast = useToast()

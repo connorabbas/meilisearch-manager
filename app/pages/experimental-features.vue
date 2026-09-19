@@ -2,7 +2,6 @@
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import PageTitleSection from '@/components/PageTitleSection.vue'
 import { camelCaseToReadable } from '@/utils'
-import { Home } from '@lucide/vue'
 import type { RuntimeTogglableFeatures } from 'meilisearch'
 
 const experimentalFeaturesDocsUrl = 'https://www.meilisearch.com/docs/resources/help/experimental_features_overview#experimental-features-overview'
@@ -10,7 +9,7 @@ const experimentalFeaturesDocsUrl = 'https://www.meilisearch.com/docs/resources/
 definePageMeta({
     layout: 'app',
     title: 'Experimental Features',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Experimental Features' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Experimental Features' }]
 })
 
 const {
