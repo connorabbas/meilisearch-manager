@@ -31,7 +31,7 @@ onUnmounted(() => {
 <template>
     <UDashboardPanel
         :id="id"
-        :ui="{ body: 'app-scroll-container' }"
+        :ui="{ root: 'h-full min-h-0', body: 'min-h-0 app-scroll-container' }"
     >
         <template #header>
             <UDashboardNavbar>
