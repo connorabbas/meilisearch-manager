@@ -30,12 +30,6 @@ export function useAppLayout() {
             active: route.path === '/keys',
         },
         {
-            label: 'Backups',
-            icon: 'i-lucide-database-backup',
-            to: '/backups',
-            active: route.path === '/backups',
-        },
-        {
             label: 'Search Rules',
             icon: 'i-lucide-search-check',
             to: '/search-rules',
@@ -46,6 +40,22 @@ export function useAppLayout() {
             icon: 'i-lucide-flask-conical',
             to: '/experimental-features',
             active: route.path === '/experimental-features',
+        },
+        {
+            label: 'Backups',
+            icon: 'i-lucide-database-backup',
+            active: route.path.startsWith('/backups'),
+            defaultOpen: true,
+            children: [
+                {
+                    label: 'Dumps',
+                    to: '/backups/dumps',
+                },
+                {
+                    label: 'Snapshots',
+                    to: '/backups/snapshots',
+                },
+            ]
         },
     ])
 
