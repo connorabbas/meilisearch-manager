@@ -310,6 +310,7 @@ export async function seedInstances(page: Page, instances: typeof instance[], cu
         localStorage.setItem('meilisearch-instances', JSON.stringify(seededInstance.instances))
         localStorage.setItem('meilisearch-current-id', seededInstance.currentInstanceId)
         localStorage.setItem('meilisearch-tasks-polling-enabled', 'false')
+        localStorage.setItem('meilisearch-index-stats-polling-enabled', 'false')
         localStorage.setItem('nuxt-color-mode', 'light')
     }, { instances, currentInstanceId })
 }

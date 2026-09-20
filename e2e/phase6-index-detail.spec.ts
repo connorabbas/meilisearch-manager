@@ -19,6 +19,12 @@ test('index detail uses shareable route navigation and renders a theme-safe char
     await expect(page.getByRole('link', { name: 'Stats', exact: true })).toBeVisible()
     await expect(page.getByRole('img', { name: 'Field distribution chart' })).toBeVisible()
     await expect(page.getByText('Total Documents')).toBeVisible()
+    await expect(page.getByText('Primary Key')).toBeVisible()
+    await expect(page.getByText('id')).toBeVisible()
+    await expect(page.getByText('Actively Indexing')).toBeVisible()
+    await expect(page.getByText('No')).toBeVisible()
+    await expect(page.getByText('Average Document Size')).toBeVisible()
+    await expect(page.getByText('100 B')).toBeVisible()
     await page.getByRole('button', { name: 'Color mode' }).click()
     await expect(page.getByRole('img', { name: 'Field distribution chart' })).toBeVisible()
     const initialRequests = { indexRequests, statsRequests }
