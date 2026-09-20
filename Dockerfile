@@ -19,7 +19,7 @@ RUN npm_config_cache=/tmp/npm-cache \
     && rm -rf /tmp/npm-cache /var/lib/apt/lists/*
 
 USER node
-RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+RUN curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path
 ENV PATH=/home/node/.opencode/bin:$PATH
 
 COPY --chown=node:node .devcontainer/.bashrc /home/node/.bashrc
