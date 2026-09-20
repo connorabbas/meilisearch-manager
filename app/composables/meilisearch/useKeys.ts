@@ -9,11 +9,15 @@ export function useKeys() {
     const {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        totalRecords: totalKeys,
+        resultText: paginationSummary,
         syncCurrentPageWithinTotal,
-        handlePageEvent,
-    } = usePagination()
+        paginate,
+    } = usePagination(20, {
+        total: () => keysResults.value?.total,
+        itemLabel: 'keys',
+    })
 
     const keysResults = ref<KeysResults | null>(null)
     const keys = ref<Key[] | null>(null)
@@ -159,14 +163,15 @@ export function useKeys() {
     return {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        totalKeys,
+        paginationSummary,
         keys,
         keysResults,
         isFetching,
         isLoading,
         error,
-        handlePageEvent,
+        paginate,
         fetchKeys,
         fetchKeysPaginated,
         createKey,
