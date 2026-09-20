@@ -38,6 +38,26 @@ const indexStats = {
     avgDocumentSize: 100,
 }
 
+const indexSettings = {
+    displayedAttributes: ['*'],
+    searchableAttributes: ['title'],
+    filterableAttributes: ['genre'],
+    sortableAttributes: ['year'],
+    rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
+    stopWords: [],
+    separatorTokens: [],
+    nonSeparatorTokens: [],
+    dictionary: [],
+    synonyms: {},
+    distinctAttribute: null,
+    typoTolerance: { enabled: true },
+    faceting: { maxValuesPerFacet: 100, sortFacetValuesBy: { '*': 'alpha' } },
+    pagination: { maxTotalHits: 1000 },
+    embedders: {},
+    searchCutoffMs: null,
+    localizedAttributes: [],
+}
+
 const task = {
     uid: 101,
     batchUid: 1,
@@ -79,6 +99,11 @@ export type MeilisearchMockOptions = {
     onSearchRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
     onDeleteIndexRequest?: (request: Request) => void,
+    onIndexStatsRequest?: (request: Request) => void,
+    onSettingsRequest?: (request: Request) => void,
+    onUpdateSettingsRequest?: (request: Request) => void,
+    onUpdateIndexRequest?: (request: Request) => void,
+    onDeleteAllDocumentsRequest?: (request: Request) => void,
     onCreateDumpRequest?: (request: Request) => void,
     onCreateSnapshotRequest?: (request: Request) => void,
     onExperimentalFeaturesRequest?: (request: Request) => void,
@@ -99,6 +124,8 @@ function json(route: Route, body: unknown, status = 200) {
 export async function installMeilisearchMock(page: Page, options: MeilisearchMockOptions = {}) {
     let healthFailuresRemaining = options.healthFailures ?? 0
     const indexes = [...(options.indexes ?? [index])]
+    const movieIndex = { ...index }
+    let movieSettings = structuredClone(indexSettings)
 
     await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
     await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
@@ -175,12 +202,25 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 type: 'indexCreation',
             })
         } else if (path === '/indexes/movies' && request.method() === 'GET') {
-            await json(route, index)
+            await json(route, movieIndex)
+        } else if (path === '/indexes/movies' && request.method() === 'PATCH') {
+            options.onUpdateIndexRequest?.(request)
+            const payload = request.postDataJSON() as { primaryKey: string }
+            movieIndex.primaryKey = payload.primaryKey
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'indexUpdate' })
         } else if (path === '/indexes/movies' && request.method() === 'DELETE') {
             options.onDeleteIndexRequest?.(request)
-            await json(route, { taskUid: task.uid, indexUid: index.uid, status: 'enqueued', type: 'indexDeletion' })
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'indexDeletion' })
         } else if (path === '/indexes/movies/stats') {
+            options.onIndexStatsRequest?.(request)
             await json(route, indexStats)
+        } else if (path === '/indexes/movies/settings' && request.method() === 'GET') {
+            options.onSettingsRequest?.(request)
+            await json(route, movieSettings)
+        } else if (path === '/indexes/movies/settings' && request.method() === 'PATCH') {
+            options.onUpdateSettingsRequest?.(request)
+            movieSettings = request.postDataJSON() as typeof indexSettings
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'settingsUpdate' })
         } else if (path === '/indexes/movies/search') {
             options.onSearchRequest?.(request)
             const body = request.postDataJSON() as { offset?: number, q?: string }
@@ -206,6 +246,9 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, ['year'])
         } else if (path === '/indexes/movies/settings/embedders') {
             await json(route, {})
+        } else if (path === '/indexes/movies/documents' && request.method() === 'DELETE') {
+            options.onDeleteAllDocumentsRequest?.(request)
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
         } else if (path === '/tasks') {
             options.onTasksRequest?.(request)
             await json(route, { results: [task], total: 1, limit: 50, from: 101, next: null })
