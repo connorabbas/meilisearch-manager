@@ -272,7 +272,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 3: Dashboard application shell
 - [x] Phase 4: Connection and low-complexity pages
 - [x] Phase 5: Index list and canonical table pattern
-- [ ] Phase 6: Index detail, stats, settings, and danger zone
+- [x] Phase 6: Index detail, stats, settings, and danger zone
 - [ ] Phase 7: API keys
 - [ ] Phase 8: Tasks
 - [ ] Phase 9A: Documents core search and views
@@ -723,6 +723,12 @@ npm run test:e2e
 ### Handoff notes
 
 - Do not modify index sub-pages while completing the backups pattern. When Phase 6 begins, make `app/pages/indexes/[uid].vue` the nested shell with the same `#sub-page-actions` action outlet, dashboard toolbar route navigation, and child-owned teleported actions.
+- Completed 2026-09-19. The index family now owns `AppDashboardPanel`, dynamic index breadcrumbs, a `UDashboardToolbar`, and typed `UNavigationMenu` route navigation for Stats, Documents, Settings, and Edit. The Documents page remains otherwise unmigrated for Phase 9, with only its navbar action teleport moved to the shared `#sub-page-actions` outlet.
+- Stats uses Nuxt UI alerts, skeletons, page cards, and a direct navbar refresh button. `FieldDistributionChart.vue` now manages a Chart.js doughnut canvas lifecycle directly, rebuilding safely for data and color-mode changes and providing an accessible empty/chart state.
+- Settings remains read-only initially, keeps the existing themed JSON editor, and moves Edit/Cancel/Save to the navbar outlet. It now refreshes on UID changes, maintains a cloned server baseline for cancellation, waits for settings task polling before returning to read-only mode, and preserves the full settings payload unchanged.
+- The Edit page owns its card layouts: the primary-key form is in the card body with its task-aware submit action in the card footer, while the danger warning is in the delete-card body and its destructive actions are in the footer. Primary-key updates retain the exact `{ primaryKey }` payload; delete-all-documents and delete-index retain their distinct confirmations, endpoints, task polling, and post-delete navigation. The obsolete `DeleteIndexDataDangerZone.vue` wrapper was removed.
+- Extended the deterministic fixture with stateful index settings and primary-key updates plus delete-all-documents support. Added `e2e/phase6-index-detail.spec.ts` for nested navigation/chart coverage, full settings payload/task coverage, and primary-key/delete-all behavior.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (31 passed), and `git diff --check`. Source audits found no PrimeVue references in Phase 6 files; PrimeVue remains intentionally in the deferred Documents page.
 
 ## Phase 7: API Keys
 
