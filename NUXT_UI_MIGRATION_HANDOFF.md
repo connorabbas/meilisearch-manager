@@ -119,7 +119,7 @@ Recommended shell behavior:
 | DataTable / Column | `UTable` with typed `TableColumn<T>[]` |
 | Paginator | `UPagination` plus explicit page-size `USelect` |
 | Dialog | `UModal` |
-| Drawer used for edit/details | `USlideover` |
+| Drawer used for edit/details | `USlideover` (rename the component `*Drawer.vue` → `*Slideover.vue`) |
 | Mobile navigation drawer | `UDashboardSidebar mode="drawer"` |
 | ConfirmDialog / ConfirmPopup | Shared programmatic confirmation `UModal` via `useOverlay()` |
 | Toast service | Nuxt UI `useToast()` |
@@ -146,6 +146,10 @@ Recommended shell behavior:
 | Skeleton | `USkeleton` |
 | ProgressSpinner | Button loading state or `UProgress` |
 | MeterGroup | `UProgressGroup` |
+
+### Component naming convention
+
+Component file names follow the Nuxt UI target component, not the PrimeVue origin. When a PrimeVue `Drawer` component is migrated to `USlideover`, rename the component file and every reference from `*Drawer.vue` to `*Slideover.vue` in the same change (applied first to the Phase 7 key slideovers). Keep `*Modal.vue` names for `UModal` migrations. Rename the page-local open-state refs (for example `keyDetailsSlideoverOpen`) for coherence, and record the rename in the phase's handoff notes.
 
 ## Reuse Inventory
 
@@ -273,7 +277,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 4: Connection and low-complexity pages
 - [x] Phase 5: Index list and canonical table pattern
 - [x] Phase 6: Index detail, stats, settings, and danger zone
-- [ ] Phase 7: API keys
+- [x] Phase 7: API keys
 - [ ] Phase 8: Tasks
 - [ ] Phase 9A: Documents core search and views
 - [ ] Phase 9B: Documents filters, geo, hybrid, import, and export
@@ -786,7 +790,15 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-20. The keys page now follows the Phase 5 canonical remote-table pattern: `AppDashboardPanel`, typed `TableColumn<Key>[]` with stable UID row IDs, right-pinned fixed-width row-action column (`id: 'actions'`, 80px, icon-only `UDropdownMenu` trigger with the accessible name "Show key actions"), external `AppTablePagination`, and explicit loading/empty/error states with retry.
+- This is the first `USlideover` family; Phase 8 (task details) should reuse it. During review the components were renamed to the Nuxt UI target naming (`CreateKeySlideover.vue`, `EditKeySlideover.vue`, `KeyDetailsSlideover.vue`), establishing the `*Drawer.vue` → `*Slideover.vue` convention documented under Component mapping. All three slideovers use `v-model:open`, `sm:max-w-2xl` content width (matching the old 40rem drawers), footer Cancel/Submit buttons, and the key details/edit slideovers stay mounted behind the page's `v-if="currentKey"` + 250ms cleanup watchers.
+- Reveal moved out of the table by review decision: table rows show only the masked key plus copy; masked/reveal (eye/eye-off `UButton` with aria-label) exists only in the key details slideover. Not yet a shared component.
+- `useKeys()` now exposes the one-based `paginate()` interface with a total getter and `paginationSummary`; `handlePageEvent()`/`firstDatasetIndex` are no longer exposed (only the keys page consumed them). Fetch/create/update/delete payloads and the `confirmDeleteKey()` flow are unchanged.
+- Intentional fixes recorded per the document: page meta title corrected from `Tasks` to `Keys`; "THe API Key" delete-toast typo fixed; the details-drawer expired badge now normalizes dates with `new Date()` because the Meilisearch client returns key dates as ISO strings at runtime (the old `expiresAt < today` Date/string comparison never triggered); create/edit forms show visible Zod validation (indexes ≥ 1, actions ≥ 1) and server errors in a `UAlert` (old code swallowed them).
+- Component-API findings that future phases must respect: (1) `UFormField` injects a single id to all child controls, so a second form control (e.g. `UCheckbox`) inside the same field collides with the first — keep checkboxes outside the `UFormField`; (2) submit buttons with `form="id"` attributes outside the form element do not trigger `UForm` submission through overlay portals — use the `CreateIndexModal` pattern (`form.value?.submit()` on click); (3) `UInputMenu` multiple mode does not propagate typed text through `v-model:search-term` — free-entry commit must read `event.target.value` from `keydown.enter.prevent`/`blur` (implemented in `CreateKeyDrawer.vue`; typed text remains visible in the input after committing a chip, which is deduplicated and harmless); (4) `USelectMenu` trigger has no useful accessible name without an associated label, and `UInputDate` uses `@internationalized/date` values (`fromDate`/`toDate()`/`today`/`toCalendarDateTime` from the transitive dependency).
+- Expiry uses a single `UInputDate` with `granularity="minute"` + 12-hour cycle, min value today, and a `Clear` button; the previous "tomorrow midnight" default display is replicated via `default-value` while the payload stays `null` unless picked. Key create/update/delete are synchronous REST operations in Meilisearch, so no task polling applies.
+- Fixture now holds three default keys (normal, `['*']` wildcard admin, expired) with stateful GET pagination, `POST /keys`, `PATCH /keys/:keyOrUid` (matched by uid or key string), and `DELETE /keys/:keyOrUid` (204); keys are deep-cloned per test to avoid cross-test mutation. `e2e/phase7-keys.spec.ts` covers pagination offsets/page-size reset, table masking with details-only reveal, create payload fidelity (empty uid omitted, actions trimmed/deduped, `['*']` mapping), edit limited to name/description, delete confirmation cancel/accept, expired badge, keyboard focus return, mobile pinned column, and dark-mode rendering. `navigation.spec.ts` now asserts `/keys` via breadcrumb with heading `Keys`.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (41 passed), and `git diff --check`. PrimeVue source audit over the five migrated files returned no matches. Playwright-MCP visual inspection was unavailable in this environment (Chrome channel not installable without root); browser checks relied on the committed Chromium suite including 375px and dark-mode cases.
 
 ## Phase 8: Tasks
 
@@ -797,7 +809,7 @@ Migrate task filtering, infinite loading, polling, details, and deletion.
 ### Primary files
 
 - `app/pages/tasks.vue`
-- `app/components/meilisearch/TaskDetailsDrawer.vue`
+- `app/components/meilisearch/TaskDetailsSlideover.vue` (rename of `TaskDetailsDrawer.vue` during this phase)
 - `app/components/meilisearch/DeleteTasksModal.vue`
 - `app/composables/meilisearch/useTasks.ts`
 
@@ -904,11 +916,11 @@ Complete the document-management feature without implementing future search impr
 
 ### Primary files
 
-- `app/components/meilisearch/FilterDocumentsDrawer.vue`
+- `app/components/meilisearch/FilterDocumentsSlideover.vue` (rename of `FilterDocumentsDrawer.vue` during this phase)
 - `app/components/meilisearch/HybridSearchModal.vue`
 - `app/components/meilisearch/DocumentsGeoMap.vue`
-- `app/components/meilisearch/EditDocumentDrawer.vue`
-- `app/components/meilisearch/ImportDocumentsDrawer.vue`
+- `app/components/meilisearch/EditDocumentSlideover.vue` (rename of `EditDocumentDrawer.vue` during this phase)
+- `app/components/meilisearch/ImportDocumentsSlideover.vue` (rename of `ImportDocumentsDrawer.vue` during this phase)
 - `app/components/meilisearch/ExportDocumentsModal.vue`
 - `app/composables/meilisearch/useDocuments.ts`
 - `app/composables/meilisearch/useExportDocuments.ts`
