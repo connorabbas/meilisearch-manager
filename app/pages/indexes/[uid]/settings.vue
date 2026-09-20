@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useSettings } from '@/composables/meilisearch/useSettings'
-import { AlertCircle, CircleQuestionMark, Pencil, TriangleAlert, X, Check } from '@lucide/vue'
+import type { Settings } from 'meilisearch'
 import { Mode } from 'vanilla-jsoneditor'
+import { useSettings } from '@/composables/meilisearch/useSettings'
+
+const settingsDocsUrl = 'https://www.meilisearch.com/docs/reference/api/settings/list-all-settings'
+const updateSettingsDocsUrl = 'https://www.meilisearch.com/docs/reference/api/settings/update-all-settings'
 
 definePageMeta({
     layout: 'app',
@@ -10,139 +13,190 @@ definePageMeta({
 
 const route = useRoute()
 const indexUid = computed(() => String(route.params.uid ?? ''))
-const { settings, isLoadingTask, fetchSettings, updateSettings } = useSettings()
-
-await fetchSettings(indexUid.value)
-
-const originalSettings = structuredClone(toRaw(settings.value))
+const { settings, isFetching, isLoadingTask, error, fetchSettings, updateSettings } = useSettings()
+const originalSettings = shallowRef<Settings | null>(null)
 const editMode = ref(false)
-const toggleEditMode = () => {
-    // if edit is canceled, reset to original value
-    if (editMode.value) {
-        settings.value = originalSettings
-    }
-    editMode.value = !editMode.value
-}
-
 const invalidJsonMessage = 'Please correct the invalid settings JSON.'
 const jsonError = ref('')
+
+function cloneSettings(value: Settings) {
+    return structuredClone(toRaw(value))
+}
+
+async function loadSettings() {
+    const loadedSettings = await fetchSettings(indexUid.value)
+    if (!loadedSettings) return
+
+    settings.value = cloneSettings(loadedSettings)
+    originalSettings.value = cloneSettings(loadedSettings)
+    jsonError.value = ''
+}
+
+function startEditing() {
+    if (!settings.value) return
+
+    originalSettings.value = cloneSettings(settings.value)
+    editMode.value = true
+}
+
+function cancelEditing() {
+    if (originalSettings.value) settings.value = cloneSettings(originalSettings.value)
+    jsonError.value = ''
+    editMode.value = false
+}
+
 async function handleUpdateSettings() {
-    if (!settings.value) {
-        return
-    }
+    if (!settings.value || jsonError.value) return
+
     try {
-        const jsonString = JSON.stringify(settings.value)
-        JSON.parse(jsonString)
-    } catch (err) {
+        JSON.parse(JSON.stringify(settings.value))
+    } catch {
         jsonError.value = invalidJsonMessage
-        console.error('Error parsing JSON:', err)
         return
     }
 
-    updateSettings(indexUid.value, settings.value).then(() => {
+    try {
+        await updateSettings(indexUid.value, settings.value)
+        await loadSettings()
         editMode.value = false
-        fetchSettings(indexUid.value)
-    })
+    } catch {
+        // The composable exposes failures inline and through a toast.
+    }
 }
-watch(() => settings.value, (newVal) => {
-    jsonError.value = (newVal === undefined) ? invalidJsonMessage : ''
+
+watch(settings, value => {
+    jsonError.value = value === undefined ? invalidJsonMessage : ''
 })
+
+watch(indexUid, () => {
+    editMode.value = false
+    void loadSettings()
+}, { immediate: true })
 </script>
 
 <template>
-    <Card>
-        <template #title>
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-3">
-                    <span>JSON Index Configuration</span>
-                    <a
-                        href="https://www.meilisearch.com/docs/reference/api/settings/list-all-settings"
-                        target="_blank"
-                        class="text-inherit"
-                    >
-                        <CircleQuestionMark class="size-5!" />
-                    </a>
-                </div>
-                <div>
-                    <Button
-                        v-if="!editMode"
-                        v-tooltip.top="'Toggle Edit Mode'"
-                        label="Edit"
-                        severity="secondary"
-                        @click="toggleEditMode"
-                    >
-                        <template #icon>
-                            <Pencil />
-                        </template>
-                    </Button>
-                    <div
-                        v-else
-                        class="flex gap-4"
-                    >
-                        <Button
-                            label="Cancel"
-                            severity="secondary"
-                            text
-                            @click="toggleEditMode"
-                        >
-                            <template #icon>
-                                <X />
-                            </template>
-                        </Button>
-                        <Button
-                            label="Save"
-                            :loading="isLoadingTask"
-                            @click="handleUpdateSettings"
-                        >
-                            <template #icon>
-                                <Check />
-                            </template>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </template>
-        <template #content>
-            <div class="flex flex-col gap-4">
-                <div v-if="editMode">
-                    <Message
-                        severity="warn"
-                        pt:content:class="items-start"
-                    >
-                        <template #icon>
-                            <TriangleAlert />
-                        </template>
-                        <span class="font-bold">Warning:</span> Updating index settings may enqueue a long-running
-                        task. Changes to searchable, filterable, sortable, ranking, tokenization, language,
-                        or embedder settings can reprocess all documents or regenerate embeddings for this index.
-                        Reference the
-                        <a
-                            href="https://www.meilisearch.com/docs/reference/api/settings/update-all-settings"
-                            target="_blank"
-                            class="text-inherit underline"
-                        >
-                            settings documentation
-                        </a> for more information.
-                    </Message>
-                </div>
-                <div v-if="jsonError">
-                    <Message severity="error">
-                        <template #icon>
-                            <AlertCircle />
-                        </template>
-                        {{ jsonError }}
-                    </Message>
-                </div>
-                <div>
-                    <ThemedJsonEditor
-                        v-model="settings"
-                        :read-only="!editMode"
-                        :mode="Mode.text"
-                        :main-menu-bar="false"
-                        :stringified="false"
+    <div class="w-full space-y-4 md:space-y-6">
+        <Teleport to="#sub-page-actions">
+            <div class="flex gap-2">
+                <UButton
+                    v-if="!editMode"
+                    label="Edit"
+                    icon="i-lucide-pencil"
+                    color="neutral"
+                    variant="outline"
+                    :disabled="isFetching.allSettings || !settings"
+                    @click="startEditing"
+                />
+                <template v-else>
+                    <UButton
+                        label="Cancel"
+                        icon="i-lucide-x"
+                        color="neutral"
+                        variant="outline"
+                        :disabled="isLoadingTask"
+                        @click="cancelEditing"
                     />
-                </div>
+                    <UButton
+                        label="Save"
+                        icon="i-lucide-save"
+                        :loading="isLoadingTask"
+                        :disabled="Boolean(jsonError)"
+                        @click="handleUpdateSettings"
+                    />
+                </template>
             </div>
-        </template>
-    </Card>
+        </Teleport>
+
+        <UAlert
+            v-if="error"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-x"
+            title="Unable to load index settings"
+            :description="error"
+            :actions="[{ label: 'Retry', onClick: loadSettings }]"
+        />
+
+        <UCard
+            title="JSON Index Configuration"
+            variant="subtle"
+        >
+            <template #description>
+                <UButton
+                    label="Review the complete index settings as JSON."
+                    :href="settingsDocsUrl"
+                    target="_blank"
+                    aria-label="Open index settings documentation"
+                    trailing-icon="i-lucide-arrow-up-right"
+                    color="neutral"
+                    variant="link"
+                    class="p-0"
+                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
+                />
+            </template>
+
+            <div
+                v-if="isFetching.allSettings && !settings"
+                aria-label="Loading index settings"
+                class="space-y-3"
+            >
+                <USkeleton class="h-8 w-1/3" />
+                <USkeleton class="h-96 w-full" />
+            </div>
+
+            <template v-else-if="settings">
+                <UAlert
+                    v-if="editMode"
+                    color="warning"
+                    variant="subtle"
+                    icon="i-lucide-triangle-alert"
+                    title="Updating settings can be long-running"
+                    :description="'Changes to searchable, filterable, sortable, ranking, tokenization, language, or embedder settings can reprocess documents or regenerate embeddings.'"
+                    class="mb-4"
+                >
+                    <template #description>
+                        Changes to searchable, filterable, sortable, ranking, tokenization, language, or embedder
+                        settings can reprocess documents or regenerate embeddings. Reference the
+                        <UButton
+                            :href="updateSettingsDocsUrl"
+                            target="_blank"
+                            label="settings documentation"
+                            trailing-icon="i-lucide-arrow-up-right"
+                            color="warning"
+                            variant="link"
+                            class="p-0 align-baseline"
+                            :ui="{ trailingIcon: 'size-3' }"
+                        /> for more information.
+                    </template>
+                </UAlert>
+
+                <UAlert
+                    v-if="jsonError"
+                    color="error"
+                    variant="subtle"
+                    icon="i-lucide-circle-x"
+                    title="Invalid settings JSON"
+                    :description="jsonError"
+                    class="mb-4"
+                />
+
+                <ThemedJsonEditor
+                    v-model="settings"
+                    :read-only="!editMode"
+                    :mode="Mode.text"
+                    :main-menu-bar="false"
+                    :stringified="false"
+                />
+            </template>
+
+            <UAlert
+                v-else-if="!error"
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-settings"
+                title="No settings available"
+                description="Refresh the page to request settings for this index."
+            />
+        </UCard>
+    </div>
 </template>
