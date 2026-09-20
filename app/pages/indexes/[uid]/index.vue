@@ -56,7 +56,7 @@ const error = computed(() => indexError.value ?? statsError.value)
 <template>
     <div class="space-y-4 md:space-y-6">
         <Teleport to="#sub-page-actions">
-            <div class="flex items-center gap-4">
+            <AppPageActions>
                 <PollToggle
                     v-model="statsPollingEnabled"
                     tooltip="Poll index stats every 5 seconds"
@@ -70,7 +70,7 @@ const error = computed(() => indexError.value ?? statsError.value)
                     :loading="fetching"
                     @click="fetchData"
                 />
-            </div>
+            </AppPageActions>
         </Teleport>
 
         <UAlert

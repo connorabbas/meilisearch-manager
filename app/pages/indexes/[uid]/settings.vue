@@ -77,7 +77,7 @@ watch(indexUid, () => {
 <template>
     <div class="w-full space-y-4 md:space-y-6">
         <Teleport to="#sub-page-actions">
-            <div class="flex gap-2">
+            <AppPageActions>
                 <UButton
                     v-if="!editMode"
                     label="Edit"
@@ -104,7 +104,7 @@ watch(indexUid, () => {
                         @click="handleUpdateSettings"
                     />
                 </template>
-            </div>
+            </AppPageActions>
         </Teleport>
 
         <UAlert

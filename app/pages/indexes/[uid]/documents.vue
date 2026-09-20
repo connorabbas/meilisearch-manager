@@ -297,7 +297,7 @@ onMounted(() => {
 <template>
     <div class="flex flex-col gap-4 md:gap-8">
         <Teleport to="#sub-page-actions">
-            <div class="flex gap-3">
+            <AppPageActions>
                 <Button
                     v-if="indexStats?.numberOfDocuments"
                     label="Export Documents"
@@ -316,7 +316,7 @@ onMounted(() => {
                         <Plus />
                     </template>
                 </Button>
-            </div>
+            </AppPageActions>
         </Teleport>
 
         <Teleport to="body">

@@ -24,12 +24,14 @@ async function createCurrentBackup() {
 <template>
     <div class="mx-auto max-w-xl">
         <Teleport to="#sub-page-actions">
-            <UButton
-                label="Create Dump"
-                icon="i-lucide-plus"
-                :loading="isLoadingTask"
-                @click="createCurrentBackup"
-            />
+            <AppPageActions>
+                <UButton
+                    label="Create Dump"
+                    icon="i-lucide-plus"
+                    :loading="isLoadingTask"
+                    @click="createCurrentBackup"
+                />
+            </AppPageActions>
         </Teleport>
 
         <UAlert

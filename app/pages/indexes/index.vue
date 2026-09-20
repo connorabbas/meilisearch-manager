@@ -87,20 +87,22 @@ async function changePageSize(pageSize: number) {
         />
 
         <template #actions>
-            <UButton
-                label="Refresh"
-                icon="i-lucide-refresh-cw"
-                loading-icon="i-lucide-refresh-cw"
-                color="neutral"
-                variant="outline"
-                :loading="isFetchingIndexes || isFetchingStats"
-                @click="fetchData"
-            />
-            <UButton
-                label="New Index"
-                icon="i-lucide-plus"
-                @click="createIndexModalOpen = true"
-            />
+            <AppPageActions>
+                <UButton
+                    label="Refresh"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    color="neutral"
+                    variant="outline"
+                    :loading="isFetchingIndexes || isFetchingStats"
+                    @click="fetchData"
+                />
+                <UButton
+                    label="New Index"
+                    icon="i-lucide-plus"
+                    @click="createIndexModalOpen = true"
+                />
+            </AppPageActions>
         </template>
 
         <UAlert

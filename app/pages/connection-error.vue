@@ -31,13 +31,15 @@ async function retryConnection() {
 <template>
     <AppDashboardPanel id="connection-error">
         <template #actions>
-            <UButton
-                label="Retry Connection"
-                icon="i-lucide-refresh-cw"
-                loading-icon="i-lucide-refresh-cw"
-                :loading="meilisearchStore.isConnecting"
-                @click="retryConnection"
-            />
+            <AppPageActions>
+                <UButton
+                    label="Retry Connection"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    :loading="meilisearchStore.isConnecting"
+                    @click="retryConnection"
+                />
+            </AppPageActions>
         </template>
 
         <div class="flex min-h-[50svh] items-center justify-center">
