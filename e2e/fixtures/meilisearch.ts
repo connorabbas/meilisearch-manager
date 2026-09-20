@@ -73,7 +73,19 @@ const task = {
     finishedAt: '2026-01-01T00:00:01.000Z',
 }
 
-const key = {
+type FixtureKey = {
+    uid: string;
+    name: string;
+    description: string | null;
+    key: string;
+    actions: string[];
+    indexes: string[];
+    expiresAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+const key: FixtureKey = {
     uid: '00000000-0000-4000-8000-000000000001',
     name: 'Playwright key',
     description: 'Deterministic browser fixture',
@@ -84,6 +96,32 @@ const key = {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
 }
+
+const defaultKeys: FixtureKey[] = [
+    key,
+    {
+        uid: '00000000-0000-4000-8000-000000000002',
+        name: 'Playwright admin key',
+        description: null,
+        key: 'playwright-admin-secret-key',
+        actions: ['*'],
+        indexes: ['*'],
+        expiresAt: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+        uid: '00000000-0000-4000-8000-000000000003',
+        name: 'Playwright expired key',
+        description: null,
+        key: 'playwright-expired-secret-key',
+        actions: ['search'],
+        indexes: ['movies'],
+        expiresAt: '2026-01-02T00:00:00.000Z',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+]
 
 export type MeilisearchMockOptions = {
     version?: string,
@@ -107,6 +145,11 @@ export type MeilisearchMockOptions = {
     onCreateDumpRequest?: (request: Request) => void,
     onCreateSnapshotRequest?: (request: Request) => void,
     onExperimentalFeaturesRequest?: (request: Request) => void,
+    keys?: FixtureKey[],
+    getKeys?: (request: Request, keys: FixtureKey[]) => FixtureKey[],
+    onCreateKeyRequest?: (request: Request) => void,
+    onUpdateKeyRequest?: (request: Request) => void,
+    onDeleteKeyRequest?: (request: Request) => void,
 }
 
 function json(route: Route, body: unknown, status = 200) {
@@ -121,11 +164,23 @@ function json(route: Route, body: unknown, status = 200) {
     })
 }
 
+function noContent(route: Route) {
+    return route.fulfill({
+        status: 204,
+        headers: {
+            'access-control-allow-origin': '*',
+            'access-control-allow-headers': '*',
+        },
+    })
+}
+
 export async function installMeilisearchMock(page: Page, options: MeilisearchMockOptions = {}) {
     let healthFailuresRemaining = options.healthFailures ?? 0
     const indexes = [...(options.indexes ?? [index])]
     const movieIndex = { ...index }
     let movieSettings = structuredClone(indexSettings)
+    const keys = structuredClone(options.keys ?? defaultKeys)
+    let createdKeyCounter = 0
 
     await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
     await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
@@ -260,8 +315,72 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 indexUid: taskUid === 102 ? 'created-index' : task.indexUid,
                 type: taskUid === 102 ? 'indexCreation' : 'indexDeletion',
             })
-        } else if (path === '/keys') {
-            await json(route, { results: [key], offset: 0, limit: 20, total: 1 })
+        } else if (path === '/keys' && request.method() === 'GET') {
+            const availableKeys = options.getKeys?.(request, keys) ?? keys
+            const offset = Number(url.searchParams.get('offset') ?? 0)
+            const limit = Number(url.searchParams.get('limit') ?? 20)
+            await json(route, {
+                results: availableKeys.slice(offset, offset + limit),
+                offset,
+                limit,
+                total: availableKeys.length,
+            })
+        } else if (path === '/keys' && request.method() === 'POST') {
+            options.onCreateKeyRequest?.(request)
+            const payload = request.postDataJSON() as Partial<FixtureKey>
+            createdKeyCounter++
+            const createdKey: FixtureKey = {
+                uid: payload.uid ?? `00000000-0000-4000-8000-1000000000${String(createdKeyCounter).padStart(2, '0')}`,
+                name: payload.name ?? '',
+                description: payload.description ?? null,
+                key: `playwright-generated-key-${createdKeyCounter}`,
+                actions: payload.actions ?? [],
+                indexes: payload.indexes ?? [],
+                expiresAt: payload.expiresAt instanceof Date
+                    ? payload.expiresAt.toISOString()
+                    : payload.expiresAt ?? null,
+                createdAt: '2026-01-03T00:00:00.000Z',
+                updatedAt: '2026-01-03T00:00:00.000Z',
+            }
+            keys.push(createdKey)
+            await json(route, createdKey)
+        } else if (/^\/keys\/[^/]+$/.test(path) && request.method() === 'PATCH') {
+            options.onUpdateKeyRequest?.(request)
+            const identifier = decodeURIComponent(path.split('/').at(-1) ?? '')
+            const existingKey = keys.find(item => item.uid === identifier || item.key === identifier)
+            if (!existingKey) {
+                await json(route, {
+                    message: `Playwright fixture key: "${identifier}" not found`,
+                    code: 'fixture_key_not_found',
+                    type: 'invalid_request',
+                    link: 'https://example.test/fixture-key-not-found',
+                }, 404)
+            } else {
+                const payload = request.postDataJSON() as Partial<FixtureKey>
+                if (payload.name !== undefined) {
+                    existingKey.name = payload.name
+                }
+                if (payload.description !== undefined) {
+                    existingKey.description = payload.description
+                }
+                existingKey.updatedAt = '2026-01-04T00:00:00.000Z'
+                await json(route, existingKey)
+            }
+        } else if (/^\/keys\/[^/]+$/.test(path) && request.method() === 'DELETE') {
+            options.onDeleteKeyRequest?.(request)
+            const identifier = decodeURIComponent(path.split('/').at(-1) ?? '')
+            const existingKeyIndex = keys.findIndex(item => item.uid === identifier || item.key === identifier)
+            if (existingKeyIndex === -1) {
+                await json(route, {
+                    message: `Playwright fixture key: "${identifier}" not found`,
+                    code: 'fixture_key_not_found',
+                    type: 'invalid_request',
+                    link: 'https://example.test/fixture-key-not-found',
+                }, 404)
+            } else {
+                keys.splice(existingKeyIndex, 1)
+                await noContent(route)
+            }
         } else if (path === '/dumps' && request.method() === 'POST') {
             options.onCreateDumpRequest?.(request)
             await json(route, { taskUid: task.uid, status: 'enqueued', type: 'dumpCreation' })
