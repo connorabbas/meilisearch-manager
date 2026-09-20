@@ -184,7 +184,7 @@ watch(allActions, (newVal) => {
                 >
                     <UInput
                         v-model="formState.uid"
-                        placeholder="optional - set UID"
+                        placeholder="set UID"
                         autocomplete="off"
                         class="w-full"
                     />
@@ -226,7 +226,7 @@ watch(allActions, (newVal) => {
                 >
                     <UTextarea
                         v-model="formState.description"
-                        placeholder="optional - set description"
+                        placeholder="details about the key use case"
                         :rows="2"
                         autoresize
                         class="w-full"

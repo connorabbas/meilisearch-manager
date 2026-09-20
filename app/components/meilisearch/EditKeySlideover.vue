@@ -119,7 +119,7 @@ watch(() => props.apiKey, (newVal: Key | null) => {
                 >
                     <UTextarea
                         v-model="formState.description"
-                        placeholder="optional - set description"
+                        placeholder="details about the key use case"
                         :rows="2"
                         autoresize
                         class="w-full"
