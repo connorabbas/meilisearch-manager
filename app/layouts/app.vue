@@ -136,9 +136,11 @@ onUnmounted(() => {
                 </div>
             </template>
 
-            <template #footer="{ collapsed }">
+            <template
+                v-if="!isSingleInstanceProxyMode"
+                #footer="{ collapsed }"
+            >
                 <UDropdownMenu
-                    v-if="!isSingleInstanceProxyMode"
                     :items="instanceMenuItems"
                     :content="{ align: 'center', collisionPadding: 12 }"
                     :class="collapsed ? 'w-10' : 'w-full'"
