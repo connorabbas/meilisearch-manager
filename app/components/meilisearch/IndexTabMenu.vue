@@ -19,8 +19,8 @@ const items = computed<NavigationMenuItem[]>(() => [{
     label: 'Settings',
     icon: 'i-lucide-settings',
 }, {
-    to: `/indexes/${props.indexUid}/edit`,
-    label: 'Edit',
+    to: `/indexes/${props.indexUid}/manage`,
+    label: 'Manage',
     icon: 'i-lucide-pencil',
 }])
 </script>
