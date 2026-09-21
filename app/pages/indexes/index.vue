@@ -171,13 +171,11 @@ async function changePageSize(pageSize: number) {
                 </template>
 
                 <template #empty>
-                    <div class="flex flex-col items-center gap-2 py-6 text-center">
-                        <UIcon
-                            name="i-lucide-database"
-                            class="size-5 text-muted"
-                        />
-                        <p class="text-sm text-muted">No indexes found</p>
-                    </div>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-database"
+                        title="No indexes found"
+                    />
                 </template>
             </UTable>
 

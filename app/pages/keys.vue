@@ -286,13 +286,11 @@ async function changePageSize(pageSize: number) {
                 </template>
 
                 <template #empty>
-                    <div class="flex flex-col items-center gap-2 py-6 text-center">
-                        <UIcon
-                            name="i-lucide-key-round"
-                            class="size-5 text-muted"
-                        />
-                        <p class="text-sm text-muted">No keys found</p>
-                    </div>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-key-round"
+                        title="No keys found"
+                    />
                 </template>
             </UTable>
 
