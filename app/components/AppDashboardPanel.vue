@@ -29,6 +29,14 @@ onUnmounted(() => {
 </script>
 
 <template>
+    <UButton
+        v-if="showScrollTop"
+        aria-label="Scroll to top"
+        icon="i-lucide-arrow-up"
+        color="primary"
+        class="fixed end-4 bottom-4 z-50 rounded-full shadow-lg sm:end-6 sm:bottom-6"
+        @click="scrollToTop"
+    />
     <UDashboardPanel
         :id="id"
         :ui="{ root: 'h-full min-h-0', body: 'min-h-0 app-scroll-container' }"
@@ -59,13 +67,4 @@ onUnmounted(() => {
             <slot />
         </template>
     </UDashboardPanel>
-
-    <UButton
-        v-if="showScrollTop"
-        aria-label="Scroll to top"
-        icon="i-lucide-arrow-up"
-        color="primary"
-        class="fixed end-4 bottom-4 z-50 rounded-full shadow-lg sm:end-6 sm:bottom-6"
-        @click="scrollToTop"
-    />
 </template>

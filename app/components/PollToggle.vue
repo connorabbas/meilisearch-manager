@@ -16,20 +16,17 @@ const model = defineModel<boolean>({ default: true })
         :content="{ side: 'top' }"
     >
         <div class="flex items-center gap-3">
-            <USwitch v-model="model">
-                <template #label>
-                    <span class="flex items-center gap-2.5">
-                        <span>{{ props.label }}</span>
-                        <span
-                            v-if="model"
-                            class="relative flex h-3 w-3"
-                        >
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75" />
-                            <span class="relative inline-flex h-3 w-3 rounded-full bg-success-400" />
-                        </span>
-                    </span>
-                </template>
-            </USwitch>
+            <span
+                v-if="model"
+                class="relative flex h-3 w-3"
+            >
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75" />
+                <span class="relative inline-flex h-3 w-3 rounded-full bg-success-400" />
+            </span>
+            <USwitch
+                v-model="model"
+                :label="props.label"
+            />
         </div>
     </UTooltip>
 </template>

@@ -53,20 +53,22 @@ export function maskedApiKey(
     return `${start}****${end}`
 }
 
-export function getStatusSeverity(status: TaskStatus) {
+export type TaskStatusColor = 'success' | 'info' | 'neutral' | 'error' | 'warning'
+
+export function getTaskStatusColor(status: TaskStatus): TaskStatusColor {
     switch (status) {
     case 'succeeded':
         return 'success'
     case 'processing':
         return 'info'
     case 'enqueued':
-        return 'secondary'
+        return 'neutral'
     case 'failed':
-        return 'danger'
+        return 'error'
     case 'canceled':
-        return 'warn'
+        return 'warning'
     default:
-        return 'secondary'
+        return 'neutral'
     }
 }
 

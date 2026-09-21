@@ -4,29 +4,29 @@ import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '../ThemedJsonEditor.vue'
 
 const props = defineProps<{
-    task: Task | null,
+    task: Task,
 }>()
 
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 
-const headerTitle = computed(() => `Task ${props.task?.uid}`)
+const headerTitle = computed(() => `Task ${props.task.uid}`)
 </script>
 
 <template>
-    <Drawer
-        v-model:visible="visible"
-        :header="headerTitle"
-        class="w-full sm:w-[60rem]"
-        position="right"
+    <USlideover
+        :key="props.task.uid"
+        v-model:open="open"
+        :title="headerTitle"
+        :ui="{ content: 'sm:max-w-4xl' }"
     >
-        <div>
+        <template #body>
             <ThemedJsonEditor
-                :modelValue="task"
+                :modelValue="props.task"
                 :mode="Mode.text"
                 :main-menu-bar="false"
                 :stringified="false"
                 read-only
             />
-        </div>
-    </Drawer>
+        </template>
+    </USlideover>
 </template>

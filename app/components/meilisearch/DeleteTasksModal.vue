@@ -1,60 +1,64 @@
 <script setup lang="ts">
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import { TASK_TYPES, TASK_STATUSES } from '@/composables/meilisearch/useTasks'
-import { getStatusSeverity } from '@/utils'
-import ConfirmPopup from 'primevue/confirmpopup'
-import { useConfirm } from 'primevue/useconfirm'
-import type { DeleteOrCancelTasksQuery } from 'meilisearch'
+import { getTaskStatusColor } from '@/utils'
+import { useConfirmAction } from '@/composables/useConfirmAction'
+import type { DeleteOrCancelTasksQuery, TaskStatus, TaskType } from 'meilisearch'
 
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 const query = defineModel<DeleteOrCancelTasksQuery>('query', { default: () => ({}) })
 
 const emit = defineEmits<{
     submit: []
 }>()
 
-const confirm = useConfirm()
+const { confirmAction } = useConfirmAction()
 const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes()
+
+// Filters are kept in plain arrays because DeleteOrCancelTasksQuery fields accept
+// wildcard and nested-array variants the selects never produce.
+const selectedTypes = ref<TaskType[]>([])
+const selectedStatuses = ref<TaskStatus[]>([])
+const selectedIndexUids = ref<string[]>([])
 
 const indexUids = computed(() => indexes.value.map((index) => index.uid))
 
 const canSubmit = computed(() => {
     return (
-        (query.value.types?.length ?? 0) > 0
-        || (query.value.statuses?.length ?? 0) > 0
-        || (query.value.indexUids?.length ?? 0) > 0
+        selectedTypes.value.length > 0
+        || selectedStatuses.value.length > 0
+        || selectedIndexUids.value.length > 0
     )
 })
 
 function reset() {
+    selectedTypes.value = []
+    selectedStatuses.value = []
+    selectedIndexUids.value = []
     query.value = {}
 }
 
-function confirmDelete(event: Event) {
-    confirm.require({
-        target: event.currentTarget as HTMLElement,
-        message: 'Are you sure you want to delete these tasks?',
-        rejectProps: {
-            label: 'Cancel',
-            severity: 'secondary',
-            text: true,
-        },
-        acceptProps: {
-            label: 'Delete',
-            severity: 'danger',
-        },
-        accept: () => {
-            visible.value = false
-            emit('submit')
-        },
+async function submitDelete() {
+    const confirmed = await confirmAction({
+        title: 'Delete Tasks',
+        description: 'Are you sure you want to delete these tasks?',
     })
+
+    if (!confirmed) {
+        return
+    }
+
+    query.value = {
+        ...(selectedTypes.value.length ? { types: [...selectedTypes.value] } : {}),
+        ...(selectedStatuses.value.length ? { statuses: [...selectedStatuses.value] } : {}),
+        ...(selectedIndexUids.value.length ? { indexUids: [...selectedIndexUids.value] } : {}),
+    }
+
+    open.value = false
+    emit('submit')
 }
 
-function handleCancel() {
-    visible.value = false
-}
-
-watch(visible, (isVisible) => {
+watch(open, (isVisible) => {
     reset()
     if (isVisible) {
         fetchAllIndexes()
@@ -63,86 +67,79 @@ watch(visible, (isVisible) => {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="visible"
-        class="w-full sm:w-[30rem]"
-        position="center"
-        header="Delete Tasks"
-        :draggable="false"
-        dismissable-mask
-        modal
+    <UModal
+        v-model:open="open"
+        title="Delete Tasks"
+        description="At least one filter is required"
+        :ui="{ footer: 'justify-end' }"
     >
-        <ConfirmPopup />
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-2">
-                <label for="delete-tasks-types">Types</label>
-                <MultiSelect
-                    id="delete-tasks-types"
-                    v-model="query.types"
-                    pt:label:class="flex flex-wrap"
-                    :options="[...TASK_TYPES]"
-                    display="chip"
-                    placeholder="Any"
-                    :showToggleAll="false"
-                    showClear
-                    filter
-                    fluid
-                />
+        <template #body>
+            <div class="flex flex-col gap-6">
+                <UFormField label="Statuses">
+                    <USelectMenu
+                        v-model="selectedStatuses"
+                        :items="[...TASK_STATUSES]"
+                        aria-label="Task statuses"
+                        multiple
+                        placeholder="Any"
+                        filter
+                        clear
+                        class="w-full"
+                    >
+                        <template #item-label="{ item }">
+                            <UBadge
+                                :color="getTaskStatusColor(item)"
+                                variant="subtle"
+                                :label="String(item)"
+                            />
+                        </template>
+                    </USelectMenu>
+                </UFormField>
+
+                <UFormField label="Types">
+                    <USelectMenu
+                        v-model="selectedTypes"
+                        :items="[...TASK_TYPES]"
+                        aria-label="Task types"
+                        multiple
+                        placeholder="Any"
+                        filter
+                        clear
+                        class="w-full"
+                    />
+                </UFormField>
+
+                <UFormField label="Indexes">
+                    <USelectMenu
+                        v-model="selectedIndexUids"
+                        :items="indexUids"
+                        aria-label="Task indexes"
+                        multiple
+                        placeholder="Any"
+                        filter
+                        clear
+                        :loading="isFetchingIndexes"
+                        class="w-full"
+                    />
+                </UFormField>
             </div>
-            <div class="flex flex-col gap-2">
-                <label for="delete-tasks-statuses">Statuses</label>
-                <MultiSelect
-                    id="delete-tasks-statuses"
-                    v-model="query.statuses"
-                    pt:label:class="flex flex-wrap"
-                    :options="[...TASK_STATUSES]"
-                    display="chip"
-                    placeholder="Any"
-                    :showToggleAll="false"
-                    showClear
-                    filter
-                    fluid
-                >
-                    <template #option="{ option }">
-                        <Tag
-                            :value="option"
-                            :severity="getStatusSeverity(option)"
-                        />
-                    </template>
-                </MultiSelect>
-            </div>
-            <div class="flex flex-col gap-2">
-                <label for="delete-tasks-indexes">Indexes</label>
-                <MultiSelect
-                    id="delete-tasks-indexes"
-                    v-model="query.indexUids"
-                    pt:label:class="flex flex-wrap"
-                    :options="indexUids"
-                    display="chip"
-                    placeholder="Any"
-                    :showToggleAll="false"
-                    showClear
-                    filter
-                    fluid
-                    :loading="isFetchingIndexes"
-                />
-            </div>
-        </div>
+        </template>
+
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <div class="flex gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
-                    @click="handleCancel"
+                    color="neutral"
+                    variant="outline"
+                    @click="open = false"
                 />
-                <Button
+                <UButton
                     label="Delete"
-                    severity="danger"
+                    color="error"
                     :disabled="!canSubmit"
-                    @click="confirmDelete($event)"
+                    @click="submitDelete"
                 />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>
