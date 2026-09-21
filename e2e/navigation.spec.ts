@@ -23,7 +23,7 @@ test('every top-level route is reachable from navigation @cross-browser', async 
     for (const route of routes) {
         await page.getByRole('link', { name: route.link, exact: true }).first().click()
         await expect(page).toHaveURL(new RegExp(`${route.path}$`))
-        if (route.path === '/indexes' || route.path.startsWith('/backups/') || route.path === '/experimental-features' || route.path === '/keys') {
+        if (route.path === '/indexes' || route.path.startsWith('/backups/') || route.path === '/experimental-features' || route.path === '/keys' || route.path === '/tasks') {
             await expect(page.getByRole('navigation', { name: 'breadcrumb' }).getByText(route.heading, { exact: true })).toBeVisible()
         } else {
             await expect(page.getByRole('heading', { name: route.heading, exact: true })).toBeVisible()

@@ -73,6 +73,8 @@ const task = {
     finishedAt: '2026-01-01T00:00:01.000Z',
 }
 
+export type FixtureTask = typeof task
+
 type FixtureKey = {
     uid: string;
     name: string;
@@ -150,6 +152,9 @@ export type MeilisearchMockOptions = {
     onCreateKeyRequest?: (request: Request) => void,
     onUpdateKeyRequest?: (request: Request) => void,
     onDeleteKeyRequest?: (request: Request) => void,
+    tasks?: FixtureTask[],
+    getTasks?: (request: Request, tasks: FixtureTask[]) => FixtureTask[],
+    onDeleteTasksRequest?: (request: Request, deletedCount: number) => void,
 }
 
 function json(route: Route, body: unknown, status = 200) {
@@ -181,6 +186,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
     let movieSettings = structuredClone(indexSettings)
     const keys = structuredClone(options.keys ?? defaultKeys)
     let createdKeyCounter = 0
+    const tasks: FixtureTask[] = structuredClone(options.tasks ?? [task])
 
     await page.route('**/api/config', route => json(route, { singleInstanceProxyMode: options.singleInstanceProxyMode ?? false }))
     await page.route('**/{__meili,api/meilisearch}/**', async (route) => {
@@ -304,9 +310,44 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         } else if (path === '/indexes/movies/documents' && request.method() === 'DELETE') {
             options.onDeleteAllDocumentsRequest?.(request)
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
+        } else if (path === '/tasks' && request.method() === 'DELETE') {
+            const query = {
+                statuses: url.searchParams.getAll('statuses').flatMap(value => value.split(',')).filter(Boolean),
+                types: url.searchParams.getAll('types').flatMap(value => value.split(',')).filter(Boolean),
+                indexUids: url.searchParams.getAll('indexUids').flatMap(value => value.split(',')).filter(Boolean),
+            }
+            const matchesQuery = (item: FixtureTask) => (query.statuses.length === 0 || query.statuses.includes(item.status))
+                && (query.types.length === 0 || query.types.includes(item.type))
+                && (query.indexUids.length === 0 || query.indexUids.includes(item.indexUid ?? ''))
+            const beforeCount = tasks.length
+            const remainingTasks = tasks.filter(item => !matchesQuery(item))
+            tasks.splice(0, tasks.length, ...remainingTasks)
+            options.onDeleteTasksRequest?.(request, beforeCount - tasks.length)
+            await json(route, { taskUid: task.uid, status: 'enqueued', type: 'taskDeletion' })
         } else if (path === '/tasks') {
             options.onTasksRequest?.(request)
-            await json(route, { results: [task], total: 1, limit: 50, from: 101, next: null })
+            const availableTasks = options.getTasks?.(request, tasks) ?? tasks
+            const queryStatuses = url.searchParams.getAll('statuses').flatMap(value => value.split(',')).filter(Boolean)
+            const queryTypes = url.searchParams.getAll('types').flatMap(value => value.split(',')).filter(Boolean)
+            const queryIndexUids = url.searchParams.getAll('indexUids').flatMap(value => value.split(',')).filter(Boolean)
+            const matchingTasks = availableTasks.filter(item => (queryStatuses.length === 0 || queryStatuses.includes(item.status))
+                && (queryTypes.length === 0 || queryTypes.includes(item.type))
+                && (queryIndexUids.length === 0 || queryIndexUids.includes(item.indexUid ?? '')))
+            const limit = Number(url.searchParams.get('limit') ?? 20)
+            const from = url.searchParams.get('from')
+            const startIndex = from === null ? 0 : matchingTasks.findIndex(item => item.uid >= Number(from))
+            const pageTasks = startIndex === -1 ? [] : matchingTasks.slice(startIndex, startIndex + limit)
+            const lastTask = pageTasks.at(-1)
+            const next = lastTask
+                ? matchingTasks.find(item => item.uid > lastTask.uid)?.uid ?? null
+                : null
+            await json(route, {
+                results: pageTasks,
+                total: matchingTasks.length,
+                limit,
+                from: from === null ? null : Number(from),
+                next,
+            })
         } else if (/^\/tasks\/\d+$/.test(path)) {
             const taskUid = Number(path.split('/').at(-1))
             await json(route, {
