@@ -4,7 +4,7 @@ defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
-    <div class="hidden md:flex items-center gap-3">
+    <div class="hidden md:flex items-center gap-2">
         <slot />
     </div>
 
