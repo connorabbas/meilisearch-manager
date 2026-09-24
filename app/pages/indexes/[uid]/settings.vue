@@ -122,16 +122,11 @@ watch(indexUid, () => {
             variant="subtle"
         >
             <template #description>
-                <UButton
+                <AppExternalLink
                     label="Review the complete index settings as JSON."
                     :href="settingsDocsUrl"
-                    target="_blank"
                     aria-label="Open index settings documentation"
-                    trailing-icon="i-lucide-arrow-up-right"
-                    color="neutral"
-                    variant="link"
                     class="p-0"
-                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                 />
             </template>
 
@@ -157,15 +152,11 @@ watch(indexUid, () => {
                     <template #description>
                         Changes to searchable, filterable, sortable, ranking, tokenization, language, or embedder
                         settings can reprocess documents or regenerate embeddings. Reference the
-                        <UButton
+                        <AppExternalLink
                             :href="updateSettingsDocsUrl"
-                            target="_blank"
                             label="settings documentation"
-                            trailing-icon="i-lucide-arrow-up-right"
                             color="warning"
-                            variant="link"
                             class="p-0 align-baseline"
-                            :ui="{ trailingIcon: 'size-3' }"
                         /> for more information.
                     </template>
                 </UAlert>

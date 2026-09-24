@@ -174,25 +174,13 @@ function focusFirstInvalidField(event: FormErrorEvent) {
                     color="neutral"
                     variant="link"
                 />
-                <UButton
+                <AppExternalLink
                     href="https://www.meilisearch.com/docs/home"
-                    target="_blank"
                     label="Docs"
-                    icon="i-lucide-book-text"
-                    trailing-icon="i-lucide-arrow-up-right"
-                    color="neutral"
-                    variant="link"
-                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                 />
-                <UButton
+                <AppExternalLink
                     href="https://github.com/connorabbas/meilisearch-manager"
-                    target="_blank"
                     label="Repository"
-                    icon="i-lucide-folder-git-2"
-                    trailing-icon="i-lucide-arrow-up-right"
-                    color="neutral"
-                    variant="link"
-                    :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                 />
             </nav>
         </div>

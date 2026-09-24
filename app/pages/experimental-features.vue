@@ -72,15 +72,10 @@ async function handleSave() {
                 <template #description>
                     Enable API-backed experimental features. Some features instead require a CLI flag or environment
                     variable.
-                    <UButton
+                    <AppExternalLink
                         :href="experimentalFeaturesDocsUrl"
-                        target="_blank"
                         label="Read the experimental features overview"
-                        trailing-icon="i-lucide-arrow-up-right"
-                        color="neutral"
-                        variant="link"
                         class="p-0"
-                        :ui="{ trailingIcon: 'size-3 text-dimmed' }"
                     />
                 </template>
 
