@@ -36,7 +36,7 @@ const perPageId = useId()
                     :for="perPageId"
                     color="neutral"
                     variant="subtle"
-                    label="Rows per page"
+                    label="Limit"
                     class="shrink-0 cursor-pointer"
                 />
                 <USelect

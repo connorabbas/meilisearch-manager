@@ -40,6 +40,10 @@ definePageMeta({
             <UDashboardToolbar>
                 <IndexTabMenu :index-uid="indexUid" />
             </UDashboardToolbar>
+            <div
+                id="sub-page-toolbar"
+                class="contents"
+            />
         </template>
 
         <NuxtPage />

@@ -72,11 +72,11 @@ export function getTaskStatusColor(status: TaskStatus): TaskStatusColor {
     }
 }
 
-export function getRankingScoreSeverity(score: number): 'success' | 'warn' | 'danger' | 'secondary' {
+export function getRankingScoreColor(score: number): 'success' | 'warning' | 'error' | 'neutral' {
     if (score >= 0.7) return 'success'
-    if (score >= 0.5) return 'warn'
-    if (score > 0) return 'danger'
-    return 'secondary'
+    if (score >= 0.5) return 'warning'
+    if (score > 0) return 'error'
+    return 'neutral'
 }
 
 export function looksLikeAnImageUrl(value: any) {
@@ -180,5 +180,4 @@ export function downloadFile(blob: Blob, filename: string) {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 }
-
 

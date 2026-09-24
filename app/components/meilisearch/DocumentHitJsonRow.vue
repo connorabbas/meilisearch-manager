@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { looksLikeAnImageUrl } from '@/utils'
-import { Expand, Minimize2, Pencil, Trash2 } from '@lucide/vue'
+import { getRankingScoreColor, looksLikeAnImageUrl } from '@/utils'
 import type { Hit } from 'meilisearch'
 import ThemedJsonViewer from '../ThemedJsonViewer.vue'
 
@@ -10,117 +9,89 @@ const props = defineProps<{
     showRankingScore?: boolean,
 }>()
 
-defineEmits(['edit', 'delete'])
+defineEmits<{
+    edit: [hit: Hit],
+    delete: [documentId: string | number],
+}>()
 
-const image = computed(() => Object.values(props.hit).find(looksLikeAnImageUrl) as string | null)
-
+const imageEntry = computed(() => Object.entries(props.hit).find(([, value]) => looksLikeAnImageUrl(value)))
+const image = computed(() => imageEntry.value?.[1] as string | undefined)
+const imageAttribute = computed(() => imageEntry.value?.[0])
 const expandedJson = ref(false)
-function toggleJsonExpanded() {
-    expandedJson.value = !expandedJson.value
-}
-
-const rankingScore = computed(() => {
-    return (props.hit as Hit & { _rankingScore?: number })._rankingScore
-})
-
-const rankingScorePercentage = computed(() => {
-    if (rankingScore.value === undefined) return 0
-    return Math.round(rankingScore.value * 100)
-})
-
-const rankingScoreColor = computed(() => {
-    const score = rankingScore.value ?? 0
-    if (score >= 0.7) return 'var(--color-green-500)'
-    if (score >= 0.5) return 'var(--color-yellow-500)'
-    return 'var(--color-red-500)'
-})
-
-const meterValue = computed(() => {
-    if (rankingScore.value === undefined) return []
-    return [{
-        label: 'Ranking Score',
-        value: rankingScorePercentage.value,
-        color: rankingScoreColor.value,
-    }]
-})
+const rankingScore = computed(() => (props.hit as Hit & { _rankingScore?: number })._rankingScore)
+const rankingScorePercentage = computed(() => Math.round((rankingScore.value ?? 0) * 100))
+const rankingScoreColor = computed(() => getRankingScoreColor(rankingScore.value ?? 0))
 </script>
 
 <template>
-    <Card
-        class="h-full group hover:border-primary transition-all duration-100 ease-in-out"
-        pt:body:class="p-4"
+    <UCard
+        variant="subtle"
+        class="h-full"
     >
-        <template #content>
-            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+        <div class="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            <PreviewImage
+                v-if="image"
+                :src="image"
+                alt="Document image"
+                :title="imageAttribute"
+                thumbnail-class="max-h-40 max-w-40 rounded-lg border border-default object-cover object-top"
+                preview-class="max-h-[80vh] max-w-[min(90vw,72rem)] rounded-lg object-contain"
+            />
+
+            <div class="min-w-0 grow space-y-4">
                 <div
-                    v-if="image"
-                    class="rounded-xl"
+                    v-if="showRankingScore && rankingScore !== undefined"
+                    class="space-y-1"
                 >
-                    <Image
-                        v-if="looksLikeAnImageUrl(image)"
-                        :src="image"
-                        alt="Document Image"
-                        pt:previewMask:class="rounded-xl"
-                        pt:image:class="max-h-40 max-w-40 shrink object-cover object-top rounded-xl border dynamic-border"
-                        preview
-                    />
-                </div>
-                <div
-                    ref="document-json-viewer"
-                    class="grow rounded-border flex flex-col gap-4"
-                >
-                    <div
-                        v-if="showRankingScore && rankingScore !== undefined"
-                        class="w-full"
-                    >
-                        <MeterGroup
-                            :value="meterValue"
-                            :min="0"
-                            :max="100"
-                            labelPosition="start"
-                        />
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted">Ranking score</span>
+                        <span class="font-medium">{{ rankingScorePercentage }}%</span>
                     </div>
-                    <ThemedJsonViewer
-                        class="py-2 rounded-border"
-                        :data="props.hit"
-                        :expanded="expandedJson"
+                    <UProgress
+                        :model-value="rankingScorePercentage"
+                        :max="100"
+                        :color="rankingScoreColor"
                     />
                 </div>
-                <div class="flex flex-row sm:flex-col justify-end gap-4">
-                    <Button
-                        v-tooltip.left="`${expandedJson ? 'Minimize' : 'Expand'} Data`"
-                        severity="secondary"
-                        outlined
-                        @click="toggleJsonExpanded()"
-                    >
-                        <template #icon>
-                            <Minimize2 v-if="expandedJson" />
-                            <Expand v-else />
-                        </template>
-                    </Button>
-                    <Button
-                        v-tooltip.left="'Edit Document'"
-                        severity="secondary"
-                        outlined
-                        @click="$emit('edit', props.hit)"
-                    >
-                        <template #icon>
-                            <Pencil />
-                        </template>
-                    </Button>
-                    <Button
-                        v-if="props.primaryKey"
-                        v-tooltip.left="'Delete Document'"
-                        severity="danger"
-                        outlined
-                        @click="$emit('delete', props.hit[props.primaryKey])"
-                    >
-                        <template #icon>
-                            <Trash2 />
-                        </template>
-                    </Button>
-                </div>
+                <ThemedJsonViewer
+                    class="rounded-lg py-2"
+                    :data="props.hit"
+                    :expanded="expandedJson"
+                />
             </div>
-        </template>
-    </Card>
+
+            <div class="flex shrink-0 flex-row gap-2 sm:flex-col">
+                <UTooltip :text="expandedJson ? 'Collapse data' : 'Expand data'">
+                    <UButton
+                        :aria-label="expandedJson ? 'Collapse document data' : 'Expand document data'"
+                        :icon="expandedJson ? 'i-lucide-minimize-2' : 'i-lucide-expand'"
+                        color="neutral"
+                        variant="outline"
+                        @click="expandedJson = !expandedJson"
+                    />
+                </UTooltip>
+                <UTooltip text="Edit document">
+                    <UButton
+                        aria-label="Edit document"
+                        icon="i-lucide-pencil"
+                        color="neutral"
+                        variant="outline"
+                        @click="$emit('edit', props.hit)"
+                    />
+                </UTooltip>
+                <UTooltip
+                    v-if="props.primaryKey"
+                    text="Delete document"
+                >
+                    <UButton
+                        aria-label="Delete document"
+                        icon="i-lucide-trash-2"
+                        color="error"
+                        variant="outline"
+                        @click="$emit('delete', props.hit[props.primaryKey])"
+                    />
+                </UTooltip>
+            </div>
+        </div>
+    </UCard>
 </template>

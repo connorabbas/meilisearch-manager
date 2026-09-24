@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch'
 import type { FacetHit, Filter, FilterableAttributes, SortableAttributes } from 'meilisearch'
-import { AlertTriangle } from '@lucide/vue'
 
 const props = defineProps<{
     indexUid: string,
@@ -12,7 +11,7 @@ const props = defineProps<{
     enableGeoFilters?: boolean,
 }>()
 
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 const filter = defineModel<Filter | null>('filter', { required: true })
 const geoSort = defineModel<string | null>('geoSort', { default: null })
 
@@ -326,255 +325,210 @@ watch(() => props.enableGeoFilters, (enabled) => {
 </script>
 
 <template>
-    <Drawer
-        v-model:visible="visible"
-        header="Filter Documents"
-        class="w-full sm:w-[30rem]"
-        position="right"
+    <USlideover
+        v-model:open="open"
+        title="Filter Documents"
+        :ui="{ content: 'sm:max-w-lg' }"
     >
-        <!-- TODO: manual input search -->
-        <div class="mt-1 relative flex flex-col gap-4">
-            <Message
-                v-if="facetAttributeOptions.length === 0"
-                pt:content:class="items-start"
-                severity="warn"
-            >
-                <template #icon>
-                    <AlertTriangle />
-                </template>
-                No facet filters available, please update the "filterableAttributes" index setting.
-            </Message>
-            <div
-                v-if="facetAttributeOptions.length > 0"
-                class="flex flex-col gap-2"
-            >
-                <label for="filterable-attributes">Facets</label>
-                <MultiSelect
-                    v-model="selectedAttributes"
-                    :options="facetAttributeOptions"
-                    pt:label:class="flex flex-wrap"
-                    placeholder="Select facets to filter on"
-                    filterPlaceholder="Search for facets"
-                    inputId="filterable-attributes"
-                    display="chip"
-                    appendTo="self"
-                    showClear
-                    filter
-                    fluid
+        <template #body>
+            <!-- TODO: manual input search -->
+            <div class="mt-1 relative flex flex-col gap-4">
+                <UAlert
+                    v-if="facetAttributeOptions.length === 0"
+                    variant="subtle"
+                    color="warning"
+                    icon="i-lucide-triangle-alert"
+                    title="No facet filters available"
+                    description="Update the filterableAttributes index setting to filter by facets."
                 />
-            </div>
-            <Divider v-if="!facetFiltersEmpty" />
-            <div
-                v-if="!facetFiltersEmpty"
-                class="flex flex-col gap-6"
-            >
-                <div
-                    v-for="facetFilter in facetFilters"
-                    :key="facetFilter.attribute"
-                    class="flex flex-col gap-2"
+                <UFormField
+                    v-if="facetAttributeOptions.length > 0"
+                    label="Facets"
                 >
-                    <label :for="`${facetFilter.attribute}_id`">{{ facetFilter.attribute }}</label>
-                    <div class="relative">
-                        <MultiSelect
-                            :modelValue="facetFilter.value"
-                            :options="facetFilter.facetHits"
-                            :inputId="`${facetFilter.attribute}_id`"
-                            :showToggleAll="false"
-                            :disabled="props.searching"
-                            filterPlaceholder="Search for facet values"
-                            pt:label:class="flex flex-wrap"
-                            pt:overlay:class="w-full"
-                            optionValue="value"
-                            optionLabel="value"
-                            display="chip"
-                            appendTo="self"
-                            showClear
-                            filter
-                            fluid
-                            @update:modelValue="(value) => updateFacetFilterValue(facetFilter.attribute, value)"
+                    <USelectMenu
+                        v-model="selectedAttributes"
+                        :items="facetAttributeOptions"
+                        placeholder="Select facets to filter on"
+                        aria-label="Filterable facets"
+                        multiple
+                        clear
+                        class="w-full"
+                    />
+                </UFormField>
+                <USeparator v-if="!facetFiltersEmpty" />
+                <div
+                    v-if="!facetFiltersEmpty"
+                    class="flex flex-col gap-6"
+                >
+                    <div
+                        v-for="facetFilter in facetFilters"
+                        :key="facetFilter.attribute"
+                        class="space-y-2"
+                    >
+                        <UFormField :label="facetFilter.attribute">
+                            <USelectMenu
+                                :model-value="facetFilter.value"
+                                :items="facetFilter.facetHits"
+                                :disabled="props.searching"
+                                :search-input="{ placeholder: 'Search facet values' }"
+                                value-key="value"
+                                label-key="value"
+                                :aria-label="`${facetFilter.attribute} values`"
+                                multiple
+                                clear
+                                class="w-full"
+                                @update:model-value="(value) => updateFacetFilterValue(facetFilter.attribute, value)"
+                            >
+                                <template #item-label="{ item }">{{ item.value }} ({{ item.count }})</template>
+                            </USelectMenu>
+                        </UFormField>
+                    </div>
+                </div>
+
+                <template v-if="props.enableGeoFilters">
+                    <USeparator />
+                    <UFormField
+                        label="Geo filter"
+                        description="Use Meilisearch geo filters with manual coordinates."
+                    >
+                        <USelect
+                            v-model="geoFilterMode"
+                            :items="geoFilterModeOptions"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <div
+                        v-if="geoFilterMode === 'radius'"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                    >
+                        <UFormField label="Latitude">
+                            <UInput
+                                v-model="radiusLat"
+                                placeholder="45.472735"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Longitude">
+                            <UInput
+                                v-model="radiusLng"
+                                placeholder="9.184019"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField
+                            label="Radius (meters)"
+                            class="sm:col-span-2"
                         >
-                            <template #option="{ option }">
-                                {{ option.value }} ({{ option.count }})
-                            </template>
-                        </MultiSelect>
+                            <UInput
+                                v-model="radiusMeters"
+                                placeholder="2000"
+                                class="w-full"
+                            />
+                        </UFormField>
                     </div>
-                </div>
+
+                    <div
+                        v-else-if="geoFilterMode === 'boundingBox'"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                    >
+                        <UFormField label="Top-left latitude">
+                            <UInput
+                                v-model="boxTopLeftLat"
+                                placeholder="45.494181"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Top-left longitude">
+                            <UInput
+                                v-model="boxTopLeftLng"
+                                placeholder="9.214024"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Bottom-right latitude">
+                            <UInput
+                                v-model="boxBottomRightLat"
+                                placeholder="45.449484"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Bottom-right longitude">
+                            <UInput
+                                v-model="boxBottomRightLng"
+                                placeholder="9.179175"
+                                class="w-full"
+                            />
+                        </UFormField>
+                    </div>
+
+                    <UFormField
+                        v-else-if="geoFilterMode === 'polygon'"
+                        label="Polygon points (lat,lng per line)"
+                    >
+                        <UTextarea
+                            v-model="polygonPointsInput"
+                            :rows="6"
+                            placeholder="45.490, 9.170&#10;45.490, 9.210&#10;45.450, 9.190"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UAlert
+                        v-if="geoFilterValidationMessage"
+                        variant="subtle"
+                        color="warning"
+                        icon="i-lucide-triangle-alert"
+                        :description="geoFilterValidationMessage"
+                    />
+
+                    <USeparator />
+
+                    <UFormField label="Geo sort">
+                        <USelect
+                            v-model="geoSortDirection"
+                            :items="geoSortDirectionOptions"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <div
+                        v-if="geoSortDirection !== 'none'"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                    >
+                        <UFormField label="Reference latitude">
+                            <UInput
+                                v-model="geoSortLat"
+                                placeholder="48.8561446"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Reference longitude">
+                            <UInput
+                                v-model="geoSortLng"
+                                placeholder="2.2978204"
+                                class="w-full"
+                            />
+                        </UFormField>
+                    </div>
+
+                    <UAlert
+                        v-if="geoSortValidationMessage"
+                        variant="subtle"
+                        color="warning"
+                        icon="i-lucide-triangle-alert"
+                        :description="geoSortValidationMessage"
+                    />
+                </template>
             </div>
-
-            <template v-if="props.enableGeoFilters">
-                <Divider />
-                <div class="flex flex-col gap-2">
-                    <label for="geo-filter-mode">Geo Filter</label>
-                    <Select
-                        id="geo-filter-mode"
-                        v-model="geoFilterMode"
-                        :options="geoFilterModeOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="self"
-                        fluid
-                    />
-                    <small class="text-muted-color">Use Meilisearch geo filters with manual coordinates.</small>
-                </div>
-
-                <div
-                    v-if="geoFilterMode === 'radius'"
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                >
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-radius-lat">Latitude</label>
-                        <InputText
-                            id="geo-radius-lat"
-                            v-model="radiusLat"
-                            placeholder="45.472735"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-radius-lng">Longitude</label>
-                        <InputText
-                            id="geo-radius-lng"
-                            v-model="radiusLng"
-                            placeholder="9.184019"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2 sm:col-span-2">
-                        <label for="geo-radius-meters">Radius (meters)</label>
-                        <InputText
-                            id="geo-radius-meters"
-                            v-model="radiusMeters"
-                            placeholder="2000"
-                            fluid
-                        />
-                    </div>
-                </div>
-
-                <div
-                    v-else-if="geoFilterMode === 'boundingBox'"
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                >
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-box-top-left-lat">Top-left latitude</label>
-                        <InputText
-                            id="geo-box-top-left-lat"
-                            v-model="boxTopLeftLat"
-                            placeholder="45.494181"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-box-top-left-lng">Top-left longitude</label>
-                        <InputText
-                            id="geo-box-top-left-lng"
-                            v-model="boxTopLeftLng"
-                            placeholder="9.214024"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-box-bottom-right-lat">Bottom-right latitude</label>
-                        <InputText
-                            id="geo-box-bottom-right-lat"
-                            v-model="boxBottomRightLat"
-                            placeholder="45.449484"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-box-bottom-right-lng">Bottom-right longitude</label>
-                        <InputText
-                            id="geo-box-bottom-right-lng"
-                            v-model="boxBottomRightLng"
-                            placeholder="9.179175"
-                            fluid
-                        />
-                    </div>
-                </div>
-
-                <div
-                    v-else-if="geoFilterMode === 'polygon'"
-                    class="flex flex-col gap-2"
-                >
-                    <label for="geo-polygon-points">Polygon points (lat,lng per line)</label>
-                    <Textarea
-                        id="geo-polygon-points"
-                        v-model="polygonPointsInput"
-                        rows="6"
-                        placeholder="45.490, 9.170&#10;45.490, 9.210&#10;45.450, 9.190"
-                        fluid
-                    />
-                </div>
-
-                <Message
-                    v-if="geoFilterValidationMessage"
-                    severity="warn"
-                    pt:content:class="items-start"
-                >
-                    <template #icon>
-                        <AlertTriangle />
-                    </template>
-                    {{ geoFilterValidationMessage }}
-                </Message>
-
-                <Divider />
-
-                <div class="flex flex-col gap-2">
-                    <label for="geo-sort-mode">Geo Sort</label>
-                    <Select
-                        id="geo-sort-mode"
-                        v-model="geoSortDirection"
-                        :options="geoSortDirectionOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="self"
-                        fluid
-                    />
-                </div>
-
-                <div
-                    v-if="geoSortDirection !== 'none'"
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                >
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-sort-lat">Reference latitude</label>
-                        <InputText
-                            id="geo-sort-lat"
-                            v-model="geoSortLat"
-                            placeholder="48.8561446"
-                            fluid
-                        />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="geo-sort-lng">Reference longitude</label>
-                        <InputText
-                            id="geo-sort-lng"
-                            v-model="geoSortLng"
-                            placeholder="2.2978204"
-                            fluid
-                        />
-                    </div>
-                </div>
-
-                <Message
-                    v-if="geoSortValidationMessage"
-                    severity="warn"
-                    pt:content:class="items-start"
-                >
-                    <template #icon>
-                        <AlertTriangle />
-                    </template>
-                    {{ geoSortValidationMessage }}
-                </Message>
-            </template>
-        </div>
+        </template>
         <template #footer>
             <div
                 v-if="props.totalHits"
-                class="flex justify-center text-muted-color"
+                class="flex justify-center text-muted"
             >
                 {{ props.totalHits.toLocaleString('en-US') }} estimated total hits
             </div>
         </template>
-    </Drawer>
+    </USlideover>
 </template>
