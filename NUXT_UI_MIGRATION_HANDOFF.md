@@ -279,10 +279,23 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 6: Index detail, stats, settings, and danger zone
 - [x] Phase 7: API keys
 - [x] Phase 8: Tasks
-- [ ] Phase 9A: Documents core search and views
-- [ ] Phase 9B: Documents filters, geo, hybrid, import, and export
+- [x] Phase 9A: Documents core search and views
+- [x] Phase 9B: Documents filters, geo, hybrid, import, and export
 - [ ] Phase 10: Search rules
 - [ ] Phase 11: PrimeVue removal and final hardening
+
+## TODO:
+on task poll toast timeout, show another toast saying to check the tasks view. Also increase the start delay on a tasks and add an action button on the polling toast to be able to cancel that specific task.
+
+find/replace all rounded- classes and replace with nuxt ui theme variable for consistent border radius on UI elements
+
+consistent flex gaps, dont use .5 iterations, try to stick with even spacing (gap-2, gap-4, gap-6,) where possible
+
+rename AppTablePagination, since non-table pagination datasets use it too
+
+experiment with using different button variants for the "view" link on tables
+
+improve documents search hybrid toggle - there should be an "enabled" toggle switch in the modal instead of having the show modal button act as the toggle, that way the hybrid search can stay on and the user can re-open the configuration modal to adjust the semantic ratio without having to turn it off every time.
 
 ## Phase 0: Characterization Tests and Migration Harness
 
@@ -917,7 +930,11 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-23. The documents route now uses one shared `UDashboardToolbar`, teleported into the index panel's new `#sub-page-toolbar` header outlet below the index route navigation. Search, estimated hits, standard sort, filter state, hybrid/ranking toggles, and the JSON/Card, Table, and conditional Geo view selector remain mounted while result presentations change. The toolbar wraps at narrow widths and every icon-only toggle/action has an accessible name and pressed state.
+- `useSearch()` now exposes the canonical one-based `paginate()` interface and `paginationSummary`; its 300 ms debounce, Enter search, page-size reset, and total clamping remain intact. JSON/Card, Table, and Geo share one result set and one `AppTablePagination` pattern with 20/50/100 sizes. View changes do not issue search requests.
+- Post-review pagination update (2026-09-23): document search retains the `master` branch's `offset`/`limit` request semantics, and pagination state remains local to each view. Document search fetches the index's `pagination.maxTotalHits` setting (falling back to Meilisearch's default of 1000), caps its reachable total with `min(estimatedTotalHits, maxTotalHits)`, and clamps the current page before issuing an out-of-range search. The request limit is also capped by `maxTotalHits` when it is smaller than the selected page size. Indexes, keys, and dynamic search rules retain their local reactive pagination.
+- JSON hits now use Nuxt UI cards, progress, image popovers, tooltips, and accessible actions. The server-backed table uses typed dynamic `TableColumn<RecordAny>[]`, primary/ranking and action pinning, stable primary-key row IDs when available, field and image `UPopover`s, semantic ranking badges, and a `UDropdownMenu` action column. It performs no client pagination or sorting. Loading, empty, search-error/retry, and pagination states are explicit.
+- Edit/delete behavior is available from JSON and table views; delete remains hidden without a primary key and still uses the shared destructive confirmation plus task polling. The unused `DocumentHitCard.vue` was removed after a final usage search.
 
 ## Phase 9B: Documents Filters, Geo, Hybrid, Import, and Export
 
@@ -984,7 +1001,12 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-23. `FilterDocumentsDrawer.vue`, `EditDocumentDrawer.vue`, and `ImportDocumentsDrawer.vue` were renamed to `FilterDocumentsSlideover.vue`, `EditDocumentSlideover.vue`, and `ImportDocumentsSlideover.vue`; all now use `USlideover` with `v-model:open`. Hybrid and export use `UModal`, file upload uses `UFileUpload`, and every migrated form/control uses Nuxt UI semantic components.
+- Filter expression logic was preserved: selected values are ORed within each facet, facets are ANDed together, apostrophes are escaped, and radius/bounding-box/polygon geo filters plus nearest/farthest geo sorting retain their existing Meilisearch expressions. Geo controls remain available only in Geo view and only produce expressions when `_geo` settings support them.
+- `DocumentsGeoMap.vue` retains `_geo` and GeoJSON Point parsing, center/bounds behavior, navigation controls, and light/dark MapLibre styles. Marker details now use keyboard-accessible `UPopover` triggers with responsive JSON content. Geo remains conditional on `_geo`/`_geojson` field distribution.
+- Hybrid search retains embedder availability gating, composite embedder labeling, semantic ratio, cancel behavior, and the exact `{ embedder, semanticRatio }` request. Import retains add-or-replace/add-or-update, JSON/CSV/manual input, task polling, errors, and the 100 MB limit. Export retains 1,000-document batches, two-pass CSV column discovery, custom/default filenames, and browser download behavior.
+- The deterministic fixture now supports configurable document/settings/stats data, ranking responses, facet search, stateful single-document deletion, import endpoints, and batched document reads. `e2e/phase9-documents.spec.ts` covers the shared taskbar, debounce and payloads, request-free view switching, table/ranking/sort/pagination behavior, facet escaping, geo filter/sort expressions, hybrid parameters, marker rendering, edit/delete overlays, import body, export filename/content, and 375px no-overflow behavior. The original document characterization test was updated for the accessible search name and current `/manage` route.
+- Verification before the subsequent visual and finite-pagination review fixes passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, focused Phase 9 Chromium tests, and `git diff --check`. The latest review changes intentionally remain unverified until the requested final test pass. The most recent complete Chromium run passed 51 of 52 tests; its sole failure was the pre-existing Phase 6 primary-key test failing to find its input. No PrimeVue references remain in the documents page or its migrated document components.
 
 ## Phase 10: Search Rules
 
