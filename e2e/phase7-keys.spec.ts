@@ -40,7 +40,7 @@ test('keys table paginates server-side and resets to page one on page-size chang
     await expect(page.getByText('Showing 21 to 40 of 45 keys')).toBeVisible()
     expect(keyRequests.at(-1)).toEqual({ limit: '20', offset: '20' })
 
-    await page.getByRole('combobox', { name: 'Rows per page' }).click()
+    await page.getByRole('combobox', { name: 'Limit' }).click()
     await page.getByRole('option', { name: '50', exact: true }).click()
     await expect(page.getByText('Showing 1 to 45 of 45 keys')).toBeVisible()
     expect(keyRequests.at(-1)).toEqual({ limit: '50', offset: '0' })

@@ -32,7 +32,7 @@ test('indexes use remote offsets and reset to page one when page size changes', 
     await expect(page.getByRole('cell', { name: 'index-21', exact: true })).toBeVisible()
     await expect.poll(() => indexRequests.at(-1)?.searchParams.get('offset')).toBe('20')
 
-    await page.getByRole('combobox', { name: 'Rows per page' }).click()
+    await page.getByRole('combobox', { name: 'Limit' }).click()
     await page.getByRole('option', { name: '50', exact: true }).click()
     await expect(page.getByRole('cell', { name: 'index-1', exact: true })).toBeVisible()
     await expect(page.getByText('Showing 1 to 21 of 21 indexes')).toBeVisible()
@@ -105,7 +105,7 @@ test('the dashboard owns vertical table scrolling and pagination returns to the 
     await installMeilisearchMock(page, { indexes: makeIndexes(101) })
     await page.goto('/indexes')
 
-    await page.getByRole('combobox', { name: 'Rows per page' }).click()
+    await page.getByRole('combobox', { name: 'Limit' }).click()
     await page.getByRole('option', { name: '100', exact: true }).click()
     await expect(page.getByRole('cell', { name: 'index-100', exact: true })).toBeVisible()
 

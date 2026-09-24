@@ -137,6 +137,14 @@ export type MeilisearchMockOptions = {
     indexes?: FixtureIndex[],
     getIndexes?: (request: Request, indexes: FixtureIndex[]) => FixtureIndex[],
     onSearchRequest?: (request: Request) => void,
+    documents?: Array<Record<string, unknown>>,
+    indexStats?: Omit<typeof indexStats, 'fieldDistribution'> & { fieldDistribution: Record<string, number> },
+    indexSettings?: Omit<typeof indexSettings, 'embedders'> & { embedders: Record<string, unknown> },
+    paginationMaxTotalHits?: number,
+    sortableAttributes?: string[],
+    onImportDocumentsRequest?: (request: Request) => void,
+    onDeleteDocumentRequest?: (request: Request) => void,
+    onGetDocumentsRequest?: (request: Request) => void,
     onTasksRequest?: (request: Request) => void,
     onDeleteIndexRequest?: (request: Request) => void,
     onIndexStatsRequest?: (request: Request) => void,
@@ -184,6 +192,13 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
     const indexes = [...(options.indexes ?? [index])]
     const movieIndex = { ...index }
     let movieSettings = structuredClone(indexSettings)
+    if (options.indexSettings) movieSettings = structuredClone(options.indexSettings)
+    if (options.paginationMaxTotalHits !== undefined) movieSettings.pagination.maxTotalHits = options.paginationMaxTotalHits
+    const documents = structuredClone(options.documents ?? Array.from({ length: 21 }, (_, itemIndex) => ({
+        id: itemIndex + 1,
+        title: itemIndex === 0 ? 'Playwright Movie' : itemIndex === 20 ? 'Page Two Movie' : `Movie ${itemIndex + 1}`,
+        year: itemIndex === 20 ? 2025 : 2026,
+    })))
     const keys = structuredClone(options.keys ?? defaultKeys)
     let createdKeyCounter = 0
     const tasks: FixtureTask[] = structuredClone(options.tasks ?? [task])
@@ -224,7 +239,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 databaseSize: 4096,
                 usedDatabaseSize: 2048,
                 lastUpdate: '2026-01-02T00:00:00.000Z',
-                indexes: Object.fromEntries(indexes.map(item => [item.uid, item.uid === 'movies' ? indexStats : {
+                indexes: Object.fromEntries(indexes.map(item => [item.uid, item.uid === 'movies' ? (options.indexStats ?? indexStats) : {
                     ...indexStats,
                     numberOfDocuments: 0,
                 }])),
@@ -274,7 +289,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'indexDeletion' })
         } else if (path === '/indexes/movies/stats') {
             options.onIndexStatsRequest?.(request)
-            await json(route, indexStats)
+            await json(route, options.indexStats ?? indexStats)
         } else if (path === '/indexes/movies/settings' && request.method() === 'GET') {
             options.onSettingsRequest?.(request)
             await json(route, movieSettings)
@@ -282,33 +297,52 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             options.onUpdateSettingsRequest?.(request)
             movieSettings = request.postDataJSON() as typeof indexSettings
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'settingsUpdate' })
+        } else if (path === '/indexes/movies/settings/pagination' && request.method() === 'GET') {
+            await json(route, movieSettings.pagination)
         } else if (path === '/indexes/movies/search') {
             options.onSearchRequest?.(request)
-            const body = request.postDataJSON() as { offset?: number, q?: string }
+            const body = request.postDataJSON() as { offset?: number, limit?: number, q?: string, showRankingScore?: boolean, showRankingScoreDetails?: boolean }
             const offset = body.offset ?? 0
-            const hits = offset === 20
-                ? [{ id: 21, title: 'Page Two Movie', year: 2025 }]
-                : Array.from({ length: 20 }, (_, itemIndex) => ({
-                    id: itemIndex + 1,
-                    title: itemIndex === 0 ? 'Playwright Movie' : `Movie ${itemIndex + 1}`,
-                    year: 2026,
-                }))
+            const limit = body.limit ?? 20
+            const maxTotalHits = movieSettings.pagination.maxTotalHits ?? 1000
+            const reachableDocuments = documents.slice(0, maxTotalHits)
+            const hits = reachableDocuments.slice(offset, offset + limit).map((document, hitIndex) => ({
+                ...document,
+                ...(body.showRankingScore ? { _rankingScore: Math.max(0, 0.9 - (hitIndex * 0.02)) } : {}),
+                ...(body.showRankingScoreDetails ? { _rankingScoreDetails: { words: { order: hitIndex } } } : {}),
+            }))
             await json(route, {
                 hits,
                 processingTimeMs: 1,
                 query: body.q ?? '',
                 offset,
-                limit: 20,
-                estimatedTotalHits: 21,
+                limit,
+                estimatedTotalHits: documents.length,
             })
+        } else if (path === '/indexes/movies/facet-search') {
+            await json(route, { facetHits: [{ value: 'Drama', count: 2 }, { value: 'Children\'s', count: 1 }], facetQuery: null, processingTimeMs: 1 })
         } else if (path === '/indexes/movies/settings/filterable-attributes') {
-            await json(route, ['genre'])
+            await json(route, movieSettings.filterableAttributes)
         } else if (path === '/indexes/movies/settings/sortable-attributes') {
-            await json(route, ['year'])
+            await json(route, options.sortableAttributes ?? movieSettings.sortableAttributes)
         } else if (path === '/indexes/movies/settings/embedders') {
-            await json(route, {})
+            await json(route, movieSettings.embedders)
+        } else if (path === '/indexes/movies/documents' && request.method() === 'GET') {
+            options.onGetDocumentsRequest?.(request)
+            const offset = Number(url.searchParams.get('offset') ?? 0)
+            const limit = Number(url.searchParams.get('limit') ?? 20)
+            await json(route, { results: documents.slice(offset, offset + limit), offset, limit, total: documents.length })
+        } else if (path === '/indexes/movies/documents' && ['POST', 'PUT'].includes(request.method())) {
+            options.onImportDocumentsRequest?.(request)
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentAdditionOrUpdate' })
         } else if (path === '/indexes/movies/documents' && request.method() === 'DELETE') {
             options.onDeleteAllDocumentsRequest?.(request)
+            await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
+        } else if (/^\/indexes\/movies\/documents\/[^/]+$/.test(path) && request.method() === 'DELETE') {
+            options.onDeleteDocumentRequest?.(request)
+            const identifier = decodeURIComponent(path.split('/').at(-1) ?? '')
+            const documentIndex = documents.findIndex(document => String(document.id) === identifier)
+            if (documentIndex >= 0) documents.splice(documentIndex, 1)
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
         } else if (path === '/tasks' && request.method() === 'DELETE') {
             const query = {

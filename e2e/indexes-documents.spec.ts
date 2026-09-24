@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('an index opens and documents can be searched and paginated', async ({ page }) => {
-    const searchRequests: Array<{ q?: string, offset?: number }> = []
+    const searchRequests: Array<{ q?: string, offset?: number, limit?: number }> = []
     await page.unroute('**/__meili/**')
     await installMeilisearchMock(page, {
         onSearchRequest: request => searchRequests.push(request.postDataJSON()),
@@ -19,12 +19,13 @@ test('an index opens and documents can be searched and paginated', async ({ page
     await expect(page).toHaveURL(/\/indexes\/movies$/)
 
     await page.getByRole('link', { name: 'Documents', exact: true }).click()
-    await page.getByPlaceholder('search query').fill('Playwright')
+    await page.getByRole('searchbox', { name: 'Search documents' }).fill('Playwright')
     await expect.poll(() => searchRequests.some(request => request.q === 'Playwright')).toBe(true)
     await expect(page.getByText('"Playwright Movie"', { exact: true })).toBeVisible()
 
+    await page.locator('.app-scroll-container').evaluate(element => element.scrollTo({ top: element.scrollHeight }))
     await page.getByRole('button', { name: 'Next Page' }).last().click()
-    await expect.poll(() => searchRequests.some(request => request.offset === 20)).toBe(true)
+    await expect.poll(() => searchRequests.some(request => request.offset === 20 && request.limit === 20)).toBe(true)
     await expect(page.getByText('"Page Two Movie"', { exact: true })).toBeVisible()
 })
 
@@ -51,7 +52,7 @@ test('destructive confirmation cancels safely and awaits accepted work', async (
         onDeleteIndexRequest: () => deleteRequests++,
     })
 
-    await page.goto('/indexes/movies/edit')
+    await page.goto('/indexes/movies/manage')
     await page.getByRole('button', { name: 'Delete this index' }).click()
 
     const confirmation = page.getByRole('dialog', { name: 'Danger Zone' })
