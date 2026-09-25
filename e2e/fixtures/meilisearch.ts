@@ -155,6 +155,7 @@ export type MeilisearchMockOptions = {
     onCreateDumpRequest?: (request: Request) => void,
     onCreateSnapshotRequest?: (request: Request) => void,
     onExperimentalFeaturesRequest?: (request: Request) => void,
+    onDynamicSearchRulesRequest?: (request: Request) => void,
     keys?: FixtureKey[],
     getKeys?: (request: Request, keys: FixtureKey[]) => FixtureKey[],
     onCreateKeyRequest?: (request: Request) => void,
@@ -192,6 +193,14 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
     const indexes = [...(options.indexes ?? [index])]
     const movieIndex = { ...index }
     let movieSettings = structuredClone(indexSettings)
+    const dynamicSearchRules = [{
+        uid: 'featured-movie',
+        description: 'Playwright rule',
+        precedence: 1,
+        active: true,
+        conditions: { query: { words: 'movie' } },
+        actions: [{ selector: { indexUid: 'movies', id: '1' }, action: { type: 'pin', position: 0 } }],
+    }]
     if (options.indexSettings) movieSettings = structuredClone(options.indexSettings)
     if (options.paginationMaxTotalHits !== undefined) movieSettings.pagination.maxTotalHits = options.paginationMaxTotalHits
     const documents = structuredClone(options.documents ?? Array.from({ length: 21 }, (_, itemIndex) => ({
@@ -338,6 +347,12 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         } else if (path === '/indexes/movies/documents' && request.method() === 'DELETE') {
             options.onDeleteAllDocumentsRequest?.(request)
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
+        } else if (/^\/indexes\/movies\/documents\/[^/]+$/.test(path) && request.method() === 'GET') {
+            options.onGetDocumentsRequest?.(request)
+            const identifier = decodeURIComponent(path.split('/').at(-1) ?? '')
+            const document = documents.find(item => String(item.id) === identifier)
+            if (document) await json(route, document)
+            else await json(route, { message: `Document "${identifier}" not found` }, 404)
         } else if (/^\/indexes\/movies\/documents\/[^/]+$/.test(path) && request.method() === 'DELETE') {
             options.onDeleteDocumentRequest?.(request)
             const identifier = decodeURIComponent(path.split('/').at(-1) ?? '')
@@ -468,21 +483,52 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             options.onExperimentalFeaturesRequest?.(request)
             await json(route, request.postDataJSON())
         } else if (path === '/dynamic-search-rules' && request.method() === 'POST') {
+            options.onDynamicSearchRulesRequest?.(request)
+            const payload = request.postDataJSON() ?? {}
+            const query = payload.filter?.query ?? ''
+            const filtered = dynamicSearchRules.filter(rule =>
+                (!query || rule.uid.includes(query))
+                && (payload.filter?.active === undefined || rule.active === payload.filter.active)
+            )
+            const offset = payload.offset ?? 0
+            const limit = payload.limit ?? 20
             await json(route, {
-                results: [{
-                    uid: 'featured-movie',
-                    description: 'Playwright rule',
-                    priority: 1,
-                    active: true,
-                    conditions: [{ scope: 'query', contains: 'movie' }],
-                    actions: [{
-                        selector: { indexUid: 'movies', id: '1' },
-                        action: { type: 'pin', position: 0 },
-                    }],
-                }],
-                offset: 0,
-                limit: 20,
-                total: 1,
+                results: filtered.slice(offset, offset + limit),
+                offset,
+                limit,
+                total: filtered.length,
+            })
+        } else if (path.startsWith('/dynamic-search-rules/') && request.method() === 'GET') {
+            const uid = decodeURIComponent(path.slice('/dynamic-search-rules/'.length))
+            const rule = dynamicSearchRules.find(item => item.uid === uid)
+            if (rule) await json(route, rule)
+            else await json(route, { message: 'Search rule not found' }, 404)
+        } else if (path.startsWith('/dynamic-search-rules/') && ['PUT', 'PATCH'].includes(request.method())) {
+            options.onDynamicSearchRulesRequest?.(request)
+            const uid = decodeURIComponent(path.slice('/dynamic-search-rules/'.length))
+            const payload = request.postDataJSON()
+            const rule = { uid, ...payload }
+            const index = dynamicSearchRules.findIndex(item => item.uid === uid)
+            if (index >= 0) dynamicSearchRules[index] = rule
+            else dynamicSearchRules.push(rule)
+            await json(route, {
+                taskUid: task.uid,
+                indexUid: null,
+                status: 'enqueued',
+                type: 'dsrUpdate',
+                enqueuedAt: '2026-01-02T00:00:00.000Z',
+            })
+        } else if (path.startsWith('/dynamic-search-rules/') && request.method() === 'DELETE') {
+            options.onDynamicSearchRulesRequest?.(request)
+            const uid = decodeURIComponent(path.slice('/dynamic-search-rules/'.length))
+            const index = dynamicSearchRules.findIndex(item => item.uid === uid)
+            if (index >= 0) dynamicSearchRules.splice(index, 1)
+            await json(route, {
+                taskUid: task.uid,
+                indexUid: null,
+                status: 'enqueued',
+                type: 'dsrUpdate',
+                enqueuedAt: '2026-01-02T00:00:00.000Z',
             })
         } else {
             await json(route, {
