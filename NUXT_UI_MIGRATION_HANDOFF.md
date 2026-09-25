@@ -281,7 +281,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 8: Tasks
 - [x] Phase 9A: Documents core search and views
 - [x] Phase 9B: Documents filters, geo, hybrid, import, and export
-- [ ] Phase 10: Search rules
+- [x] Phase 10: Search rules
 - [ ] Phase 11: PrimeVue removal and final hardening
 
 ## TODO:
@@ -1024,6 +1024,9 @@ Migrate search-rule gating, list, conditions, actions, and create/edit forms whi
 - `app/components/meilisearch/SearchRuleConditionModal.vue`
 - `app/components/meilisearch/SearchRuleActionModal.vue`
 - `app/composables/meilisearch/useDynamicSearchRules.ts`
+- `app/types/index.d.ts`
+- `e2e/fixtures/meilisearch.ts`
+- `e2e/phase10-search-rules.spec.ts`
 
 ### Page order
 
@@ -1057,7 +1060,7 @@ Do not add the newer filter-based search-rule condition in this phase. That is t
 ### Acceptance criteria
 
 - Feature gating works for old versions, disabled flag, and enabled support.
-- Create/edit payloads match the baseline.
+- Create/edit payloads match the current dynamic-search-rules API.
 - Nested modal focus and keyboard behavior work.
 - Search-rule tables and forms contain no PrimeVue dependency.
 - Playwright covers gating and one complete create/edit/delete journey.
@@ -1073,7 +1076,14 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-24 and finalized 2026-09-25. Search-rule feature gating, list, create/edit routes, shared form, condition modal, and pin-action modal now use Nuxt UI components and contain no PrimeVue dependency. Breadcrumbs remain the page-title source; create/edit use subtle cards, `UTextarea` for Description, and `AppDashboardPanel` actions for Cancel/Save.
+- The list follows the established `UTable`/`AppTablePagination`/`AppFiltersPopover` pattern. UID search is debounced and server-backed. The card header contains UID and non-searchable status filters, with Active/Inactive rendered using the same badges as the table. The dashboard actions include Refresh and New Rule. API `precedence` is normalized to the Priority column, object-shaped conditions are counted correctly, and local Priority sorting cycles unsorted → ascending → descending → unsorted.
+- The Meilisearch JavaScript SDK is pinned to `0.62.0`, whose native search-rule types match the supported server API. The form now uses SDK-backed `precedence`, object-shaped `SearchRuleConditions`, `words`, `SearchRuleAction[]`, and `SearchRuleUpdatePayload` directly. The temporary hand-written API payload type and `app/utils/search-rules.ts` compatibility adapter were removed; application-owned form/view types live in `app/types/index.d.ts`.
+- Query-empty, query-contains, and one-sided or bounded time conditions remain supported. Time inputs use native `datetime-local` through `UInput` and convert local entry to ISO strings on save. The newer filter-based condition remains explicitly deferred.
+- Pin actions use one free-entry autocomplete `UInputMenu` for document search or exact ID entry. Search results include document snippets; selecting a result or pressing Enter for an exact ID displays a JSON preview without search-triggered error toasts. Editing an existing action loads its saved document into the preview automatically, and missing documents are reported inline. Stale preview responses are ignored after the modal closes or its index/ID changes.
+- Search-rule mutations use the SDK's native task-backed return type. The composable follows the existing task polling/toast pattern and redirects only after completion, so the list fetch after navigation reflects the saved rule. The SDK's new `dsrUpdate` and `dsrClear` task types are also available in task filters.
+- The stateful Playwright fixture supports dynamic-search-rule list, read, update, and delete endpoints. `e2e/phase10-search-rules.spec.ts` covers create/edit/delete payload fidelity, inactive filtering, precedence display, the three-state Priority sort, autocomplete preview behavior, and automatic existing-document preview. The existing navigation suite covers version and experimental-feature gating.
+- Verification passed with ESLint, `npm run typecheck`, `npm run build`, and the focused Chromium Phase 10 suite (5 tests). Phase 11 remains responsible for dependency/configuration removal and the final all-source PrimeVue audit.
 
 ## Phase 11: PrimeVue Removal and Final Hardening
 
