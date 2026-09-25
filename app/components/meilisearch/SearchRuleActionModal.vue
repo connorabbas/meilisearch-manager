@@ -1,79 +1,91 @@
 <script setup lang="ts">
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
-import { useDocuments } from '@/composables/meilisearch/useDocuments'
 import { useDebounceFn } from '@vueuse/core'
-import type { SearchRuleAction, SearchRuleSelector, SearchRulePinAction, RecordAny } from 'meilisearch'
+import type { SearchRuleAction, SearchRulePinAction, RecordAny } from 'meilisearch'
+import type { SearchRuleDocumentOption } from '@/types'
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue'
 
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 const action = defineModel<SearchRuleAction>('action', { required: true })
+const emit = defineEmits<{ save: [] }>()
 
-const emit = defineEmits<{
-    save: []
-}>()
-
-const meilisearchStore = useMeilisearchStore()
+const store = useMeilisearchStore()
 const { indexes, fetchAllIndexes } = useIndexes()
-const { document: fetchedDocument, isFetching: isFetchingDocument, fetchDocument } = useDocuments()
-
-const actionTypeOptions = [
-    { label: 'Pin', value: 'pin' },
-]
-
-const internalActionType = ref<'pin'>('pin')
-const selectedIndexUid = ref<string>('')
-const documentQuery = ref('')
-const autoCompleteModel = ref<any>('')
-const selectedDocumentId = ref<string | null>(null)
-const position = ref<number>(0)
-const searchSuggestions = ref<RecordAny[]>([])
+const indexUid = ref('')
+const documentId = ref('')
+const searchTerm = ref('')
+const documentOptions = ref<SearchRuleDocumentOption[]>([])
+const selectedDocument = ref<RecordAny | null>(null)
+const previewError = ref<string | null>(null)
+const isPreviewing = ref(false)
+const position = ref<number | null>(0)
 const isSearching = ref(false)
+let previewRequestId = 0
 
-const selectedIndex = computed(() => indexes.value.find(i => i.uid === selectedIndexUid.value))
+const selectedIndex = computed(() => {
+    return indexes.value.find(index => index.uid === indexUid.value)
+})
 const primaryKey = computed(() => selectedIndex.value?.primaryKey ?? 'id')
+const canSave = computed(() => {
+    return !!indexUid.value
+        && !!documentId.value.trim()
+        && position.value !== null
+        && Number.isInteger(position.value)
+        && position.value >= 0
+})
+
+function documentPreview(document: RecordAny): string {
+    return Object.entries(document)
+        .filter(([key, value]) => key !== primaryKey.value && value !== null && value !== undefined && typeof value !== 'object')
+        .slice(0, 3)
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(' · ') || 'No previewable fields'
+}
 
 function resetForm() {
-    const a = action.value
-
-    if (a.selector?.indexUid) {
-        selectedIndexUid.value = a.selector.indexUid
-    } else {
-        selectedIndexUid.value = ''
-    }
-
-    if (a.selector?.id && a.selector?.indexUid) {
-        selectedDocumentId.value = a.selector.id
-        documentQuery.value = String(a.selector.id)
-        autoCompleteModel.value = documentQuery.value
-        fetchDocument(a.selector.indexUid, a.selector.id)
-    } else {
-        selectedDocumentId.value = null
-        documentQuery.value = ''
-        autoCompleteModel.value = ''
-        fetchedDocument.value = null
-    }
-
-    position.value = (a.action as SearchRulePinAction)?.position ?? 0
-    internalActionType.value = 'pin'
-    searchSuggestions.value = []
+    previewRequestId++
+    isPreviewing.value = false
+    indexUid.value = action.value.selector?.indexUid ?? ''
+    documentId.value = action.value.selector?.id ?? ''
+    searchTerm.value = ''
+    documentOptions.value = []
+    selectedDocument.value = null
+    previewError.value = null
+    position.value = (action.value.action as SearchRulePinAction)?.position ?? 0
 }
 
 async function searchDocuments(query: string) {
-    if (!selectedIndexUid.value || !query.trim()) {
-        searchSuggestions.value = []
+    if (!indexUid.value || !query.trim()) {
+        documentOptions.value = []
         return
     }
 
-    const client = meilisearchStore.getClient()
-    if (!client) return
-
+    const requestedIndex = indexUid.value
+    const requestedQuery = query
     isSearching.value = true
+
     try {
-        const results = await client.index(selectedIndexUid.value).search(query, { limit: 20 })
-        searchSuggestions.value = results.hits
+        const client = store.getClient()
+        const results = client
+            ? await client.index(requestedIndex).search(query, { limit: 20 })
+            : null
+
+        if (open.value && indexUid.value === requestedIndex && searchTerm.value === requestedQuery) {
+            documentOptions.value = (results?.hits ?? []).map(document => {
+                const id = document[primaryKey.value]
+
+                return {
+                    label: String(id ?? 'Unknown'),
+                    value: String(id ?? ''),
+                    preview: documentPreview(document),
+                    document,
+                    onSelect: () => selectDocument(document),
+                }
+            }).filter(option => option.value)
+        }
     } catch {
-        searchSuggestions.value = []
+        documentOptions.value = []
     } finally {
         isSearching.value = false
     }
@@ -81,191 +93,215 @@ async function searchDocuments(query: string) {
 
 const debouncedSearch = useDebounceFn(searchDocuments, 300)
 
-function onDocumentQueryChange(event: { query: string }) {
-    documentQuery.value = event.query
-    autoCompleteModel.value = event.query
-    selectedDocumentId.value = null
-    debouncedSearch(event.query)
+function changeIndex() {
+    previewRequestId++
+    isPreviewing.value = false
+    documentId.value = ''
+    searchTerm.value = ''
+    documentOptions.value = []
+    selectedDocument.value = null
+    previewError.value = null
 }
 
-function onDocumentSelect(event: { value: RecordAny | string }) {
-    const value = event.value
-    if (typeof value === 'string') {
-        selectedDocumentId.value = value
-        documentQuery.value = value
-    } else if (value && typeof value === 'object') {
-        const rawId = value[primaryKey.value]
-        const id = rawId !== undefined && rawId !== null ? String(rawId) : ''
-        selectedDocumentId.value = id
-        documentQuery.value = id
-    }
-    autoCompleteModel.value = documentQuery.value
+function selectDocument(document: RecordAny) {
+    documentId.value = String(document[primaryKey.value] ?? '')
+    selectedDocument.value = document
+    previewError.value = null
 }
 
-function onDocumentBlur() {
-    const query = documentQuery.value
-    if (typeof query !== 'string') {
-        return
-    }
-    const trimmed = query.trim()
-    if (trimmed) {
-        selectedDocumentId.value = trimmed
-    }
-    autoCompleteModel.value = documentQuery.value
-}
-
-function handleSave() {
-    if (!selectedIndexUid.value || !selectedDocumentId.value) {
+async function previewTypedDocument() {
+    const id = documentId.value.trim()
+    if (!indexUid.value || !id) {
+        selectedDocument.value = null
+        previewError.value = null
         return
     }
 
-    const selector: SearchRuleSelector = {
-        indexUid: selectedIndexUid.value,
-        id: selectedDocumentId.value,
+    const option = documentOptions.value.find(item => item.value === id)
+    if (option) {
+        selectDocument(option.document)
+        return
     }
 
-    const pinAction: SearchRulePinAction = {
-        type: 'pin',
-        position: position.value,
+    const requestedIndex = indexUid.value
+    const requestedId = id
+    const requestId = ++previewRequestId
+    const client = store.getClient()
+    if (!client) return
+
+    isPreviewing.value = true
+    previewError.value = null
+
+    try {
+        const document = await client.index(requestedIndex).getDocument(requestedId)
+        if (requestId === previewRequestId && open.value && indexUid.value === requestedIndex && documentId.value.trim() === requestedId) {
+            selectedDocument.value = document
+        }
+    } catch {
+        if (requestId === previewRequestId && open.value && indexUid.value === requestedIndex && documentId.value.trim() === requestedId) {
+            selectedDocument.value = null
+            previewError.value = `Document "${requestedId}" was not found.`
+        }
+    } finally {
+        if (requestId === previewRequestId) {
+            isPreviewing.value = false
+        }
     }
+}
+
+async function initializeForm() {
+    resetForm()
+    void fetchAllIndexes()
+    await nextTick()
+    await previewTypedDocument()
+}
+
+function save() {
+    if (!canSave.value || position.value === null) return
 
     action.value = {
-        selector,
-        action: pinAction,
+        selector: { indexUid: indexUid.value, id: documentId.value.trim() },
+        action: { type: 'pin', position: position.value },
     }
-
-    visible.value = false
+    open.value = false
     emit('save')
 }
 
-function handleCancel() {
-    visible.value = false
-}
-
-function onIndexChange() {
-    selectedDocumentId.value = null
-    documentQuery.value = ''
-    autoCompleteModel.value = ''
-    fetchedDocument.value = null
-}
-
-watch([selectedIndexUid, selectedDocumentId], ([indexUid, docId]) => {
-    if (indexUid && docId) {
-        fetchDocument(indexUid, docId)
-    } else {
-        fetchedDocument.value = null
-    }
+watch(searchTerm, term => {
+    debouncedSearch(term)
 })
 
-watch(visible, (isVisible) => {
-    if (isVisible) {
-        fetchAllIndexes()
-        resetForm()
+watch(documentId, id => {
+    if (String(selectedDocument.value?.[primaryKey.value] ?? '') !== id) {
+        previewRequestId++
+        isPreviewing.value = false
+        selectedDocument.value = null
+    }
+    previewError.value = null
+})
+
+watch(open, value => {
+    if (value) {
+        void initializeForm()
+    } else {
+        previewRequestId++
+        isPreviewing.value = false
     }
 })
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="visible"
-        class="w-full sm:w-[30rem]"
-        position="center"
-        header="Action"
-        :draggable="false"
-        dismissable-mask
-        modal
+    <UModal
+        v-model:open="open"
+        title="Action"
+        :ui="{ content: 'sm:max-w-lg' }"
     >
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-2">
-                <label for="action-type">Action Type</label>
-                <Select
-                    id="action-type"
-                    v-model="internalActionType"
-                    :options="actionTypeOptions"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Select action type"
-                    fluid
-                />
-            </div>
+        <template #body>
+            <div class="flex flex-col gap-6">
+                <UFormField label="Action type">
+                    <UInput
+                        model-value="Pin"
+                        disabled
+                        class="w-full"
+                    />
+                </UFormField>
 
-            <div class="flex flex-col gap-2">
-                <label for="action-index">Index</label>
-                <Select
-                    id="action-index"
-                    v-model="selectedIndexUid"
-                    :options="indexes.map(i => i.uid)"
-                    placeholder="Select an index"
-                    fluid
-                    @change="onIndexChange"
-                />
-            </div>
+                <UFormField label="Index">
+                    <USelect
+                        v-model="indexUid"
+                        :items="indexes"
+                        value-key="uid"
+                        label-key="uid"
+                        placeholder="Select an index"
+                        class="w-full"
+                        @update:model-value="changeIndex"
+                    />
+                </UFormField>
 
-            <div
-                v-if="selectedIndexUid"
-                class="flex flex-col gap-2"
-            >
-                <label for="action-document">Document</label>
-                <AutoComplete
-                    id="action-document"
-                    v-model="autoCompleteModel"
-                    :suggestions="searchSuggestions"
-                    :option-label="(option: any) => String(option[primaryKey] ?? '')"
-                    placeholder="Search for a document or enter an id..."
-                    :loading="isSearching"
-                    fluid
-                    @complete="onDocumentQueryChange"
-                    @item-select="onDocumentSelect"
-                    @blur="onDocumentBlur"
-                >
-                    <template #option="{ option }">
-                        <div class="flex flex-col gap-2">
-                            <span class="font-medium">{{ option[primaryKey] ?? 'Unknown' }}</span>
-                            <span class="text-xs text-muted-color truncate">{{ JSON.stringify(option).slice(0, 80) }}...</span>
+                <template v-if="indexUid">
+                    <UFormField
+                        label="Document ID"
+                        help="Search for a document or enter an exact ID."
+                    >
+                        <UInputMenu
+                            v-model="documentId"
+                            v-model:search-term="searchTerm"
+                            mode="autocomplete"
+                            aria-label="Document ID"
+                            :items="documentOptions"
+                            value-key="value"
+                            label-key="label"
+                            :loading="isSearching"
+                            :content="{ hideWhenEmpty: true }"
+                            ignore-filter
+                            icon="i-lucide-search"
+                            placeholder="Search documents or enter an ID..."
+                            class="w-full"
+                            @keydown.enter.prevent="previewTypedDocument"
+                        >
+                            <template #item-label="{ item }">
+                                <div class="flex min-w-0 flex-col">
+                                    <span class="font-medium">{{ item.label }}</span>
+                                    <span class="truncate text-xs text-muted">{{ item.preview }}</span>
+                                </div>
+                            </template>
+                        </UInputMenu>
+                    </UFormField>
+
+                    <div
+                        v-if="selectedDocument"
+                        class="flex flex-col gap-2"
+                    >
+                        <p class="text-sm font-medium text-default">
+                            Selected document
+                        </p>
+                        <div class="max-h-52 overflow-auto rounded-md border border-default">
+                            <ThemedJsonViewer :data="selectedDocument" />
                         </div>
-                    </template>
-                </AutoComplete>
+                    </div>
 
-                <div
-                    v-if="isFetchingDocument"
-                    class="text-sm text-muted-color"
-                >
-                    Loading document...
-                </div>
-                <div
-                    v-else-if="fetchedDocument"
-                    class="border dynamic-border rounded-border overflow-auto max-h-50"
-                >
-                    <ThemedJsonViewer :data="fetchedDocument" />
-                </div>
-            </div>
+                    <p
+                        v-else-if="isPreviewing"
+                        class="text-sm text-muted"
+                    >
+                        Loading document preview...
+                    </p>
+                    <UAlert
+                        v-else-if="previewError"
+                        color="warning"
+                        variant="subtle"
+                        :title="previewError"
+                    />
+                </template>
 
-            <div class="flex flex-col gap-2">
-                <label for="action-position">Position</label>
-                <InputNumber
-                    id="action-position"
-                    v-model="position"
-                    :min="0"
-                    placeholder="Pin position"
-                    fluid
-                />
+                <UFormField
+                    label="Position"
+                    help="Zero-based pin position."
+                >
+                    <UInputNumber
+                        v-model="position"
+                        :min="0"
+                        :step="1"
+                        class="w-full"
+                    />
+                </UFormField>
             </div>
-        </div>
+        </template>
 
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <div class="flex w-full justify-end gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
-                    @click="handleCancel"
+                    color="neutral"
+                    variant="outline"
+                    @click="open = false"
                 />
-                <Button
+                <UButton
                     label="Save"
-                    :disabled="!selectedIndexUid || !selectedDocumentId"
-                    @click="handleSave"
+                    :disabled="!canSave"
+                    @click="save"
                 />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>

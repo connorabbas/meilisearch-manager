@@ -3,14 +3,14 @@ import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearc
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
 import SearchRuleForm from '@/components/meilisearch/SearchRuleForm.vue'
-import PageTitleSection from '@/components/PageTitleSection.vue'
 import { isVersionAtLeast } from '@/utils'
-import type { SearchRuleUpdatePayload, SearchRuleCondition, SearchRuleAction } from 'meilisearch'
-import type { SearchRuleFormState } from '@/components/meilisearch/SearchRuleForm.vue'
+import type { SearchRuleUpdatePayload } from 'meilisearch'
+import type { SearchRuleFormState } from '@/types'
 
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
+    dashboardPanel: true,
     breadcrumbs: [
         { label: 'Dashboard', to: '/dashboard' },
         { label: 'Search Rules', to: '/search-rules' },
@@ -51,19 +51,24 @@ const isFeatureAvailable = computed(() => isSupportedVersion.value && isFeatureE
 const formState = reactive<SearchRuleFormState>({
     uid: '',
     description: '',
-    priority: null,
+    precedence: null,
     active: true,
-    conditions: [] as SearchRuleCondition[],
-    actions: [] as SearchRuleAction[],
+    conditions: {},
+    actions: [],
+})
+const canSave = computed(() => {
+    return formState.uid.trim().length > 0
+        && Object.values(formState.conditions).some(Boolean)
+        && formState.actions.length > 0
 })
 
 async function handleSave() {
     const payload: SearchRuleUpdatePayload = {
         description: formState.description || null,
-        priority: formState.priority,
+        precedence: formState.precedence,
         active: formState.active,
-        conditions: formState.conditions.length > 0 ? formState.conditions : null,
-        actions: formState.actions.length > 0 ? formState.actions : null,
+        conditions: formState.conditions,
+        actions: formState.actions,
     }
 
     try {
@@ -80,13 +85,24 @@ async function handleCancel() {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <PageTitleSection>
-            <template #title>
-                Create Search Rule
-            </template>
-        </PageTitleSection>
-
+    <AppDashboardPanel id="create-search-rule">
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    label="Cancel"
+                    color="neutral"
+                    variant="outline"
+                    @click="handleCancel"
+                />
+                <UButton
+                    label="Save Rule"
+                    icon="i-lucide-save"
+                    :loading="isLoading"
+                    :disabled="!canSave"
+                    @click="handleSave"
+                />
+            </AppPageActions>
+        </template>
         <SearchRulesFeatureUnavailableCard
             v-if="!isFeatureAvailable"
             :is-supported-version="isSupportedVersion"
@@ -95,13 +111,12 @@ async function handleCancel() {
             feature-name="Dynamic Search Rules"
         />
 
-        <SearchRuleForm
-            v-else
-            v-model="formState"
-            v-model:is-loading="isLoading"
-            is-create
-            @save="handleSave"
-            @cancel="handleCancel"
-        />
-    </div>
+        <UContainer v-else>
+            <SearchRuleForm
+                v-model="formState"
+                v-model:is-loading="isLoading"
+                is-create
+            />
+        </UContainer>
+    </AppDashboardPanel>
 </template>

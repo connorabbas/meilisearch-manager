@@ -1,10 +1,12 @@
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '../usePagination'
-import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload } from 'meilisearch'
+import { useTasks } from './useTasks'
+import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload, Task } from 'meilisearch'
 
 export function useDynamicSearchRules(initialPerPage: number = 20) {
     const toast = useToast()
     const { confirmAction } = useConfirmAction()
+    const { pollTaskStatus } = useTasks()
     const meilisearchStore = useMeilisearchStore()
     const {
         currentPage,
@@ -12,6 +14,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         firstDatasetIndex,
         offset,
         syncCurrentPageWithinTotal,
+        paginate,
         handlePageEvent,
     } = usePagination(initialPerPage)
 
@@ -27,7 +30,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     const rulesQuery = computed<SearchRuleListPayload>(() => {
         const filter: SearchRuleListFilterPayload = {}
         if (searchQuery.value.trim()) {
-            filter.attributePatterns = [`*${searchQuery.value.trim()}*`]
+            filter.query = searchQuery.value.trim()
         }
         if (activeFilter.value !== null) {
             filter.active = activeFilter.value
@@ -105,7 +108,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     async function createOrUpdate(
         uid: string,
         payload: SearchRuleUpdatePayload
-    ): Promise<SearchRule | undefined> {
+    ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -116,15 +119,12 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            const result = await client.updateDynamicSearchRule(uid, payload)
-            toast.add({
-                color: 'success',
-                icon: 'i-lucide-circle-check',
-                title: 'Rule Saved',
-                description: `Search rule "${uid}" was saved successfully`,
-                duration: 3000,
-            })
-            return result
+            const enqueuedTask = await client.updateDynamicSearchRule(uid, payload)
+            return await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `An update task for search rule "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `Search rule "${uid}" was saved successfully`,
+            )
         } catch (err) {
             error.value = (err as Error).message
             throw err
@@ -193,6 +193,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error,
         searchQuery,
         activeFilter,
+        paginate,
         handlePageEvent,
         fetchRules,
         fetchRulesPaginated,

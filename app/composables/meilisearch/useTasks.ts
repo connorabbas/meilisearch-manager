@@ -16,6 +16,8 @@ export const TASK_TYPES = [
     'snapshotCreation',
     'upgradeDatabase',
     'networkTopologyChange',
+    'dsrUpdate',
+    'dsrClear',
 ] as const satisfies readonly TaskType[]
 
 export const TASK_STATUSES = [

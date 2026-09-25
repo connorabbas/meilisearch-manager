@@ -3,14 +3,14 @@ import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearc
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
 import SearchRuleForm from '@/components/meilisearch/SearchRuleForm.vue'
-import PageTitleSection from '@/components/PageTitleSection.vue'
 import { isVersionAtLeast } from '@/utils'
-import type { SearchRuleUpdatePayload } from 'meilisearch'
-import type { SearchRuleFormState } from '@/components/meilisearch/SearchRuleForm.vue'
+import type { SearchRule, SearchRuleUpdatePayload } from 'meilisearch'
+import type { SearchRuleFormState } from '@/types'
 
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
+    dashboardPanel: true,
     breadcrumbs: [
         { label: 'Dashboard', to: '/dashboard' },
         { label: 'Search Rules', to: '/search-rules' },
@@ -58,33 +58,40 @@ if (isFeatureAvailable.value && ruleUid.value) {
     await fetchRule(ruleUid.value)
 }
 
-const formState = reactive<SearchRuleFormState>({
-    uid: currentRule.value?.uid ?? '',
-    description: currentRule.value?.description ?? '',
-    priority: currentRule.value?.priority ?? null,
-    active: currentRule.value?.active ?? true,
-    conditions: currentRule.value?.conditions ? [...currentRule.value.conditions] : [],
-    actions: currentRule.value?.actions ? [...currentRule.value.actions] : [],
-})
+function toFormState(rule?: SearchRule | null): SearchRuleFormState {
+    const value = rule ? toRaw(rule) : null
+
+    return {
+        uid: value?.uid ?? '',
+        description: value?.description ?? '',
+        precedence: value?.precedence ?? null,
+        active: value?.active ?? true,
+        conditions: structuredClone(value?.conditions ?? {}),
+        actions: structuredClone(value?.actions ?? []),
+    }
+}
+
+const formState = reactive<SearchRuleFormState>(toFormState(currentRule.value))
 
 watch(currentRule, (rule) => {
     if (rule) {
-        formState.uid = rule.uid
-        formState.description = rule.description ?? ''
-        formState.priority = rule.priority ?? null
-        formState.active = rule.active ?? true
-        formState.conditions = rule.conditions ? [...rule.conditions] : []
-        formState.actions = rule.actions ? [...rule.actions] : []
+        Object.assign(formState, toFormState(rule))
     }
 }, { immediate: true })
+
+const canSave = computed(() => {
+    return formState.uid.trim().length > 0
+        && Object.values(formState.conditions).some(Boolean)
+        && formState.actions.length > 0
+})
 
 async function handleSave() {
     const payload: SearchRuleUpdatePayload = {
         description: formState.description || null,
-        priority: formState.priority,
+        precedence: formState.precedence,
         active: formState.active,
-        conditions: formState.conditions.length > 0 ? formState.conditions : null,
-        actions: formState.actions.length > 0 ? formState.actions : null,
+        conditions: formState.conditions,
+        actions: formState.actions,
     }
 
     try {
@@ -101,13 +108,24 @@ async function handleCancel() {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <PageTitleSection>
-            <template #title>
-                Edit Search Rule: {{ ruleUid }}
-            </template>
-        </PageTitleSection>
-
+    <AppDashboardPanel id="edit-search-rule">
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    label="Cancel"
+                    color="neutral"
+                    variant="outline"
+                    @click="handleCancel"
+                />
+                <UButton
+                    label="Save Rule"
+                    icon="i-lucide-save"
+                    :loading="isLoading"
+                    :disabled="!canSave"
+                    @click="handleSave"
+                />
+            </AppPageActions>
+        </template>
         <SearchRulesFeatureUnavailableCard
             v-if="!isFeatureAvailable"
             :is-supported-version="isSupportedVersion"
@@ -116,17 +134,19 @@ async function handleCancel() {
             feature-name="Dynamic Search Rules"
         />
 
-        <div v-else-if="isFetchingRule" class="flex justify-center p-8">
-            <ProgressSpinner />
+        <div
+            v-else-if="isFetchingRule"
+            class="flex justify-center p-8"
+        >
+            <USkeleton class="h-8 w-48" />
         </div>
 
-        <SearchRuleForm
-            v-else
-            v-model="formState"
-            v-model:is-loading="isLoading"
-            is-edit
-            @save="handleSave"
-            @cancel="handleCancel"
-        />
-    </div>
+        <UContainer v-else>
+            <SearchRuleForm
+                v-model="formState"
+                v-model:is-loading="isLoading"
+                is-edit
+            />
+        </UContainer>
+    </AppDashboardPanel>
 </template>

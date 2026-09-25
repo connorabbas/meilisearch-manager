@@ -2,7 +2,14 @@ import type { RouteLocationRaw } from 'vue-router'
 import type { DataTableFilterMetaData } from 'primevue'
 import type { MenuItem as PrimeVueMenuItem } from 'primevue/menuitem'
 import type { LucideIcon } from '@lucide/vue'
-import type { Embedder } from 'meilisearch'
+import type {
+    Embedder,
+    RecordAny,
+    SearchRuleAction,
+    SearchRuleConditions,
+    SearchRuleQueryCondition,
+    SearchRuleTimeCondition,
+} from 'meilisearch'
 
 export type PrimeVueDataFilters = {
     [key: string]: DataTableFilterMetaData;
@@ -20,3 +27,24 @@ export type IndexEmbedderOption = {
     label: string;
     settings: NonNullable<Embedder>;
 }
+
+export type SearchRuleFormState = {
+    uid: string;
+    description: string;
+    precedence: number | null;
+    active: boolean;
+    conditions: SearchRuleConditions;
+    actions: SearchRuleAction[];
+};
+
+export type SearchRuleConditionEntry =
+    | { scope: 'query'; condition: SearchRuleQueryCondition }
+    | { scope: 'time'; condition: SearchRuleTimeCondition };
+
+export type SearchRuleDocumentOption = {
+    label: string;
+    value: string;
+    preview: string;
+    document: RecordAny;
+    onSelect: () => void;
+};

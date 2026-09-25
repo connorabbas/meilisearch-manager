@@ -1,157 +1,198 @@
 <script setup lang="ts">
+import { h, resolveComponent } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import type { SearchRule } from 'meilisearch'
+import { useDebounceFn } from '@vueuse/core'
 import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearchRules'
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
-import Menu from '@/components/router-link-menus/Menu.vue'
-import PageTitleSection from '@/components/PageTitleSection.vue'
 import { isVersionAtLeast } from '@/utils'
-import { Plus, Pencil, Trash2, EllipsisVertical, Search } from '@lucide/vue'
-import { useDebounceFn } from '@vueuse/core'
-import { useToast } from 'primevue/usetoast'
-import type { SearchRule } from 'meilisearch'
-import type { MenuItem } from '@/types'
-import type { DataTableSortEvent } from 'primevue/datatable'
 
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
-    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Search Rules' }]
+    dashboardPanel: true,
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Search Rules' }],
 })
 
+const UButton = resolveComponent('UButton')
 const toast = useToast()
 
 const {
+    currentPage,
     perPage,
-    firstDatasetIndex,
     rules,
     rulesResults,
-    isFetching: isFetchingRules,
+    isFetching,
+    error,
     searchQuery,
     activeFilter,
     fetchRulesPaginated,
-    handlePageEvent,
+    paginate,
     confirmDeleteRule,
 } = useDynamicSearchRules()
 
-const {
-    features,
-    fetchExperimentalFeatures,
-} = useExperimentalFeatures()
-
-const {
-    version,
-    fetchVersion,
-} = useStats()
-
-const isSupportedVersion = computed(() => {
-    return version.value ? isVersionAtLeast(version.value.pkgVersion, '1.41.0') : false
-})
-
-const isFeatureEnabled = computed(() => {
-    return features.value?.dynamicSearchRules === true
-})
-
-const isFeatureAvailable = computed(() => isSupportedVersion.value && isFeatureEnabled.value)
+const { features, fetchExperimentalFeatures } = useExperimentalFeatures()
+const { version, fetchVersion } = useStats()
 
 await Promise.all([
     fetchExperimentalFeatures(),
     fetchVersion(),
 ])
 
+const isSupportedVersion = computed(() => {
+    return !!version.value && isVersionAtLeast(version.value.pkgVersion, '1.41.0')
+})
+const isFeatureEnabled = computed(() => features.value?.dynamicSearchRules === true)
+const isFeatureAvailable = computed(() => isSupportedVersion.value && isFeatureEnabled.value)
+
 if (isFeatureAvailable.value) {
     await fetchRulesPaginated()
 }
 
-function editRule(rule: SearchRule) {
-    navigateTo(`/search-rules/${rule.uid}/edit`)
-}
+const activeFilterItems = [
+    { label: 'Any', value: null },
+    { label: 'Active', value: true, color: 'success' as const },
+    { label: 'Inactive', value: false, color: 'warning' as const },
+]
+const activeFilterCount = computed(() => activeFilter.value === null ? 0 : 1)
+const sorting = ref<Array<{ id: string, desc: boolean }>>([])
 
-const activeFilterOptions = [
-    { label: 'Active', value: true, severity: 'success' },
-    { label: 'Inactive', value: false, severity: 'warn' },
+const columns: TableColumn<SearchRule>[] = [
+    {
+        accessorKey: 'uid',
+        header: 'UID',
+    },
+    {
+        accessorKey: 'description',
+        header: 'Description',
+    },
+    {
+        accessorKey: 'precedence',
+        enableSorting: true,
+        header: ({ column }) => {
+            const sorted = column.getIsSorted()
+
+            return h(UButton, {
+                color: 'neutral',
+                variant: 'ghost',
+                label: 'Priority',
+                'aria-label': sorted === 'asc'
+                    ? 'Priority, sorted ascending'
+                    : sorted === 'desc'
+                        ? 'Priority, sorted descending'
+                        : 'Priority, not sorted',
+                icon: sorted
+                    ? sorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                class: '-mx-2.5',
+                onClick: () => {
+                    if (sorted === 'desc') {
+                        column.clearSorting()
+                    } else {
+                        column.toggleSorting(sorted === 'asc')
+                    }
+                },
+            })
+        },
+    },
+    {
+        id: 'status',
+        header: 'Status',
+    },
+    {
+        id: 'conditions',
+        header: 'Conditions',
+    },
+    {
+        id: 'ruleActions',
+        header: 'Actions',
+    },
+    {
+        id: 'actions',
+        header: '',
+        size: 48,
+        meta: { class: { th: 'text-end', td: 'text-end' } },
+    },
 ]
 
+const summary = computed(() => {
+    const total = rulesResults.value?.total ?? 0
+    const first = total ? ((currentPage.value - 1) * perPage.value) + 1 : 0
+
+    return `Showing ${first} to ${Math.min(currentPage.value * perPage.value, total)} of ${total} rules`
+})
+
 const debouncedSearch = useDebounceFn(() => {
-    fetchRulesPaginated(true)
+    void fetchRulesPaginated(true)
 }, 300)
 
-watch(searchQuery, () => {
-    debouncedSearch()
-})
-
+watch(searchQuery, debouncedSearch)
 watch(activeFilter, () => {
-    fetchRulesPaginated(true)
+    void fetchRulesPaginated(true)
 })
 
-function onSort(event: DataTableSortEvent) {
-    const { sortField, sortOrder } = event
-    if (sortField !== 'priority' || sortOrder === null || sortOrder === undefined) return
-
-    rules.value.sort((a, b) => {
-        const aVal = a.priority ?? Number.MAX_SAFE_INTEGER
-        const bVal = b.priority ?? Number.MAX_SAFE_INTEGER
-        return (aVal - bVal) * sortOrder
-    })
+function clearFilters() {
+    activeFilter.value = null
 }
 
-const contextMenu = useTemplateRef('rule-context-menu')
-const contextMenuItems = ref<MenuItem[]>([])
-function toggleContextMenu(event: Event, rule: SearchRule) {
-    contextMenuItems.value = [
+function ruleActions(rule: SearchRule) {
+    return [
         {
             label: 'Edit',
-            lucideIcon: Pencil,
-            command: () => editRule(rule),
+            icon: 'i-lucide-pencil',
+            onSelect: () => navigateTo(`/search-rules/${encodeURIComponent(rule.uid)}/edit`),
         },
         {
             label: 'Delete',
-            lucideIcon: Trash2,
-            class: 'delete-menu-item',
-            lucideIconClass: 'text-red-500 dark:text-red-400',
-            command: () => {
-                confirmDeleteRule(rule.uid, () => {
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Rule Deleted',
-                        detail: `Search rule "${rule.uid}" was deleted`,
-                        life: 3000,
-                    })
-                    fetchRulesPaginated()
+            icon: 'i-lucide-trash-2',
+            color: 'error' as const,
+            onSelect: () => confirmDeleteRule(rule.uid, () => {
+                toast.add({
+                    color: 'success',
+                    icon: 'i-lucide-circle-check',
+                    title: 'Rule Deleted',
+                    description: `Search rule "${rule.uid}" was deleted`,
                 })
-            },
+                void fetchRulesPaginated()
+            }),
         },
     ]
-    contextMenu.value?.toggle(event)
+}
+
+async function changePage(page: number) {
+    await paginate(page, perPage.value, fetchRulesPaginated)
+}
+
+async function changePageSize(size: number) {
+    await paginate(currentPage.value, size, fetchRulesPaginated)
 }
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <PageTitleSection>
-            <template #title>
-                Search Rules
-            </template>
-            <template #subTitle>
-                <span
-                    v-if="!isFeatureAvailable"
-                    class="text-muted-color"
-                >
-                    Feature availability depends on Meilisearch version and experimental flags.
-                </span>
-            </template>
-            <template #end>
-                <NuxtLink
+    <AppDashboardPanel id="search-rules">
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    v-if="isFeatureAvailable"
+                    label="Refresh"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    color="neutral"
+                    variant="outline"
+                    :loading="isFetching"
+                    @click="fetchRulesPaginated()"
+                />
+                <UButton
                     v-if="isFeatureAvailable"
                     to="/search-rules/create"
-                >
-                    <Button label="New Rule">
-                        <template #icon>
-                            <Plus />
-                        </template>
-                    </Button>
-                </NuxtLink>
-            </template>
-        </PageTitleSection>
+                    label="New Rule"
+                    icon="i-lucide-plus"
+                />
+            </AppPageActions>
+        </template>
 
         <SearchRulesFeatureUnavailableCard
             v-if="!isFeatureAvailable"
@@ -161,160 +202,143 @@ function toggleContextMenu(event: Event, rule: SearchRule) {
             feature-name="Dynamic Search Rules"
         />
 
-        <Card v-else>
-            <template #content>
-                <Menu
-                    ref="rule-context-menu"
-                    class="shadow-sm"
-                    :model="contextMenuItems"
-                    popup
-                />
-                <DataTable
-                    lazy
-                    paginator
-                    removable-sort
-                    :value="rules"
-                    :loading="isFetchingRules"
-                    :rows="perPage"
-                    :first="firstDatasetIndex"
-                    :totalRecords="rulesResults?.total"
-                    :rowsPerPageOptions="[20, 50, 100]"
-                    filter-display="row"
-                    :pt="{
-                        tableContainer: {
-                            id: 'search-rules-data-table-container'
-                        },
-                        thead: {
-                            class: 'z-2'
-                        }
-                    }"
-                    paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    current-page-report-template="Showing {first} to {last} of {totalRecords} records"
-                    scrollable
-                    column-resize-mode="fit"
-                    @page="handlePageEvent($event, () => fetchRulesPaginated())"
-                    @sort="onSort"
-                >
-                    <template #empty>
-                        <NotFoundMessage subject="Rule" />
-                    </template>
-                    <Column
-                        field="uid"
-                        header="UID"
-                        :show-filter-menu="false"
-                    >
-                        <template #filter>
-                            <IconField>
-                                <InputIcon>
-                                    <Search class="size-4" />
-                                </InputIcon>
-                                <InputText
-                                    v-model="searchQuery"
-                                    placeholder="Search by uid..."
-                                    fluid
-                                />
-                            </IconField>
-                        </template>
-                    </Column>
-                    <Column
-                        field="description"
-                        header="Description"
-                    >
-                        <template #body="{ data }">
-                            <span
-                                v-if="(data as SearchRule).description"
-                                class="truncate inline-block max-w-[300px]"
-                            >
-                                {{ (data as SearchRule).description }}
-                            </span>
-                        </template>
-                    </Column>
-                    <Column
-                        field="priority"
-                        header="Priority"
-                        sortable
-                    >
-                        <template #body="{ data }">
-                            {{ (data as SearchRule).priority ?? '' }}
-                        </template>
-                    </Column>
-                    <Column
-                        field="active"
-                        header="Status"
-                        :show-filter-menu="false"
-                    >
-                        <template #filter>
-                            <Select
-                                v-model="activeFilter"
-                                :options="activeFilterOptions"
-                                option-label="label"
-                                option-value="value"
-                                placeholder="Any"
-                                show-clear
-                                fluid
-                            >
-                                <template #value="{ value, placeholder }">
-                                    <Tag
-                                        v-if="value !== null && value !== undefined"
-                                        :value="value ? 'Active' : 'Inactive'"
-                                        :severity="value ? 'success' : 'warn'"
-                                    />
-                                    <span v-else>{{ placeholder }}</span>
-                                </template>
-                                <template #option="{ option }">
-                                    <Tag
-                                        :value="option.label"
-                                        :severity="option.severity"
-                                    />
-                                </template>
-                            </Select>
-                        </template>
-                        <template #body="{ data }">
-                            <Tag
-                                :value="(data as SearchRule).active ? 'Active' : 'Inactive'"
-                                :severity="(data as SearchRule).active ? 'success' : 'warn'"
-                            />
-                        </template>
-                    </Column>
-                    <Column
-                        field="conditions"
-                        header="Conditions"
-                    >
-                        <template #body="{ data }">
-                            {{ (data as SearchRule).conditions?.length ?? 0 }}
-                        </template>
-                    </Column>
-                    <Column
-                        field="actions"
-                        header="Actions"
-                    >
-                        <template #body="{ data }">
-                            {{ (data as SearchRule).actions?.length ?? 0 }}
-                        </template>
-                    </Column>
-                    <Column
-                        frozen
-                        align-frozen="right"
-                    >
-                        <template #body="{ data }">
-                            <div class="flex items-center gap-2">
-                                <Button
-                                    v-tooltip.top="'Show Search Rule Actions'"
-                                    type="button"
-                                    severity="secondary"
-                                    rounded
-                                    text
-                                    @click="toggleContextMenu($event, data as SearchRule)"
+        <template v-else>
+            <UAlert
+                v-if="error"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-circle-x"
+                title="Unable to load search rules"
+                :description="error"
+                :actions="[{ label: 'Retry', onClick: () => fetchRulesPaginated() }]"
+            />
+
+            <UCard
+                variant="outline"
+                :ui="{
+                    header: 'shrink-0 p-4 py-3 sm:px-6',
+                    body: 'p-0 sm:p-0',
+                }"
+            >
+                <template #header>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <UInput
+                            v-model="searchQuery"
+                            aria-label="Search rules by UID"
+                            icon="i-lucide-search"
+                            placeholder="Search by UID..."
+                            class="w-full sm:max-w-xs"
+                        />
+
+                        <AppFiltersPopover
+                            :count="activeFilterCount"
+                            @clear="clearFilters"
+                        >
+                            <UFormField label="Status">
+                                <USelect
+                                    v-model="activeFilter"
+                                    :items="activeFilterItems"
+                                    value-key="value"
+                                    label-key="label"
+                                    aria-label="Filter search rules by status"
+                                    placeholder="Any"
+                                    class="w-full"
                                 >
-                                    <template #icon>
-                                        <EllipsisVertical class="size-5!" />
+                                    <template #item-label="{ item }">
+                                        <UBadge
+                                            v-if="item.value !== null"
+                                            :color="item.color"
+                                            variant="subtle"
+                                            :label="item.label"
+                                        />
+                                        <span v-else>{{ item.label }}</span>
                                     </template>
-                                </Button>
-                            </div>
-                        </template>
-                    </Column>
-                </DataTable>
-            </template>
-        </Card>
-    </div>
+                                </USelect>
+                            </UFormField>
+                        </AppFiltersPopover>
+                    </div>
+                </template>
+
+                <UTable
+                    v-model:sorting="sorting"
+                    :data="rules"
+                    :columns="columns"
+                    :get-row-id="row => row.uid"
+                    :loading="isFetching"
+                >
+                    <template #description-cell="{ row }">
+                        <UTooltip
+                            v-if="row.original.description"
+                            :text="row.original.description"
+                        >
+                            <span class="block max-w-72 truncate">
+                                {{ row.original.description }}
+                            </span>
+                        </UTooltip>
+                    </template>
+
+                    <template #precedence-cell="{ row }">
+                        {{ row.original.precedence ?? '' }}
+                    </template>
+
+                    <template #status-cell="{ row }">
+                        <UBadge
+                            :label="row.original.active ? 'Active' : 'Inactive'"
+                            :color="row.original.active ? 'success' : 'warning'"
+                            variant="subtle"
+                        />
+                    </template>
+
+                    <template #conditions-cell="{ row }">
+                        {{ Object.values(row.original.conditions ?? {}).filter(Boolean).length }}
+                    </template>
+
+                    <template #ruleActions-cell="{ row }">
+                        {{ row.original.actions?.length ?? 0 }}
+                    </template>
+
+                    <template #actions-cell="{ row }">
+                        <div class="flex justify-end">
+                            <UDropdownMenu :items="ruleActions(row.original)">
+                                <UButton
+                                    aria-label="Show search rule actions"
+                                    icon="i-lucide-ellipsis-vertical"
+                                    color="neutral"
+                                    variant="ghost"
+                                    square
+                                />
+                            </UDropdownMenu>
+                        </div>
+                    </template>
+
+                    <template #loading>
+                        <div class="flex justify-center py-4">
+                            <USkeleton class="h-5 w-48" />
+                        </div>
+                    </template>
+
+                    <template #empty>
+                        <UEmpty
+                            variant="naked"
+                            icon="i-lucide-list-x"
+                            title="No rules found"
+                        />
+                    </template>
+                </UTable>
+
+                <template #footer>
+                    <AppTablePagination
+                        :page="currentPage"
+                        :per-page="perPage"
+                        :total="rulesResults?.total ?? 0"
+                        :summary="summary"
+                        :disabled="isFetching"
+                        show-edges
+                        @page="changePage"
+                        @per-page="changePageSize"
+                    />
+                </template>
+            </UCard>
+        </template>
+    </AppDashboardPanel>
 </template>
