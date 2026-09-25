@@ -301,6 +301,8 @@ change all dashboard tool bar "refresh" buttons to only show the refresh icon, a
 
 ensure types are only defined/exported in the types fir, not ad hoc in utils, components, modules or composables
 
+editing the settings json - if there is a syntax error in the json it just breaks and shows the "No settings available" alert, the old primevue version did not do this, this is a major regression.
+
 ## Phase 0: Characterization Tests and Migration Harness
 
 ### Objective
