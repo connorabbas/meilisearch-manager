@@ -1,6 +1,3 @@
-import themePreset from './app/theme/theme-preset'
-import globalPt from './app/theme/global-pt'
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     app: {
@@ -16,7 +13,7 @@ export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/css/main.css'],
     devtools: { enabled: false },
-    modules: ['@primevue/nuxt-module', '@nuxt/ui', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint', 'nuxt-maplibre'],
+    modules: ['@nuxt/ui', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint', 'nuxt-maplibre'],
     nitro: {
         prerender: {
             crawlLinks: false,
@@ -31,24 +28,6 @@ export default defineNuxtConfig({
         public: {
             staticDeploy: false,
         },
-    },
-    primevue: {
-        composables: {
-            exclude: ['useToast']
-        },
-        options: {
-            theme: {
-                preset: themePreset,
-                options: {
-                    darkModeSelector: '.dark',
-                    cssLayer: {
-                        name: 'primevue',
-                        order: 'theme, base, primevue'
-                    }
-                }
-            },
-            pt: globalPt
-        }
     },
     ui: {
         fonts: false,

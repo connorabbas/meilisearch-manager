@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tailwindcss-primeui";
 @import "@nuxt/ui";
 
 body {
@@ -22,7 +21,6 @@ body {
 @theme static {
     --header-height: 4rem;
 
-    /* Retain the PrimeVue transition palette until its theme is migrated. */
     --color-meili-50: oklch(0.949 0.011 292.08);
     --color-meili-100: oklch(0.898 0.022 291.76);
     --color-meili-200: oklch(0.805 0.043 291.34);
@@ -66,16 +64,4 @@ body {
     --ui-bg: var(--ui-color-neutral-900);
     --ui-bg-muted: var(--ui-color-neutral-800);
     --ui-text-inverted: var(--ui-color-neutral-900);
-}
-
-@utility dynamic-bg {
-    @apply bg-surface-0 dark:bg-surface-900;
-}
-
-@utility dynamic-border {
-    @apply border-surface-200 dark:border-surface-800;
-}
-
-@utility delete-menu-item {
-    @apply text-red-500 dark:text-red-400 hover:bg-red-500/10 rounded-[var(--p-menu-item-border-radius)] transition-colors duration-[var(--p-menu-transition-duration)];
 }

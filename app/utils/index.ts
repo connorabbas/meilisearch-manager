@@ -1,22 +1,4 @@
 import type { TaskStatus } from 'meilisearch'
-import { twMerge } from 'tailwind-merge'
-
-export const ptViewMerge = (
-    globalPTProps = {} as any,
-    selfPTProps = {} as any,
-    datasets: any
-) => {
-    const { class: globalClass, ...globalRest } = globalPTProps
-    const { class: selfClass, ...selfRest } = selfPTProps
-
-    return {
-        ...globalRest,
-        ...selfRest,
-        ...datasets,
-        class: twMerge(globalClass, selfClass, datasets?.class),
-    }
-}
-
 export const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US')
 }
@@ -180,4 +162,3 @@ export function downloadFile(blob: Blob, filename: string) {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 }
-
