@@ -282,7 +282,7 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [x] Phase 9A: Documents core search and views
 - [x] Phase 9B: Documents filters, geo, hybrid, import, and export
 - [x] Phase 10: Search rules
-- [ ] Phase 11: PrimeVue removal and final hardening
+- [~] Phase 11: PrimeVue removal and final hardening
 
 ## TODO:
 on task poll toast timeout, show another toast saying to check the tasks view. Also increase the start delay on a tasks and add an action button on the polling toast to be able to cancel that specific task.
@@ -1188,7 +1188,13 @@ Run any unit, accessibility, and visual test scripts added during earlier phases
 
 ### Handoff notes
 
-- None yet.
+- PrimeVue runtime integration and application references were removed from the active app in the current Phase 11 slice. Removed packages: `primevue`, `@primevue/nuxt-module`, `@primevue/forms`, `@primeuix/themes`, `tailwindcss-primeui`, and the Prime-only `tailwind-merge` utility. `package-lock.json` was regenerated and a clean `npm ci` completed successfully.
+- Removed the Prime module/configuration, theme preset and global pass-through config, root Prime toast/confirmation providers, stale Prime menu wrapper, unused Prime message/error and page-title/not-found helpers, Prime-derived global types/helper, Prime CSS import/utilities, and the Prime MCP entry. Removed the obsolete Prime component-library link from the README. Nuxt UI and Playwright MCP entries remain; `UApp`, Nuxt UI theme palettes, JSON styles, MapLibre styles, and app behavior remain.
+- Source audit of `app/` found no matches for the Phase 11 PrimeVue/import/API/CSS patterns. `package.json` and `package-lock.json` contain no PrimeVue packages. Historical phase context in this migration handoff remains as migration documentation and is not included in the application bundle.
+- Verification passed: `npm ci`, `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate`, and `npx nuxt build --preset github_pages`. Chromium E2E: 60 passed, 1 failed; the only failure is the previously reported Phase 6 primary-key test failing to find the `Primary Key` input (`e2e/phase6-index-detail.spec.ts:80`), unrelated to PrimeVue removal. Playwright ran with a temporary port 3101 because the configured 3100 endpoint was occupied; `playwright.config.ts` was restored afterward.
+- Follow-up dashboard-shell cleanup: removed the `dashboardPanel` route-meta switch and the layout-owned fallback `UDashboardPanel`; all app-layout pages render or inherit their own `AppDashboardPanel`. Removed the fallback scroll container, layout scroll-to-top listener/button, and the `.legacy-app-scroll-container` pagination selector. Removed the unused pagination `firstDatasetIndex` and `handlePageEvent` adapter and their search-rules composable exports. `/backups` now uses the app layout and redirects to `/backups/dumps`; the navigation E2E test verifies the redirect and breadcrumb.
+- Follow-up verification: ESLint, typecheck, and Node build passed. Targeted Chromium navigation tests passed (2/2), including `/backups` direct entry. The complete Chromium run passed 60/62; it hit the known Phase 6 primary-key failure plus one intermittent Phase 10 create-rule preview assertion. The Phase 10 test passed on isolated rerun. Cross-browser execution remains blocked because Firefox and WebKit Playwright binaries are not installed. `playwright.config.ts` was restored to port 3100 after the run.
+- Phase 11 remains in progress. Remaining definition-of-done checks include resolving/revalidating the known Phase 6 failure, cross-browser smoke tests, automated accessibility checks and visual review, and runtime proxy/static deployment smoke tests. The separate `TODO` list under this handoff was not implemented in this slice.
 
 ## Functional Regression Checklist
 

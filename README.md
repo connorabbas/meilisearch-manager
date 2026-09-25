@@ -113,13 +113,13 @@ See [DOCKER.md](./DOCKER.md) for image tags, Docker Compose examples, Traefik Ba
 
 ## Tech Stack
 
-- [Nuxt 4](https://nuxt.com/)
 - [Vue 3](https://vuejs.org/) with Composition API and [TypeScript](https://www.typescriptlang.org/)
-- [PrimeVue v4](https://v4.primevue.org/)
-- [Pinia](https://pinia.vuejs.org/) via [`@pinia/nuxt`](https://nuxt.com/modules/pinia)
+- [Nuxt 4](https://nuxt.com/)
+- [Nuxt UI](https://ui.nuxt.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 - [VueUse](https://vueuse.org/)
-- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Pinia](https://pinia.vuejs.org/) via [`@pinia/nuxt`](https://nuxt.com/modules/pinia)
 - [`@nuxt/fonts`](https://nuxt.com/modules/fonts)
-- [Lucide Vue](https://lucide.dev/)
+- [Lucide Icons](https://lucide.dev/)
 - [Meilisearch JavaScript/TypeScript client](https://github.com/meilisearch/meilisearch-js)
 - [Zod](https://zod.dev/)
