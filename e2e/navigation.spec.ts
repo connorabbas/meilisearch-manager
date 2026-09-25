@@ -6,6 +6,14 @@ test.beforeEach(async ({ page }) => {
     await seedInstance(page)
 })
 
+test('the backups parent route redirects to its default child inside the dashboard shell', async ({ page }) => {
+    await page.goto('/backups')
+
+    await expect(page).toHaveURL(/\/backups\/dumps$/)
+    await expect(page.getByRole('navigation', { name: 'breadcrumb' }).getByText('Dumps', { exact: true })).toBeVisible()
+    await expect(page.getByText('Export a dump', { exact: true })).toBeVisible()
+})
+
 test('every top-level route is reachable from navigation @cross-browser', async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', 'Mobile navigation is covered by the dashboard-shell migration.')
     await page.goto('/dashboard')
