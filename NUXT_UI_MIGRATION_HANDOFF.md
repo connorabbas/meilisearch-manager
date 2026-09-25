@@ -297,6 +297,10 @@ experiment with using different button variants for the "view" link on tables
 
 improve documents search hybrid toggle - there should be an "enabled" toggle switch in the modal instead of having the show modal button act as the toggle, that way the hybrid search can stay on and the user can re-open the configuration modal to adjust the semantic ratio without having to turn it off every time.
 
+change all dashboard tool bar "refresh" buttons to only show the refresh icon, as a ghost variant button
+
+ensure types are only defined/exported in the types fir, not ad hoc in utils, components, modules or composables
+
 ## Phase 0: Characterization Tests and Migration Harness
 
 ### Objective
