@@ -65,21 +65,23 @@ watch(open, (isOpen) => {
                                 :icon="keyRevealed ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                                 color="neutral"
                                 variant="ghost"
-                                size="xs"
+                                size="sm"
                                 square
                                 @click="keyRevealed = !keyRevealed"
                             />
                         </UTooltip>
-                        <UButton
-                            v-if="canCopy"
-                            aria-label="Copy API key"
-                            :icon="keyCopied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
-                            color="neutral"
-                            variant="ghost"
-                            size="xs"
-                            square
-                            @click="emit('copy-key', props.apiKey.key, props.apiKey.uid)"
-                        />
+                        <UTooltip text="Copy API Key">
+                            <UButton
+                                v-if="canCopy"
+                                aria-label="Copy API key"
+                                :icon="keyCopied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                square
+                                @click="emit('copy-key', props.apiKey.key, props.apiKey.uid)"
+                            />
+                        </UTooltip>
                     </dd>
                 </div>
                 <div v-if="props.apiKey.description">

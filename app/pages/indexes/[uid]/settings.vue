@@ -90,7 +90,6 @@ watch(indexUid, () => {
                 <template v-else>
                     <UButton
                         label="Cancel"
-                        icon="i-lucide-x"
                         color="neutral"
                         variant="outline"
                         :disabled="isLoadingTask"

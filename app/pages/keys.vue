@@ -226,16 +226,18 @@ async function changePageSize(pageSize: number) {
                         <span class="min-w-0 whitespace-nowrap font-mono text-sm">
                             {{ maskedApiKey(row.original.key) }}
                         </span>
-                        <UButton
-                            v-if="canCopy"
-                            aria-label="Copy API key"
-                            :icon="keyCopiedUid === row.original.uid ? 'i-lucide-copy-check' : 'i-lucide-copy'"
-                            color="neutral"
-                            variant="ghost"
-                            size="xs"
-                            square
-                            @click="copyApiKey(row.original.key, row.original.uid)"
-                        />
+                        <UTooltip text="Copy API Key">
+                            <UButton
+                                v-if="canCopy"
+                                aria-label="Copy API key"
+                                :icon="keyCopiedUid === row.original.uid ? 'i-lucide-copy-check' : 'i-lucide-copy'"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                square
+                                @click="copyApiKey(row.original.key, row.original.uid)"
+                            />
+                        </UTooltip>
                     </div>
                 </template>
 
