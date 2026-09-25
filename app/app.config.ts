@@ -3,7 +3,7 @@ export default defineAppConfig({
         colors: {
             primary: 'pink',
             secondary: 'violet',
-            neutral: 'saturated-purple',
+            neutral: 'meili',
         },
         icons: {
             loading: 'i-lucide-loader-circle',
