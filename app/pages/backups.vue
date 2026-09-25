@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+definePageMeta({
+    layout: 'app',
+    title: 'Backups',
+})
+
+const route = useRoute()
+if (route.path === '/backups') {
+    await navigateTo('/backups/dumps', { replace: true })
+}
+
 const links = [{
     label: 'Dumps',
     to: '/backups/dumps',

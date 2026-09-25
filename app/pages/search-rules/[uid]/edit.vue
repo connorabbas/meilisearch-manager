@@ -10,7 +10,6 @@ import type { SearchRuleFormState } from '@/types'
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
-    dashboardPanel: true,
     breadcrumbs: [
         { label: 'Dashboard', to: '/dashboard' },
         { label: 'Search Rules', to: '/search-rules' },

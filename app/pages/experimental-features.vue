@@ -8,7 +8,6 @@ const experimentalFeaturesDocsUrl = 'https://www.meilisearch.com/docs/resources/
 definePageMeta({
     layout: 'app',
     title: 'Experimental Features',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Experimental Features' }]
 })
 

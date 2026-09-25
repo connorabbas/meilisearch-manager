@@ -11,7 +11,6 @@ import KeyDetailsSlideover from '@/components/meilisearch/KeyDetailsSlideover.vu
 definePageMeta({
     layout: 'app',
     title: 'Keys',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Keys' }]
 })
 

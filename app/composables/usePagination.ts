@@ -1,8 +1,3 @@
-export interface PaginationEvent {
-    page: number;
-    rows: number;
-}
-
 export interface PaginationOptions {
     total?: () => number | null | undefined;
     itemLabel?: string;
@@ -14,9 +9,6 @@ export function usePagination(initialPerPage: number = 20, options: PaginationOp
     const totalRecords = computed(() => options.total?.() ?? 0)
     const itemLabel = options.itemLabel ?? 'records'
 
-    const firstDatasetIndex = computed(() => {
-        return (currentPage.value - 1) * perPage.value
-    })
     const offset = computed(() => (perPage.value * currentPage.value) - perPage.value)
     const rangeStart = computed(() => totalRecords.value === 0 ? 0 : offset.value + 1)
     const rangeEnd = computed(() => Math.min(currentPage.value * perPage.value, totalRecords.value))
@@ -59,7 +51,7 @@ export function usePagination(initialPerPage: number = 20, options: PaginationOp
                 scrollTopContainer.scrollTop = 0
             }
         } else if (scrollTop) {
-            const appScrollContainer = document.querySelector<HTMLElement>('.app-scroll-container, .legacy-app-scroll-container')
+            const appScrollContainer = document.querySelector<HTMLElement>('.app-scroll-container')
             if (appScrollContainer) {
                 appScrollContainer.scrollTo({ top: 0 })
             } else {
@@ -68,26 +60,15 @@ export function usePagination(initialPerPage: number = 20, options: PaginationOp
         }
     }
 
-    function handlePageEvent<T>(
-        event: PaginationEvent,
-        onPaginatedCallback?: () => Promise<T>,
-        scrollTop: boolean = true,
-        scrollTopContainerId?: string,
-    ): Promise<void> {
-        return paginate(event.page + 1, event.rows, onPaginatedCallback, scrollTop, scrollTopContainerId)
-    }
-
     return {
         currentPage,
         perPage,
         totalRecords,
-        firstDatasetIndex,
         offset,
         rangeStart,
         rangeEnd,
         resultText,
         syncCurrentPageWithinTotal,
         paginate,
-        handlePageEvent,
     }
 }

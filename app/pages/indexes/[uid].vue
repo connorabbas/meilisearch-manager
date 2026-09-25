@@ -20,7 +20,6 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
 definePageMeta({
     layout: 'app',
-    dashboardPanel: true,
 })
 </script>
 

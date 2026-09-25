@@ -11,7 +11,6 @@ import { isVersionAtLeast } from '@/utils'
 definePageMeta({
     layout: 'app',
     title: 'Search Rules',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Search Rules' }],
 })
 

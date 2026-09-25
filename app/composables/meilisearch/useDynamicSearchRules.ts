@@ -11,11 +11,9 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     const {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
         syncCurrentPageWithinTotal,
         paginate,
-        handlePageEvent,
     } = usePagination(initialPerPage)
 
     const rulesResults = ref<ResourceResults<SearchRule[]> | null>(null)
@@ -183,7 +181,6 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     return {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
         rules,
         rulesResults,
@@ -194,7 +191,6 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         searchQuery,
         activeFilter,
         paginate,
-        handlePageEvent,
         fetchRules,
         fetchRulesPaginated,
         fetchRule,

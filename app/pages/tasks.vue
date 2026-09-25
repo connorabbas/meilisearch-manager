@@ -11,7 +11,6 @@ import DeleteTasksModal from '@/components/meilisearch/DeleteTasksModal.vue'
 definePageMeta({
     layout: 'app',
     title: 'Tasks',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Tasks' }]
 })
 

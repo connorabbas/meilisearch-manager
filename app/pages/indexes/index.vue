@@ -9,7 +9,6 @@ import { formatNumber, formatDate } from '@/utils'
 definePageMeta({
     layout: 'app',
     title: 'Indexes',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Indexes' }]
 })
 

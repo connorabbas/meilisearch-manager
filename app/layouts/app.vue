@@ -1,37 +1,6 @@
 <script setup lang="ts">
-import type { BreadcrumbItem } from '@nuxt/ui'
 import { useAppLayout } from '@/composables/useAppLayout'
 import ChangeInstanceModal from '@/components/meilisearch/ChangeInstanceModal.vue'
-
-const route = useRoute()
-const appScrollContainer = shallowRef<HTMLElement | null>(null)
-const showScrollTop = ref(false)
-const usesPagePanel = computed(() => route.meta.dashboardPanel === true)
-
-const staticBreadcrumbs = computed(() => route.meta.breadcrumbs as BreadcrumbItem[] | undefined)
-const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    const uidParam = route.params.uid
-
-    if (typeof uidParam === 'string' && route.path.startsWith('/indexes/')) {
-        const dynamicBreadcrumbs: BreadcrumbItem[] = [
-            { label: 'Dashboard', to: '/dashboard' },
-            { label: 'Indexes', to: '/indexes' },
-            { label: uidParam, to: `/indexes/${encodeURIComponent(uidParam)}` },
-        ]
-
-        if (route.path.endsWith('/documents')) {
-            dynamicBreadcrumbs.push({ label: 'Documents' })
-        } else if (route.path.endsWith('/settings')) {
-            dynamicBreadcrumbs.push({ label: 'Settings' })
-        } else if (route.path.endsWith('/edit')) {
-            dynamicBreadcrumbs.push({ label: 'Edit' })
-        }
-
-        return dynamicBreadcrumbs
-    }
-
-    return staticBreadcrumbs.value ?? []
-})
 
 const {
     navigationItems,
@@ -40,33 +9,6 @@ const {
     instanceMenuItems,
     currentMeilisearchInstanceName,
 } = useAppLayout()
-
-function updateScrollTopVisibility() {
-    showScrollTop.value = (appScrollContainer.value?.scrollTop ?? 0) > 200
-}
-
-function scrollToTop() {
-    appScrollContainer.value?.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-async function attachLegacyScrollContainer() {
-    appScrollContainer.value?.removeEventListener('scroll', updateScrollTopVisibility)
-    appScrollContainer.value = null
-    showScrollTop.value = false
-
-    if (usesPagePanel.value) return
-
-    await nextTick()
-    appScrollContainer.value = document.querySelector<HTMLElement>('.legacy-app-scroll-container')
-    appScrollContainer.value?.addEventListener('scroll', updateScrollTopVisibility, { passive: true })
-}
-
-onMounted(attachLegacyScrollContainer)
-watch(usesPagePanel, attachLegacyScrollContainer)
-
-onUnmounted(() => {
-    appScrollContainer.value?.removeEventListener('scroll', updateScrollTopVisibility)
-})
 </script>
 
 <template>
@@ -166,39 +108,8 @@ onUnmounted(() => {
             </template>
         </UDashboardSidebar>
 
-        <slot v-if="usesPagePanel" />
-
-        <UDashboardPanel
-            v-else
-            :ui="{ body: 'legacy-app-scroll-container' }"
-        >
-            <template #header>
-                <UDashboardNavbar>
-                    <template #left>
-                        <UDashboardSidebarCollapse />
-                        <UBreadcrumb
-                            v-if="breadcrumbs.length"
-                            :items="breadcrumbs"
-                            color="neutral"
-                        />
-                    </template>
-                </UDashboardNavbar>
-            </template>
-
-            <template #body>
-                <slot />
-            </template>
-        </UDashboardPanel>
+        <slot />
 
         <ChangeInstanceModal v-model="changeInstanceModalOpen" />
-
-        <UButton
-            v-if="!usesPagePanel && showScrollTop"
-            aria-label="Scroll to top"
-            icon="i-lucide-arrow-up"
-            color="primary"
-            class="fixed end-4 bottom-4 z-50 rounded-full shadow-lg sm:end-6 sm:bottom-6"
-            @click="scrollToTop"
-        />
     </UDashboardGroup>
 </template>

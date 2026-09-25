@@ -6,7 +6,6 @@ import { useMeilisearchStore } from '@/stores/meilisearch'
 definePageMeta({
     layout: 'app',
     title: 'Dashboard',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard' }]
 })
 

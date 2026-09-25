@@ -4,7 +4,6 @@ import { useDumps } from '@/composables/meilisearch/useDumps'
 definePageMeta({
     layout: 'app',
     title: 'Backups',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Backups' }, { label: 'Dumps' }]
 })
 

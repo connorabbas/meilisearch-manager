@@ -4,7 +4,6 @@ import { useMeilisearchStore } from '@/stores/meilisearch'
 definePageMeta({
     layout: 'app',
     title: 'Connection Error',
-    dashboardPanel: true,
     breadcrumbs: [{ label: 'Connection Error' }],
 })
 
