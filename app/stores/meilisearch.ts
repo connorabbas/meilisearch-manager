@@ -1,13 +1,7 @@
 import { Meilisearch } from 'meilisearch'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-
-export interface MeilisearchInstanceConfig {
-    id: string;
-    name: string;
-    host: string;
-    apiKey: string;
-}
+import type { MeilisearchInstanceConfig } from '@/types'
 
 export const useMeilisearchStore = defineStore('meilisearch', () => {
     const toast = useToast()

@@ -1,11 +1,6 @@
 import ConfirmActionModal from '@/components/ConfirmActionModal.vue'
 
-export interface ConfirmActionOptions {
-    title: string;
-    description: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-}
+import type { ConfirmActionOptions } from '@/types'
 
 export function useConfirmAction() {
     const overlay = useOverlay()

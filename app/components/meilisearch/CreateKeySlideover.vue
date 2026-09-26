@@ -4,6 +4,7 @@ import { today, toCalendarDateTime, fromDate, getLocalTimeZone } from '@internat
 import { useKeys } from '@/composables/meilisearch/useKeys'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import type { KeyCreation } from 'meilisearch'
+import type { CreateKeyFormState } from '@/types'
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -22,15 +23,6 @@ const schema = z.object({
     indexes: z.array(z.string()).min(1, 'Select at least one index or enable “All indexes”'),
     actions: z.array(z.string()).min(1, 'Add at least one action or enable “All actions”'),
 })
-
-interface CreateKeyFormState {
-    uid?: string
-    name?: string
-    description?: string
-    indexes: string[]
-    actions: string[]
-    expiresAt: Date | null
-}
 
 const emptyFormState = (): CreateKeyFormState => ({
     uid: '',

@@ -1,4 +1,5 @@
 import type { TaskStatus } from 'meilisearch'
+import type { TaskStatusColor } from '@/types'
 export const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US')
 }
@@ -34,8 +35,6 @@ export function maskedApiKey(
 
     return `${start}****${end}`
 }
-
-export type TaskStatusColor = 'success' | 'info' | 'neutral' | 'error' | 'warning'
 
 export function getTaskStatusColor(status: TaskStatus): TaskStatusColor {
     switch (status) {

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import Container from '@/components/Container.vue'
 import LogoLink from '@/components/LogoLink.vue'
 import { useMeilisearchStore } from '@/stores/meilisearch'
+import type { NewInstanceForm } from '@/types'
 
 definePageMeta({
     title: 'Add Instance',
@@ -14,8 +15,6 @@ const schema = z.object({
     host: z.string().min(1, { message: 'Please provide a host url/ip for your instance' }),
     apiKey: z.string().min(1, { message: 'Please provide a valid API key' }),
 })
-
-type NewInstanceForm = z.output<typeof schema>
 
 const meilisearchStore = useMeilisearchStore()
 const toast = useToast()

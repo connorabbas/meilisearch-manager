@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { Hit } from 'meilisearch'
+import type { GeoPoint, MappedGeoHit } from '@/types'
 import { joinURL } from 'ufo'
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue'
-
-type GeoPoint = { lat: number, lng: number }
-type MappedGeoHit = { key: string, hit: Hit, point: GeoPoint }
 
 const props = defineProps<{ hits: Hit[], primaryKey?: string }>()
 const runtimeConfig = useRuntimeConfig()

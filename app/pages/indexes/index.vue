@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { IndexObject } from 'meilisearch'
+import type { IndexRow } from '@/types'
 import { useStats } from '@/composables/meilisearch/useStats'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import CreateIndexModal from '@/components/meilisearch/CreateIndexModal.vue'
@@ -35,10 +35,6 @@ await fetchData()
 
 const createIndexModalOpen = ref(false)
 const columnPinning = ref({ right: ['actions'] })
-
-type IndexRow = IndexObject & {
-    numberOfDocuments: number;
-}
 
 const indexesData = computed<IndexRow[]>(() => {
     return indexes.value.map((index) => {

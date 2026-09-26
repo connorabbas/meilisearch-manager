@@ -1,7 +1,4 @@
-export interface PaginationOptions {
-    total?: () => number | null | undefined;
-    itemLabel?: string;
-}
+import type { PaginationOptions } from '@/types'
 
 export function usePagination(initialPerPage: number = 20, options: PaginationOptions = {}) {
     const currentPage = ref(1)

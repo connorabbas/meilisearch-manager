@@ -14,14 +14,13 @@ import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import { useSearch } from '@/composables/meilisearch/useSearch'
 import { useSettings } from '@/composables/meilisearch/useSettings'
 import { useStats } from '@/composables/meilisearch/useStats'
-import type { IndexEmbedderOption } from '@/types'
+import type { DocumentDataView, IndexEmbedderOption, SortOption } from '@/types'
 import { getRankingScoreColor, looksLikeAnImageUrl } from '@/utils'
 
 definePageMeta({ layout: 'app', title: 'Index Documents' })
 
 const route = useRoute()
 const indexUid = computed(() => String(route.params.uid ?? ''))
-type DataView = 'json' | 'table' | 'geo'
 
 const { currentIndex, fetchIndex } = useIndexes()
 const { isSendingTask, confirmDeleteDocument } = useDocuments()
@@ -87,7 +86,6 @@ const dataViewOptions = computed<TabsItem[]>(() => [
 const debouncedSearch = useDebounceFn(() => searchPaginated(indexUid.value, true), 300)
 watch(searchQuery, value => value ? debouncedSearch() : searchPaginated(indexUid.value, true))
 
-type SortOption = { value: string, label: string }
 const NO_SORT_VALUE = '__no_sort__'
 const standardSortableAttributes = computed(() => (sortableAttributes.value ?? []).filter(attribute => attribute !== '_geo'))
 const sortingOptions = computed<SortOption[]>(() => standardSortableAttributes.value.length

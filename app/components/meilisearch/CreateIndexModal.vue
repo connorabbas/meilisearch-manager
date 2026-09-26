@@ -3,6 +3,7 @@ import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import type { IndexOptions } from 'meilisearch'
+import type { CreateIndexForm } from '@/types'
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -16,8 +17,6 @@ const schema = z.object({
     uid: z.string().trim().min(1, { message: 'Please provide an index UID' }),
     primaryKey: z.string().trim().optional(),
 })
-
-type CreateIndexForm = z.output<typeof schema>
 
 const formState = reactive<CreateIndexForm>({
     uid: '',

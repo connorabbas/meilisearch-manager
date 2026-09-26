@@ -1,11 +1,7 @@
-import type { Ref } from 'vue'
+import type { SearchPaginationState } from '@/types'
 import type { Filter, HybridSearch, RecordAny, SearchParams, SearchResponse } from 'meilisearch'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '@/composables/usePagination'
-
-type SearchPaginationState = {
-    maxTotalHits?: Ref<number | null | undefined>,
-}
 
 export function useSearch(initialPerPage: number = 20, paginationState: SearchPaginationState = {}) {
     const toast = useToast()

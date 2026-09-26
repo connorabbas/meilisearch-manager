@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch'
-import type { FacetHit, Filter, FilterableAttributes, SortableAttributes } from 'meilisearch'
+import type { Filter, FilterableAttributes, SortableAttributes } from 'meilisearch'
+import type { FacetFilterGroup, GeoFilterMode, GeoSortDirection } from '@/types'
 
 const props = defineProps<{
     indexUid: string,
@@ -18,11 +19,6 @@ const geoSort = defineModel<string | null>('geoSort', { default: null })
 const { searchFacetValues } = useFacetSearch()
 
 const selectedAttributes = ref<string[]>([])
-type FacetFilterGroup = {
-    attribute: string,
-    facetHits: FacetHit[],
-    value: string[],
-}
 const facetFilters = ref<Record<string, FacetFilterGroup>>({})
 const facetFiltersEmpty = computed(() => Object.keys(facetFilters.value).length === 0)
 
@@ -30,7 +26,6 @@ const facetAttributeOptions = computed(() => {
     return ((props.filterableAttributes as string[]) ?? []).filter(attribute => attribute !== '_geo')
 })
 
-type GeoFilterMode = 'none' | 'radius' | 'boundingBox' | 'polygon'
 const geoFilterMode = ref<GeoFilterMode>('none')
 const geoFilterModeOptions = [
     { label: 'None', value: 'none' },
@@ -50,7 +45,6 @@ const boxBottomRightLng = ref('')
 
 const polygonPointsInput = ref('')
 
-type GeoSortDirection = 'none' | 'asc' | 'desc'
 const geoSortDirection = ref<GeoSortDirection>('none')
 const geoSortDirectionOptions = [
     { label: 'None', value: 'none' },
