@@ -62,11 +62,11 @@ const error = computed(() => indexError.value ?? statsError.value)
                     tooltip="Poll index stats every 5 seconds"
                 />
                 <UButton
-                    label="Refresh"
+                    aria-label="Refresh"
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     :loading="fetching"
                     @click="fetchData"
                 />

@@ -191,7 +191,7 @@ const columnPinning = ref({ right: ['actions'] })
         <template #actions>
             <AppPageActions>
                 <UButton
-                    label="Refresh"
+                    aria-label="Refresh"
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
@@ -342,10 +342,10 @@ const columnPinning = ref({ right: ['actions'] })
 
                 <template #actions-cell="{ row }">
                     <UButton
-                        label="Details"
-                        icon="i-lucide-info"
+                        label="View"
+                        trailing-icon="i-lucide-arrow-right"
                         color="neutral"
-                        variant="ghost"
+                        variant="subtle"
                         @click="showTask(row.original)"
                     />
                 </template>

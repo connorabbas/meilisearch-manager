@@ -84,11 +84,11 @@ async function changePageSize(pageSize: number) {
         <template #actions>
             <AppPageActions>
                 <UButton
-                    label="Refresh"
+                    aria-label="Refresh"
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     :loading="isFetchingIndexes || isFetchingStats"
                     @click="fetchData"
                 />
@@ -155,7 +155,7 @@ async function changePageSize(pageSize: number) {
                         label="View"
                         trailing-icon="i-lucide-arrow-right"
                         color="neutral"
-                        variant="ghost"
+                        variant="subtle"
                     />
                 </template>
 
@@ -175,7 +175,7 @@ async function changePageSize(pageSize: number) {
             </UTable>
 
             <template #footer>
-                <AppTablePagination
+                <AppPagination
                     :page="currentPage"
                     :per-page="perPage"
                     :total="totalIndexes"

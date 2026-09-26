@@ -601,7 +601,7 @@ onMounted(() => {
                 </template>
             </UTable>
             <template #footer>
-                <AppTablePagination
+                <AppPagination
                     :page="currentPage"
                     :per-page="perPage"
                     :total="totalHits"
@@ -647,7 +647,7 @@ onMounted(() => {
                 />
             </div>
             <UCard variant="outline">
-                <AppTablePagination
+                <AppPagination
                     :page="currentPage"
                     :per-page="perPage"
                     :total="totalHits"

@@ -39,11 +39,11 @@ watch(currentInstanceId, async (instanceId, previousInstanceId) => {
         <template #actions>
             <AppPageActions>
                 <UButton
-                    label="Refresh"
+                    aria-label="Refresh"
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     :loading="isFetching"
                     @click="fetchData"
                 />

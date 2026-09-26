@@ -24,12 +24,12 @@ const perPageId = useId()
 </script>
 
 <template>
-    <div class="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div class="flex min-w-0 flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <p class="min-w-0 text-sm text-muted">
             {{ summary }}
         </p>
 
-        <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center md:ml-auto">
+        <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center md:ml-auto">
             <UFieldGroup class="w-full sm:w-auto">
                 <UButton
                     as="label"

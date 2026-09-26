@@ -176,11 +176,11 @@ async function changePageSize(size: number) {
             <AppPageActions>
                 <UButton
                     v-if="isFeatureAvailable"
-                    label="Refresh"
+                    aria-label="Refresh"
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     :loading="isFetching"
                     @click="fetchRulesPaginated()"
                 />
@@ -326,7 +326,7 @@ async function changePageSize(size: number) {
                 </UTable>
 
                 <template #footer>
-                    <AppTablePagination
+                    <AppPagination
                         :page="currentPage"
                         :per-page="perPage"
                         :total="rulesResults?.total ?? 0"
