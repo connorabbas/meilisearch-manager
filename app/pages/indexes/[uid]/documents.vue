@@ -54,7 +54,7 @@ const {
     paginate,
 } = useSearch(20, { maxTotalHits: computed(() => pagination.value.maxTotalHits) })
 
-const dataView = ref<DataView>('json')
+const dataView = ref<DocumentDataView>('json')
 
 const primaryKey = computed(() => currentIndex.value?.primaryKey)
 const hits = computed<RecordAny[]>(() => searchResults.value?.hits ?? [])
