@@ -285,23 +285,31 @@ Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for 
 - [~] Phase 11: PrimeVue removal and final hardening
 
 ## TODO:
-on task poll toast timeout, show another toast saying to check the tasks view. Also increase the start delay on a tasks and add an action button on the polling toast to be able to cancel that specific task.
+- [x] Task polling timeout guidance, 3-second initial toast delay, and per-task cancellation action.
+- [x] Replace fixed corner-radius classes with the Nuxt UI `--ui-radius` token; retain `rounded-full` for circular controls and indicators.
+- [x] Normalize fractional/odd flex gaps to even spacing utilities where the layout permits.
+- [x] Rename `AppTablePagination` to `AppPagination` and update all consumers.
+- [x] Try an alternate table View-link treatment; index list now uses `subtle`.
+- [x] Separate hybrid-search enabled state from configuration; configure/reopen without toggling off.
+- [x] Make dashboard navbar Refresh controls icon-only ghost buttons with accessible names.
+- [x] Move named application-owned types into `app/types/index.d.ts`.
+- [x] Keep invalid settings JSON in an editable draft, show a syntax error, block save, and preserve the full parsed settings payload on valid save.
+- [x] Treat canceled tasks as a non-success result in all mutation callers; only run success callbacks, navigation, modal close/import events, and list refreshes after a succeeded task.
+- [x] Use a soft `View` button for task rows, matching the index table action treatment.
 
-find/replace all rounded- classes and replace with nuxt ui theme variable for consistent border radius on UI elements
 
-consistent flex gaps, dont use .5 iterations, try to stick with even spacing (gap-2, gap-4, gap-6,) where possible
+### Follow-up completion notes (2026-09-25)
 
-rename AppTablePagination, since non-table pagination datasets use it too
-
-experiment with using different button variants for the "view" link on tables
-
-improve documents search hybrid toggle - there should be an "enabled" toggle switch in the modal instead of having the show modal button act as the toggle, that way the hybrid search can stay on and the user can re-open the configuration modal to adjust the semantic ratio without having to turn it off every time.
-
-change all dashboard tool bar "refresh" buttons to only show the refresh icon, as a ghost variant button
-
-ensure types are only defined/exported in the types fir, not ad hoc in utils, components, modules or composables
-
-editing the settings json - if there is a syntax error in the json it just breaks and shows the "No settings available" alert, the old primevue version did not do this, this is a major regression.
+- Task polling now waits three seconds before its first status check, offers a `Cancel task` toast action bound to that invocation's task UID, and continues polling until the server reports a terminal status. A cancellation request is a warning toast; confirmed cancellation is an informational toast and does not enter the generic error handling path. Cancellation request failures surface a separate error toast. Exhausting the polling attempts adds a warning toast with an `Open Tasks` action and resolves as an unknown/incomplete outcome, avoiding a duplicate generic error toast. The delay applies only to client-side status polling: cancellation requests are sent immediately on click, and Meilisearch processes cancellation as a separate task (so a target may finish before cancellation is applied). E2E covers request UID, cancellation failure, terminal cancellation, and timeout guidance.
+- Task mutation consumers now gate success-only follow-up work on `status === 'succeeded'`. Task deletion returns its polled task result rather than its initial enqueued response, so a canceled deletion does not trigger the list refresh path as if it succeeded. Canceled create-index, import/update document, settings, primary-key, search-rule, and destructive-operation flows do not emit completion events, navigate away, or run success callbacks.
+- Task rows now use a neutral soft `View` button with a trailing arrow, matching the index table's view action while preserving opening the task details slideover and keyboard focus return.
+- Settings editing now keeps text in a separate string draft. Invalid JSON remains visible/editable, displays inline feedback, and disables Save; Cancel restores the server baseline. Valid JSON is parsed and sent as the full settings payload. Added regression coverage for malformed input and recovery/cancel behavior.
+- Hybrid search has an `Enabled` switch in its modal. Applying configuration commits enablement, embedder, and semantic ratio; reopening retains configuration; cancel leaves the current search unchanged; disabled search omits the hybrid request parameter. Desktop/mobile controls open configuration without toggling it.
+- Renamed the shared pagination component and updated all five consumers. Navbar refreshes are icon-only ghost controls with `aria-label="Refresh"`. The index table View action uses the subtle variant.
+- Replaced fixed rounded-corner utilities with `rounded-[var(--ui-radius)]`; retained fully circular status indicators, map markers, and floating controls. Normalized fractional/odd flex gaps to even increments where used.
+- Moved named application-owned type declarations from stores, composables, utilities, page scripts, and component scripts to `app/types/index.d.ts`.
+- Corrected the Phase 6 primary-key E2E test's stale `/edit` URL to the current `/manage` route; the full suite now verifies that formerly failing flow.
+- Verification for the follow-up: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `git diff --check`, and the complete Chromium suite passed (66 tests). Playwright used port 3101 because port 3100 was already occupied. This completes the TODO list; Phase 11 remains in progress for its separate cross-browser, accessibility, visual, deployment, and final-definition-of-done checks.
 
 ## Phase 0: Characterization Tests and Migration Harness
 
