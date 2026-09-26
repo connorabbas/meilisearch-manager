@@ -95,25 +95,90 @@ test('tasks infinite loading appends cursor pages without duplicates', async ({ 
 test('task details show the full task JSON and return focus on close', async ({ page }) => {
     await page.goto('/tasks')
 
-    const detailsButton = page.getByRole('button', { name: 'Details' })
-    await detailsButton.focus()
+    const viewButton = page.getByRole('button', { name: 'View' })
+    await viewButton.focus()
     await page.keyboard.press('Enter')
 
     const slideover = page.getByRole('dialog', { name: 'Task 101' })
     await expect(slideover).toBeVisible()
     await expect(slideover.getByText('documentAdditionOrUpdate')).toBeVisible()
     await expect(slideover.getByText('PT0.001S')).toBeVisible()
+    await expect(slideover.getByRole('button', { name: 'Cancel task' })).toHaveCount(0)
 
     await page.keyboard.press('Escape')
     await expect(slideover).toBeHidden()
-    await expect(detailsButton).toBeFocused()
+    await expect(viewButton).toBeFocused()
+})
+
+test('task details can cancel a processing task and update its status', async ({ page }) => {
+    let cancellationRequested = false
+    const canceledUids: number[][] = []
+    await page.unroute('**/__meili/**')
+    const processingTask: FixtureTask = {
+        ...makeTasks(1)[0]!,
+        status: 'processing',
+        finishedAt: null,
+    }
+    await installMeilisearchMock(page, {
+        tasks: [processingTask],
+        onCancelTasksRequest: (_request, uids) => {
+            cancellationRequested = true
+            canceledUids.push(uids)
+        },
+        getTask: (_request, uid) => ({
+            ...processingTask,
+            uid,
+            status: cancellationRequested ? 'canceled' : 'processing',
+            finishedAt: cancellationRequested ? '2026-01-01T00:00:01.000Z' : null,
+        }),
+    })
+
+    await page.goto('/tasks')
+    await page.getByRole('button', { name: 'View' }).click()
+    const slideover = page.getByRole('dialog', { name: 'Task 1' })
+    const cancelButton = slideover.getByRole('button', { name: 'Cancel task' })
+    await expect(cancelButton).toBeVisible()
+    await cancelButton.click()
+
+    await expect.poll(() => canceledUids).toContainEqual([1])
+    await expect(slideover.getByRole('button', { name: 'Cancel task' })).toHaveCount(0)
+    await expect(page.getByText('Task cancelled', { exact: true })).toHaveCount(1)
+    await page.keyboard.press('Escape')
+    await expect(slideover).toBeHidden()
+    await expect(page.getByRole('row').filter({ hasText: 'canceled' })).toBeVisible()
+})
+
+test('task details keep cancellation available when Meilisearch rejects the request', async ({ page }) => {
+    await page.unroute('**/__meili/**')
+    const cancelUids: number[][] = []
+    const processingTask: FixtureTask = {
+        ...makeTasks(1)[0]!,
+        status: 'processing',
+        finishedAt: null,
+    }
+    await installMeilisearchMock(page, {
+        tasks: [processingTask],
+        cancelTasksFailure: true,
+        onCancelTasksRequest: (_request, uids) => cancelUids.push(uids),
+        getTask: (_request, uid) => ({ ...processingTask, uid }),
+    })
+
+    await page.goto('/tasks')
+    await page.getByRole('button', { name: 'View' }).click()
+    const slideover = page.getByRole('dialog', { name: 'Task 1' })
+    await slideover.getByRole('button', { name: 'Cancel task' }).click()
+
+    await expect.poll(() => cancelUids).toContainEqual([1])
+    await expect(slideover.getByRole('button', { name: 'Cancel task' })).toBeEnabled()
 })
 
 test('deleting tasks requires a filter and an explicit confirmation', async ({ page }) => {
     const deletedTasks: { url: string, count: number }[] = []
+    const canceledTaskUids: number[][] = []
     await page.unroute('**/__meili/**')
     await installMeilisearchMock(page, {
         onDeleteTasksRequest: (request, deletedCount) => deletedTasks.push({ url: request.url(), count: deletedCount }),
+        onCancelTasksRequest: (_request, uids) => canceledTaskUids.push(uids),
     })
 
     await page.goto('/tasks')
@@ -145,6 +210,11 @@ test('deleting tasks requires a filter and an explicit confirmation', async ({ p
     await expect(confirmation).toBeVisible()
     await confirmation.getByRole('button', { name: 'Delete', exact: true }).click()
 
+    const pollingToast = page.getByRole('region', { name: 'Notifications (F8)' }).getByRole('listitem').filter({ hasText: 'Task Enqueued' })
+    await expect(pollingToast.getByRole('button', { name: 'Cancel task' })).toBeVisible()
+    await pollingToast.getByRole('button', { name: 'Cancel task' }).click()
+    await expect.poll(() => canceledTaskUids).toContainEqual([101])
+
     await expect(deleteTasksDialog).toBeHidden()
     await expect.poll(() => deletedTasks).toHaveLength(1)
     expect(deletedTasks[0]?.url).toContain('statuses=succeeded')
@@ -152,6 +222,86 @@ test('deleting tasks requires a filter and an explicit confirmation', async ({ p
 
     await expect(page.getByRole('region', { name: 'Notifications (F8)' }).getByText('Tasks matching the filter have been successfully deleted')).toBeVisible()
     await expect(page.getByText('No tasks found')).toBeVisible()
+})
+
+test('task polling timeout points to the Tasks view', async ({ page }) => {
+    test.setTimeout(30_000)
+    await page.unroute('**/__meili/**')
+    await installMeilisearchMock(page, {
+        getTask: (_request, uid) => ({
+            uid,
+            batchUid: 1,
+            indexUid: 'movies',
+            status: 'processing',
+            type: 'settingsUpdate',
+            canceledBy: null,
+            details: {},
+            error: null,
+            duration: null,
+            enqueuedAt: '2026-01-01T00:00:00.000Z',
+            startedAt: '2026-01-01T00:00:00.000Z',
+            finishedAt: null,
+        }),
+    })
+    await page.goto('/indexes/movies/settings')
+    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Save' }).click()
+    const notifications = page.getByRole('region', { name: 'Notifications (F8)' })
+    const timeoutToast = notifications.getByText('Task is still running')
+    await expect(timeoutToast).toBeVisible({ timeout: 25_000 })
+    await expect(notifications.getByRole('button', { name: 'Open Tasks' })).toBeVisible()
+    await expect(notifications.getByText('Task did not complete after 30 attempts, please check the Tasks log')).toHaveCount(0)
+    await expect(notifications.getByText('Meilisearch Settings Error')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled()
+})
+
+test('task cancellation failures are surfaced without stopping task polling', async ({ page }) => {
+    await page.unroute('**/__meili/**')
+    await installMeilisearchMock(page, { cancelTasksFailure: true })
+    await page.goto('/indexes/movies/settings')
+    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    const notifications = page.getByRole('region', { name: 'Notifications (F8)' })
+    const pollingToast = notifications.getByRole('listitem').filter({ hasText: 'Task Enqueued' })
+    await pollingToast.getByRole('button', { name: 'Cancel task' }).click()
+    await expect(notifications.getByText('Unable to cancel task')).toBeVisible()
+    await expect(notifications.getByText('The settings for index: "movies" have been successfully updated')).toBeVisible({ timeout: 10_000 })
+})
+
+test('a requested task cancellation is confirmed by the polled terminal status', async ({ page }) => {
+    await page.unroute('**/__meili/**')
+    let cancellationRequested = false
+    await installMeilisearchMock(page, {
+        onCancelTasksRequest: () => cancellationRequested = true,
+        getTask: (_request, uid) => ({
+            uid,
+            batchUid: 1,
+            indexUid: 'movies',
+            status: uid === 101 ? cancellationRequested ? 'canceled' : 'processing' : 'succeeded',
+            type: 'settingsUpdate',
+            canceledBy: null,
+            details: {},
+            error: null,
+            duration: null,
+            enqueuedAt: '2026-01-01T00:00:00.000Z',
+            startedAt: '2026-01-01T00:00:00.000Z',
+            finishedAt: null,
+        }),
+    })
+    await page.goto('/indexes/movies/settings')
+    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    const notifications = page.getByRole('region', { name: 'Notifications (F8)' })
+    const pollingToast = notifications.getByRole('listitem').filter({ hasText: 'Task Enqueued' })
+    await pollingToast.getByRole('button', { name: 'Cancel task' }).click()
+    await expect.poll(() => cancellationRequested).toBe(true)
+    await expect(notifications.getByText('was cancelled successfully')).toBeVisible()
+    await expect(notifications.getByText('Meilisearch Settings Error')).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled()
 })
 
 test('task polling can be enabled and disabled without duplicate timers', async ({ page }) => {
@@ -209,7 +359,7 @@ test('the tasks table keeps the pinned action column usable at mobile width', as
     await expect(page.getByRole('row').filter({ hasText: 'documentAdditionOrUpdate' })).toBeVisible()
 
     await table.evaluate(element => element.scrollLeft = element.scrollWidth)
-    await expect(page.getByRole('button', { name: 'Details' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'View' })).toBeVisible()
 
     expect(await page.locator('body').evaluate(body => body.scrollWidth <= body.clientWidth)).toBe(true)
     const scrollContainer = page.locator('.app-scroll-container')

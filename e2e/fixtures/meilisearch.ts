@@ -164,6 +164,9 @@ export type MeilisearchMockOptions = {
     tasks?: FixtureTask[],
     getTasks?: (request: Request, tasks: FixtureTask[]) => FixtureTask[],
     onDeleteTasksRequest?: (request: Request, deletedCount: number) => void,
+    onCancelTasksRequest?: (request: Request, canceledUids: number[]) => void,
+    cancelTasksFailure?: boolean,
+    getTask?: (request: Request, taskUid: number) => FixtureTask,
 }
 
 function json(route: Route, body: unknown, status = 200) {
@@ -359,6 +362,14 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             const documentIndex = documents.findIndex(document => String(document.id) === identifier)
             if (documentIndex >= 0) documents.splice(documentIndex, 1)
             await json(route, { taskUid: task.uid, indexUid: movieIndex.uid, status: 'enqueued', type: 'documentDeletion' })
+        } else if (path === '/tasks/cancel' && request.method() === 'POST') {
+            const canceledUids = url.searchParams.getAll('uids').flatMap(value => value.split(',')).filter(Boolean).map(Number)
+            options.onCancelTasksRequest?.(request, canceledUids)
+            if (options.cancelTasksFailure) {
+                await json(route, { message: 'Fixture could not cancel task', code: 'fixture_cancel_failed', type: 'invalid_request', link: 'https://example.test' }, 400)
+            } else {
+                await json(route, { taskUid: task.uid + 1, status: 'enqueued', type: 'taskCancelation' })
+            }
         } else if (path === '/tasks' && request.method() === 'DELETE') {
             const query = {
                 statuses: url.searchParams.getAll('statuses').flatMap(value => value.split(',')).filter(Boolean),
@@ -399,12 +410,13 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             })
         } else if (/^\/tasks\/\d+$/.test(path)) {
             const taskUid = Number(path.split('/').at(-1))
-            await json(route, {
+            const returnedTask = options.getTask?.(request, taskUid) ?? {
                 ...task,
                 uid: taskUid,
                 indexUid: taskUid === 102 ? 'created-index' : task.indexUid,
                 type: taskUid === 102 ? 'indexCreation' : 'indexDeletion',
-            })
+            }
+            await json(route, returnedTask)
         } else if (path === '/keys' && request.method() === 'GET') {
             const availableKeys = options.getKeys?.(request, keys) ?? keys
             const offset = Number(url.searchParams.get('offset') ?? 0)

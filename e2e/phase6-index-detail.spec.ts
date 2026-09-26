@@ -77,6 +77,29 @@ test('settings save the full JSON payload after task completion', async ({ page 
     await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible()
 })
 
+test('invalid settings JSON stays editable and cannot be submitted until repaired', async ({ page }) => {
+    let updateRequests = 0
+    await installMeilisearchMock(page, {
+        onUpdateSettingsRequest: () => updateRequests++,
+    })
+    await page.goto('/indexes/movies/settings')
+    await page.getByRole('button', { name: 'Edit' }).click()
+
+    const editor = page.getByRole('textbox').first()
+    await expect(editor).toBeVisible()
+    await editor.fill('{ invalid json')
+    await expect(page.getByText('Invalid settings JSON', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled()
+    await expect(editor).toContainText('{ invalid json')
+    expect(updateRequests).toBe(0)
+
+    await editor.fill('{"displayedAttributes":["*"]}')
+    await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled()
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible()
+    expect(updateRequests).toBe(0)
+})
+
 test('primary key and delete-all-documents keep their distinct task-backed operations', async ({ page }) => {
     let primaryKeyPayload: unknown
     let deleteAllRequests = 0
@@ -84,7 +107,7 @@ test('primary key and delete-all-documents keep their distinct task-backed opera
         onUpdateIndexRequest: request => primaryKeyPayload = request.postDataJSON(),
         onDeleteAllDocumentsRequest: () => deleteAllRequests++,
     })
-    await page.goto('/indexes/movies/edit')
+    await page.goto('/indexes/movies/manage')
 
     const primaryKey = page.getByLabel('Primary Key')
     await expect(primaryKey).toHaveValue('id')
@@ -101,6 +124,6 @@ test('primary key and delete-all-documents keep their distinct task-backed opera
     await page.getByRole('button', { name: 'Delete all documents' }).click()
     await confirmation.getByRole('button', { name: 'Delete' }).click()
     await expect.poll(() => deleteAllRequests).toBe(1)
-    await expect(page).toHaveURL(/\/indexes\/movies\/edit$/)
+    await expect(page).toHaveURL(/\/indexes\/movies\/manage$/)
     await expect(page.getByText('All documents from index: "movies" have been successfully deleted', { exact: true })).toBeVisible()
 })
