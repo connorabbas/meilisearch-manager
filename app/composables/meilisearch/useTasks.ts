@@ -226,6 +226,7 @@ export function useTasks() {
         checkingTaskStatus.value = true
         let attempts = 0
         let taskToast: ReturnType<typeof toast.add> | undefined
+        let cancellationRequested = false
         try {
             taskToast = toast.add({
                 color: 'neutral',
@@ -235,9 +236,37 @@ export function useTasks() {
                 duration: 0,
                 progress: false,
                 ui: { icon: 'motion-safe:animate-spin' },
+                actions: [{
+                    label: 'Cancel task',
+                    color: 'error',
+                    variant: 'outline',
+                    onClick: async () => {
+                        if (cancellationRequested) return
+                        cancellationRequested = true
+                        try {
+                            await client.tasks.cancelTasks({ uids: [taskUid] })
+                            toast.add({
+                                color: 'warning',
+                                icon: 'i-lucide-ban',
+                                title: 'Task cancellation requested',
+                                description: `Cancellation requested for task ${taskUid}.`,
+                                duration: 5000,
+                            })
+                        } catch (err) {
+                            cancellationRequested = false
+                            toast.add({
+                                color: 'error',
+                                icon: 'i-lucide-circle-x',
+                                title: 'Unable to cancel task',
+                                description: (err as Error).message,
+                                duration: 7500,
+                            })
+                        }
+                    },
+                }],
             })
-            // Wait just a moment to show the task enqueued toast
-            await new Promise(resolve => setTimeout(resolve, 1500))
+            // Give the user time to read the enqueued task notice.
+            await new Promise(resolve => setTimeout(resolve, 3000))
             while (attempts < maxAttempts) {
                 const taskResponse = await client.tasks.getTask(taskUid)
                 if (!taskResponse || typeof taskResponse.status === 'undefined') {
@@ -300,6 +329,61 @@ export function useTasks() {
         }
     }
 
+    async function fetchTask(taskUid: number): Promise<Task> {
+        const client = meilisearchStore.getClient()
+        if (!client) {
+            throw new Error('Meilisearch client not connected')
+        }
+
+        return await client.tasks.getTask(taskUid)
+    }
+
+    async function cancelTask(taskUid: number): Promise<Task | undefined> {
+        const client = meilisearchStore.getClient()
+        if (!client) {
+            toast.add({
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Unable to cancel task',
+                description: 'Meilisearch client not connected',
+                duration: 7500,
+            })
+            return
+        }
+
+        try {
+            const latestTask = await client.tasks.getTask(taskUid)
+            if (latestTask.status !== 'processing') {
+                toast.add({
+                    color: 'info',
+                    icon: 'i-lucide-list-checks',
+                    title: 'Task is no longer processing',
+                    description: `Task ${taskUid} is currently ${latestTask.status}.`,
+                    duration: 5000,
+                })
+                return latestTask
+            }
+
+            await client.tasks.cancelTasks({ uids: [taskUid] })
+            toast.add({
+                color: 'warning',
+                icon: 'i-lucide-ban',
+                title: 'Task cancellation requested',
+                description: `Cancellation requested for task ${taskUid}.`,
+                duration: 5000,
+            })
+            return await client.tasks.getTask(taskUid)
+        } catch (err) {
+            toast.add({
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Unable to cancel task',
+                description: (err as Error).message,
+                duration: 7500,
+            })
+        }
+    }
+
     async function deleteTasks(): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
@@ -354,6 +438,8 @@ export function useTasks() {
         fetchAndAppendTasks,
         pollLatestTasks,
         pollTaskStatus,
+        fetchTask,
+        cancelTask,
         deleteTasks,
     }
 }

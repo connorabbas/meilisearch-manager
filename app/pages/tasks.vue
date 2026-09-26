@@ -96,6 +96,16 @@ function showTask(task: Task) {
     taskDetailsSlideoverOpen.value = true
 }
 
+function handleTaskUpdated(task: Task) {
+    const existingTask = tasks.value.find(existing => existing.uid === task.uid)
+    const isTerminalStatus = (status: Task['status']) => status === 'succeeded' || status === 'failed' || status === 'canceled'
+    if (existingTask && isTerminalStatus(existingTask.status) && !isTerminalStatus(task.status)) return
+
+    if (currentTask.value?.uid === task.uid && isTerminalStatus(currentTask.value.status) && !isTerminalStatus(task.status)) return
+    currentTask.value = task
+    tasks.value = tasks.value.map(existingTask => existingTask.uid === task.uid ? task : existingTask)
+}
+
 async function handleDeleteTasks() {
     try {
         const result = await deleteTasks()
@@ -180,6 +190,7 @@ const columnPinning = ref({ right: ['actions'] })
                 v-if="currentTask"
                 v-model:open="taskDetailsSlideoverOpen"
                 :task="currentTask"
+                @task-updated="handleTaskUpdated"
             />
             <DeleteTasksModal
                 v-model:open="deleteTasksModalOpen"
