@@ -166,7 +166,7 @@ export type MeilisearchMockOptions = {
     onDeleteTasksRequest?: (request: Request, deletedCount: number) => void,
     onCancelTasksRequest?: (request: Request, canceledUids: number[]) => void,
     cancelTasksFailure?: boolean,
-    getTask?: (request: Request, taskUid: number) => FixtureTask,
+    getTask?: (request: Request, taskUid: number) => Record<string, unknown>,
 }
 
 function json(route: Route, body: unknown, status = 200) {

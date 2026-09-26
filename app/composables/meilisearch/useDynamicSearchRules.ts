@@ -131,7 +131,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         }
     }
 
-    async function deleteRule(uid: string): Promise<void> {
+    async function deleteRule(uid: string): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -142,7 +142,12 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            await client.deleteDynamicSearchRule(uid)
+            const enqueuedTask = await client.deleteDynamicSearchRule(uid)
+            return await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `A delete task for search rule "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `Search rule "${uid}" was deleted successfully`,
+            )
         } catch (err) {
             error.value = (err as Error).message
             throw err
@@ -160,9 +165,8 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
             description: 'Are you sure you want to delete this search rule?',
             confirmLabel: 'Delete',
         }, async () => {
-            await deleteRule(uid).then(() => {
-                onDeletedCallback?.()
-            })
+            const task = await deleteRule(uid)
+            if (task?.status === 'succeeded') onDeletedCallback?.()
         })
     }
 

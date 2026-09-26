@@ -35,7 +35,38 @@ test('search rule can be created, edited, and deleted', async ({ page }) => {
     await page.getByRole('button', { name: 'Show search rule actions' }).last().click()
     await page.getByRole('menuitem', { name: 'Delete' }).click()
     await page.getByRole('button', { name: 'Delete' }).click()
+    await expect(page.getByText('Task Succeeded', { exact: true })).toBeVisible()
+    await expect(page.getByText('Rule Deleted', { exact: true })).toHaveCount(0)
     await expect(page.getByRole('cell', { name: 'summer-sale' })).toHaveCount(0)
+})
+
+test('search rule deletion does not report success until its task succeeds', async ({ page }) => {
+    await installMeilisearchMock(page, {
+        getTask: (_, taskUid) => ({
+            uid: taskUid,
+            batchUid: 1,
+            indexUid: null,
+            status: 'canceled',
+            type: 'dsrClear',
+            canceledBy: 102,
+            details: {},
+            error: null,
+            duration: 'PT0.001S',
+            enqueuedAt: '2026-01-01T00:00:00.000Z',
+            startedAt: '2026-01-01T00:00:00.000Z',
+            finishedAt: '2026-01-01T00:00:01.000Z',
+        }),
+    })
+    await seedInstance(page)
+    await page.goto('/search-rules')
+
+    await page.getByRole('button', { name: 'Show search rule actions' }).first().click()
+    await page.getByRole('menuitem', { name: 'Delete' }).click()
+    await page.getByRole('button', { name: 'Delete' }).click()
+
+    await expect(page.getByText('Task cancelled', { exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'featured-movie' })).toBeVisible()
+    await expect(page.getByText('Rule Deleted', { exact: true })).toHaveCount(0)
 })
 
 test('inactive filter sends false and can be cleared', async ({ page }) => {

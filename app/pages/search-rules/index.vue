@@ -15,7 +15,6 @@ definePageMeta({
 })
 
 const UButton = resolveComponent('UButton')
-const toast = useToast()
 
 const {
     currentPage,
@@ -149,12 +148,6 @@ function ruleActions(rule: SearchRule) {
             icon: 'i-lucide-trash-2',
             color: 'error' as const,
             onSelect: () => confirmDeleteRule(rule.uid, () => {
-                toast.add({
-                    color: 'success',
-                    icon: 'i-lucide-circle-check',
-                    title: 'Rule Deleted',
-                    description: `Search rule "${rule.uid}" was deleted`,
-                })
                 void fetchRulesPaginated()
             }),
         },
