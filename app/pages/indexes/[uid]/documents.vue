@@ -260,44 +260,116 @@ onMounted(() => {
         <Teleport to="#sub-page-toolbar">
             <UDashboardToolbar
                 :ui="{
-                    root: 'min-w-0 flex-wrap py-3',
+                    root: 'min-w-0 flex-wrap py-3 gap-2',
                     left: 'min-w-0 w-full flex-wrap xl:flex-1 gap-2',
                     right: 'min-w-0 w-full flex-wrap justify-between xl:w-auto xl:justify-start gap-2'
                 }"
             >
                 <template #left>
-                    <UInput
-                        v-model="searchQuery"
-                        role="searchbox"
-                        icon="i-lucide-search"
-                        placeholder="Search documents"
-                        aria-label="Search documents"
-                        autofocus
-                        class="w-full xl:max-w-96"
-                        :ui="{ trailing: 'pe-1' }"
-                        @keyup.enter="searchPaginated(indexUid, true)"
-                    >
-                        <template
-                            v-if="searchQuery"
-                            #trailing
-                        >
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                icon="i-lucide-circle-x"
-                                aria-label="Clear search"
-                                @click="searchQuery = ''"
-                            />
-                        </template>
-                    </UInput>
                     <UBadge
                         color="neutral"
                         variant="soft"
                         size="xl"
-                        class="hidden xl:inline-flex"
+                        class="hidden shrink-0 xl:inline-flex"
                         :label="`${totalHits.toLocaleString('en-US')} total hits`"
                     />
+                    <div class="flex min-w-0 w-full items-center gap-2 xl:contents">
+                        <UInput
+                            v-model="searchQuery"
+                            role="searchbox"
+                            icon="i-lucide-search"
+                            placeholder="Search documents"
+                            aria-label="Search documents"
+                            autofocus
+                            class="min-w-0 flex-1"
+                            :ui="{ trailing: 'pe-1' }"
+                            @keyup.enter="searchPaginated(indexUid, true)"
+                        >
+                            <template
+                                v-if="searchQuery"
+                                #trailing
+                            >
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    icon="i-lucide-circle-x"
+                                    aria-label="Clear search"
+                                    @click="searchQuery = ''"
+                                />
+                            </template>
+                        </UInput>
+                        <UPopover
+                            v-model:open="searchOptionsOpen"
+                            class="shrink-0 xl:hidden"
+                            :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
+                        >
+                            <UButton
+                                icon="i-lucide-ellipsis-vertical"
+                                color="neutral"
+                                variant="ghost"
+                                square
+                                aria-label="Open search options"
+                            />
+                            <template #content>
+                                <div class="flex min-w-56 flex-col items-stretch gap-4 p-4">
+                                    <USelect
+                                        :model-value="selectedSort"
+                                        :items="sortingOptions"
+                                        :loading="isFetchingSettings.sortableAttributes"
+                                        :modal="false"
+                                        placeholder="Sort by"
+                                        aria-label="Sort documents"
+                                        class="w-full"
+                                        @update:model-value="updateSort(String($event))"
+                                    >
+                                        <template #content-bottom>
+                                            <p
+                                                v-if="standardSortableAttributes.length === 0"
+                                                class="border-t border-default p-2 text-sm text-muted"
+                                            >
+                                                Update the index settings to enable sorting.
+                                            </p>
+                                        </template>
+                                    </USelect>
+                                    <UChip
+                                        :show="Boolean(searchFilter || searchGeoSort)"
+                                        inset
+                                    >
+                                        <UButton
+                                            label="Filter"
+                                            icon="i-lucide-funnel"
+                                            color="neutral"
+                                            variant="outline"
+                                            class="w-full justify-center"
+                                            @click="openFilters"
+                                        />
+                                    </UChip>
+                                    <UButton
+                                        v-if="availableEmbedders.length"
+                                        label="Hybrid search"
+                                        aria-label="Configure hybrid search"
+                                        icon="i-lucide-sparkles"
+                                        :color="hybridSearchEnabled ? 'primary' : 'neutral'"
+                                        :variant="hybridSearchEnabled ? 'soft' : 'outline'"
+                                        :aria-pressed="hybridSearchEnabled"
+                                        class="w-full justify-center"
+                                        @click="toggleHybridSearch"
+                                    />
+                                    <UButton
+                                        label="Show ranking score"
+                                        aria-label="Toggle ranking score"
+                                        icon="i-lucide-trophy"
+                                        :color="showRankingScore ? 'primary' : 'neutral'"
+                                        :variant="showRankingScore ? 'soft' : 'outline'"
+                                        :aria-pressed="showRankingScore"
+                                        class="w-full justify-center"
+                                        @click="toggleRanking"
+                                    />
+                                </div>
+                            </template>
+                        </UPopover>
+                    </div>
                 </template>
                 <template #right>
                     <div class="hidden items-center gap-2 xl:flex">
@@ -360,77 +432,8 @@ onMounted(() => {
                         :content="false"
                         size="sm"
                         aria-label="Document view"
+                        class="w-full xl:w-auto"
                     />
-                    <UPopover
-                        v-model:open="searchOptionsOpen"
-                        class="xl:hidden"
-                        :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
-                    >
-                        <UButton
-                            icon="i-lucide-ellipsis-vertical"
-                            color="neutral"
-                            variant="ghost"
-                            square
-                            aria-label="Open search options"
-                        />
-                        <template #content>
-                            <div class="flex min-w-56 flex-col items-stretch gap-4 p-4">
-                                <USelect
-                                    :model-value="selectedSort"
-                                    :items="sortingOptions"
-                                    :loading="isFetchingSettings.sortableAttributes"
-                                    :modal="false"
-                                    placeholder="Sort by"
-                                    aria-label="Sort documents"
-                                    class="w-full"
-                                    @update:model-value="updateSort(String($event))"
-                                >
-                                    <template #content-bottom>
-                                        <p
-                                            v-if="standardSortableAttributes.length === 0"
-                                            class="border-t border-default p-2 text-sm text-muted"
-                                        >
-                                            Update the index settings to enable sorting.
-                                        </p>
-                                    </template>
-                                </USelect>
-                                <UChip
-                                    :show="Boolean(searchFilter || searchGeoSort)"
-                                    inset
-                                >
-                                    <UButton
-                                        label="Filter"
-                                        icon="i-lucide-funnel"
-                                        color="neutral"
-                                        variant="outline"
-                                        class="w-full justify-center"
-                                        @click="openFilters"
-                                    />
-                                </UChip>
-                                <UButton
-                                    v-if="availableEmbedders.length"
-                                    label="Hybrid search"
-                                    aria-label="Configure hybrid search"
-                                    icon="i-lucide-sparkles"
-                                    :color="hybridSearchEnabled ? 'primary' : 'neutral'"
-                                    :variant="hybridSearchEnabled ? 'soft' : 'outline'"
-                                    :aria-pressed="hybridSearchEnabled"
-                                    class="w-full justify-center"
-                                    @click="toggleHybridSearch"
-                                />
-                                <UButton
-                                    label="Show ranking score"
-                                    aria-label="Toggle ranking score"
-                                    icon="i-lucide-trophy"
-                                    :color="showRankingScore ? 'primary' : 'neutral'"
-                                    :variant="showRankingScore ? 'soft' : 'outline'"
-                                    :aria-pressed="showRankingScore"
-                                    class="w-full justify-center"
-                                    @click="toggleRanking"
-                                />
-                            </div>
-                        </template>
-                    </UPopover>
                 </template>
             </UDashboardToolbar>
         </Teleport>
