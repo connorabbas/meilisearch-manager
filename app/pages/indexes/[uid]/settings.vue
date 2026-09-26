@@ -15,6 +15,7 @@ const route = useRoute()
 const indexUid = computed(() => String(route.params.uid ?? ''))
 const { settings, isFetching, isLoadingTask, error, fetchSettings, updateSettings } = useSettings()
 const originalSettings = shallowRef<Settings | null>(null)
+const settingsJson = ref('')
 const editMode = ref(false)
 const invalidJsonMessage = 'Please correct the invalid settings JSON.'
 const jsonError = ref('')
@@ -29,6 +30,7 @@ async function loadSettings() {
 
     settings.value = cloneSettings(loadedSettings)
     originalSettings.value = cloneSettings(loadedSettings)
+    settingsJson.value = JSON.stringify(loadedSettings, null, 2)
     jsonError.value = ''
 }
 
@@ -36,11 +38,13 @@ function startEditing() {
     if (!settings.value) return
 
     originalSettings.value = cloneSettings(settings.value)
+    settingsJson.value = JSON.stringify(settings.value, null, 2)
     editMode.value = true
 }
 
 function cancelEditing() {
     if (originalSettings.value) settings.value = cloneSettings(originalSettings.value)
+    settingsJson.value = originalSettings.value ? JSON.stringify(originalSettings.value, null, 2) : ''
     jsonError.value = ''
     editMode.value = false
 }
@@ -48,8 +52,9 @@ function cancelEditing() {
 async function handleUpdateSettings() {
     if (!settings.value || jsonError.value) return
 
+    let parsedSettings: Settings
     try {
-        JSON.parse(JSON.stringify(settings.value))
+        parsedSettings = JSON.parse(settingsJson.value) as Settings
     } catch {
         jsonError.value = invalidJsonMessage
         return
@@ -64,8 +69,14 @@ async function handleUpdateSettings() {
     }
 }
 
-watch(settings, value => {
-    jsonError.value = value === undefined ? invalidJsonMessage : ''
+watch(settingsJson, value => {
+    if (!editMode.value) return
+    try {
+        JSON.parse(value)
+        jsonError.value = ''
+    } catch {
+        jsonError.value = invalidJsonMessage
+    }
 })
 
 watch(indexUid, () => {
@@ -171,11 +182,11 @@ watch(indexUid, () => {
                 />
 
                 <ThemedJsonEditor
-                    v-model="settings"
+                    v-model="settingsJson"
                     :read-only="!editMode"
                     :mode="Mode.text"
                     :main-menu-bar="false"
-                    :stringified="false"
+                    :stringified="true"
                 />
             </template>
 
