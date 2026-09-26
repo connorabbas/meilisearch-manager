@@ -13,7 +13,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
     if (route.path.endsWith('/documents')) items.push({ label: 'Documents' })
     else if (route.path.endsWith('/settings')) items.push({ label: 'Settings' })
-    else if (route.path.endsWith('manage')) items.push({ label: 'Manage' })
+    else if (route.path.endsWith('edit')) items.push({ label: 'Edit' })
 
     return items
 })
