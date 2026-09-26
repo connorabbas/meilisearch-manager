@@ -86,7 +86,7 @@ async function handleSave() {
                     <USkeleton
                         v-for="item in 5"
                         :key="item"
-                        class="h-10 w-full rounded-md"
+                        class="h-10 w-full rounded-[var(--ui-radius)]"
                     />
                 </div>
 

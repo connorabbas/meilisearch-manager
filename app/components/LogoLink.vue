@@ -8,7 +8,7 @@ const props = defineProps<{
     <NuxtLink
         to="/"
         aria-label="Meilisearch Manager home"
-        class="flex items-center justify-start rounded-md"
+        class="flex items-center justify-start rounded-[var(--ui-radius)]"
     >
         <img
             :class="['block h-6 w-auto', props.imgClasses]"

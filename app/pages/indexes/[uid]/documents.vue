@@ -384,7 +384,7 @@ onMounted(() => {
                             aria-label="Open search options"
                         />
                         <template #content>
-                            <div class="flex min-w-56 flex-col items-stretch gap-3 p-4">
+                            <div class="flex min-w-56 flex-col items-stretch gap-4 p-4">
                                 <USelect
                                     :model-value="selectedSort"
                                     :items="sortingOptions"
@@ -496,7 +496,7 @@ onMounted(() => {
 
         <div
             v-if="isSearching && !hits.length"
-            class="flex min-h-64 flex-col items-center justify-center gap-3 text-muted"
+            class="flex min-h-64 flex-col items-center justify-center gap-4 text-muted"
         >
             <UIcon
                 name="i-lucide-loader-circle"

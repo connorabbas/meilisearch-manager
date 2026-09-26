@@ -221,7 +221,7 @@ async function changePageSize(pageSize: number) {
                 </template>
 
                 <template #key-cell="{ row }">
-                    <div class="flex min-w-0 items-center gap-1">
+                    <div class="flex min-w-0 items-center gap-2">
                         <span class="min-w-0 whitespace-nowrap font-mono text-sm">
                             {{ maskedApiKey(row.original.key) }}
                         </span>
@@ -241,7 +241,7 @@ async function changePageSize(pageSize: number) {
                 </template>
 
                 <template #indexes-cell="{ row }">
-                    <div class="flex flex-wrap gap-1">
+                    <div class="flex flex-wrap gap-2">
                         <UBadge
                             v-for="index in row.original.indexes"
                             :key="index"
@@ -253,7 +253,7 @@ async function changePageSize(pageSize: number) {
                 </template>
 
                 <template #keyActions-cell="{ row }">
-                    <div class="flex flex-wrap gap-1">
+                    <div class="flex flex-wrap gap-2">
                         <UBadge
                             v-for="action in row.original.actions"
                             :key="action"

@@ -52,7 +52,7 @@ watch(geoHits, () => { openMarkerKey.value = null })
 </script>
 
 <template>
-    <div class="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-default">
+    <div class="relative flex min-h-0 flex-1 overflow-hidden rounded-[var(--ui-radius)] border border-default">
         <MglMap
             :key="mapStyleUrl"
             :map-style="mapStyleUrl"

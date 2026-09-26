@@ -7,7 +7,7 @@ const props = withDefaults(defineProps<{
     previewClass?: string,
 }>(), {
     alt: 'Document image',
-    thumbnailClass: 'max-h-20 max-w-32 rounded-md object-contain',
+    thumbnailClass: 'max-h-20 max-w-32 rounded-[var(--ui-radius)] object-contain',
     previewClass: 'max-h-[80vh] max-w-[min(90vw,72rem)] object-contain',
 })
 
@@ -18,7 +18,7 @@ const open = ref(false)
     <span class="inline-flex">
         <button
             type="button"
-            class="group relative shrink-0 overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+            class="group relative shrink-0 overflow-hidden rounded-[var(--ui-radius)] focus-visible:outline-2 focus-visible:outline-primary"
             :aria-label="`Enlarge ${alt.toLowerCase()}`"
             aria-haspopup="dialog"
             @click="open = true"

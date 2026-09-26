@@ -34,8 +34,8 @@ const rankingScoreColor = computed(() => getRankingScoreColor(rankingScore.value
                 :src="image"
                 alt="Document image"
                 :title="imageAttribute"
-                thumbnail-class="max-h-40 max-w-40 rounded-lg border border-default object-cover object-top"
-                preview-class="max-h-[80vh] max-w-[min(90vw,72rem)] rounded-lg object-contain"
+                thumbnail-class="max-h-40 max-w-40 rounded-[var(--ui-radius)] border border-default object-cover object-top"
+                preview-class="max-h-[80vh] max-w-[min(90vw,72rem)] rounded-[var(--ui-radius)] object-contain"
             />
 
             <div class="min-w-0 grow space-y-4">
@@ -54,7 +54,7 @@ const rankingScoreColor = computed(() => getRankingScoreColor(rankingScore.value
                     />
                 </div>
                 <ThemedJsonViewer
-                    class="rounded-lg py-2"
+                    class="rounded-[var(--ui-radius)] py-2"
                     :data="props.hit"
                     :expanded="expandedJson"
                 />

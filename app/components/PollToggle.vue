@@ -15,7 +15,7 @@ const model = defineModel<boolean>({ default: true })
         :text="props.tooltip"
         :content="{ side: 'top' }"
     >
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
             <span
                 v-if="model"
                 class="relative flex h-3 w-3"

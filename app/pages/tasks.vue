@@ -234,7 +234,7 @@ const columnPinning = ref({ right: ['actions'] })
                         :count="activeFilterCount"
                         @clear="clearFilters"
                     >
-                        <div class="flex flex-col gap-1.5">
+                        <div class="flex flex-col gap-2">
                             <span class="text-sm font-medium text-default">Status</span>
                             <USelectMenu
                                 v-model="statusFilter"
@@ -255,7 +255,7 @@ const columnPinning = ref({ right: ['actions'] })
                             </USelectMenu>
                         </div>
 
-                        <div class="flex flex-col gap-1.5">
+                        <div class="flex flex-col gap-2">
                             <span class="text-sm font-medium text-default">Type</span>
                             <USelectMenu
                                 v-model="typeFilter"
@@ -269,7 +269,7 @@ const columnPinning = ref({ right: ['actions'] })
                             />
                         </div>
 
-                        <div class="flex flex-col gap-1.5">
+                        <div class="flex flex-col gap-2">
                             <span class="text-sm font-medium text-default">Index</span>
                             <USelectMenu
                                 v-model="indexUidFilter"

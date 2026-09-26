@@ -32,7 +32,7 @@ const emit = defineEmits<{
         </UChip>
 
         <template #content>
-            <div class="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-3 p-4">
+            <div class="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-4 p-4">
                 <slot />
 
                 <template v-if="props.count > 0">

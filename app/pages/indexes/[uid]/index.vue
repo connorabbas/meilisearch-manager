@@ -92,10 +92,10 @@ const error = computed(() => indexError.value ?? statsError.value)
                 <USkeleton
                     v-for="card in 6"
                     :key="card"
-                    class="h-32 rounded-lg"
+                    class="h-32 rounded-[var(--ui-radius)]"
                 />
             </div>
-            <USkeleton class="h-96 rounded-lg" />
+            <USkeleton class="h-96 rounded-[var(--ui-radius)]" />
         </div>
 
         <div

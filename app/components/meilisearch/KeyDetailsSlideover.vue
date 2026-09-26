@@ -52,7 +52,7 @@ watch(open, (isOpen) => {
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-default">Key</dt>
-                    <dd class="mt-1 flex items-center gap-1">
+                    <dd class="mt-1 flex items-center gap-2">
                         <span
                             class="min-w-0 font-mono text-sm"
                             :class="keyRevealed ? 'break-all' : 'whitespace-nowrap'"
@@ -92,7 +92,7 @@ watch(open, (isOpen) => {
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-default">Indexes</dt>
-                    <dd class="mt-1 flex flex-wrap gap-1">
+                    <dd class="mt-1 flex flex-wrap gap-2">
                         <template v-if="props.apiKey.indexes.length">
                             <UBadge
                                 v-for="index in props.apiKey.indexes"
@@ -112,7 +112,7 @@ watch(open, (isOpen) => {
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-default">Actions</dt>
-                    <dd class="mt-1 flex flex-wrap gap-1">
+                    <dd class="mt-1 flex flex-wrap gap-2">
                         <template v-if="props.apiKey.actions.length">
                             <UBadge
                                 v-for="action in props.apiKey.actions"

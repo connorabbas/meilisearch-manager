@@ -138,7 +138,7 @@ watch(() => props.apiKey, (newVal: Key | null) => {
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-default">Indexes</dt>
-                        <dd class="mt-1 flex flex-wrap gap-1">
+                        <dd class="mt-1 flex flex-wrap gap-2">
                             <template v-if="props.apiKey.indexes.length">
                                 <UBadge
                                     v-for="index in props.apiKey.indexes"
@@ -158,7 +158,7 @@ watch(() => props.apiKey, (newVal: Key | null) => {
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-default">Actions</dt>
-                        <dd class="mt-1 flex flex-wrap gap-1">
+                        <dd class="mt-1 flex flex-wrap gap-2">
                             <template v-if="props.apiKey.actions.length">
                                 <UBadge
                                     v-for="action in props.apiKey.actions"

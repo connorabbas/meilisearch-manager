@@ -96,7 +96,7 @@ watch(() => props.embedders, () => {
                     />
                 </UFormField>
 
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between gap-4">
                         <label class="font-medium">Semantic ratio</label>
                         <span class="text-sm text-muted">{{ semanticRatioLabel }}</span>

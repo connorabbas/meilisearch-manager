@@ -45,8 +45,8 @@ function handleDeleteAllDocuments() {
         />
 
         <template v-if="isFetching && !currentIndex">
-            <USkeleton class="h-72 rounded-lg" />
-            <USkeleton class="h-48 rounded-lg" />
+            <USkeleton class="h-72 rounded-[var(--ui-radius)]" />
+            <USkeleton class="h-48 rounded-[var(--ui-radius)]" />
         </template>
 
         <template v-else-if="currentIndex">

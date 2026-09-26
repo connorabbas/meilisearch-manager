@@ -68,7 +68,7 @@ watch(currentInstanceId, async (instanceId, previousInstanceId) => {
             <USkeleton
                 v-for="item in 4"
                 :key="item"
-                class="h-32 rounded-lg"
+                class="h-32 rounded-[var(--ui-radius)]"
             />
         </div>
 

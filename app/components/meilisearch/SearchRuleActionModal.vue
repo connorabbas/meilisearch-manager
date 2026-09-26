@@ -255,7 +255,7 @@ watch(open, value => {
                         <p class="text-sm font-medium text-default">
                             Selected document
                         </p>
-                        <div class="max-h-52 overflow-auto rounded-md border border-default">
+                        <div class="max-h-52 overflow-auto rounded-[var(--ui-radius)] border border-default">
                             <ThemedJsonViewer :data="selectedDocument" />
                         </div>
                     </div>

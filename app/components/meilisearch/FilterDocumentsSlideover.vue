@@ -394,7 +394,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
 
                     <div
                         v-if="geoFilterMode === 'radius'"
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
                     >
                         <UFormField label="Latitude">
                             <UInput
@@ -424,7 +424,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
 
                     <div
                         v-else-if="geoFilterMode === 'boundingBox'"
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
                     >
                         <UFormField label="Top-left latitude">
                             <UInput
@@ -488,7 +488,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
 
                     <div
                         v-if="geoSortDirection !== 'none'"
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
                     >
                         <UFormField label="Reference latitude">
                             <UInput
