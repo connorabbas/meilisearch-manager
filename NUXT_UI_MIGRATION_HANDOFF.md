@@ -119,7 +119,7 @@ Recommended shell behavior:
 | DataTable / Column | `UTable` with typed `TableColumn<T>[]` |
 | Paginator | `UPagination` plus explicit page-size `USelect` |
 | Dialog | `UModal` |
-| Drawer used for edit/details | `USlideover` |
+| Drawer used for edit/details | `USlideover` (rename the component `*Drawer.vue` → `*Slideover.vue`) |
 | Mobile navigation drawer | `UDashboardSidebar mode="drawer"` |
 | ConfirmDialog / ConfirmPopup | Shared programmatic confirmation `UModal` via `useOverlay()` |
 | Toast service | Nuxt UI `useToast()` |
@@ -146,6 +146,10 @@ Recommended shell behavior:
 | Skeleton | `USkeleton` |
 | ProgressSpinner | Button loading state or `UProgress` |
 | MeterGroup | `UProgressGroup` |
+
+### Component naming convention
+
+Component file names follow the Nuxt UI target component, not the PrimeVue origin. When a PrimeVue `Drawer` component is migrated to `USlideover`, rename the component file and every reference from `*Drawer.vue` to `*Slideover.vue` in the same change (applied first to the Phase 7 key slideovers). Keep `*Modal.vue` names for `UModal` migrations. Rename the page-local open-state refs (for example `keyDetailsSlideoverOpen`) for coherence, and record the rename in the phase's handoff notes.
 
 ## Reuse Inventory
 
@@ -210,12 +214,12 @@ Do not create a universal table wrapper in the first table migration. Establish 
 
 PrimeVue currently leaks into the Pinia store and Meilisearch composables through `useToast()` and `useConfirm()`.
 
-Introduce small application-owned interfaces before migrating complex pages:
+Use Nuxt UI's feedback service directly and introduce one application-owned confirmation interface before migrating complex pages:
 
-- `useAppToast()` normalizes success, error, warning, and information notifications.
+- Nuxt UI `useToast()` is available through the root `UApp`; stores and composables call it directly with semantic colors.
 - `useConfirmAction()` opens a shared confirmation modal through Nuxt UI `useOverlay()` and resolves a promise or callback.
 
-These wrappers should be small. Their purpose is to prevent domain composables from constructing library-specific payloads, not to recreate PrimeVue APIs.
+The confirmation wrapper should remain small and must not recreate PrimeVue's confirmation API. Do not wrap Nuxt UI `useToast()` without a demonstrated application-specific need.
 
 Map notification concepts consistently:
 
@@ -266,19 +270,46 @@ Current screenshots should be reference material for content and behavior, not s
 
 Update statuses as the migration proceeds. Use `[ ]` for not started, `[~]` for in progress, and `[x]` for complete.
 
-- [ ] Phase 0: Characterization tests and migration harness
-- [ ] Phase 1: Nuxt UI foundation and design system
-- [ ] Phase 2: Feedback, confirmation, and pagination decoupling
-- [ ] Phase 3: Dashboard application shell
-- [ ] Phase 4: Connection and low-complexity pages
-- [ ] Phase 5: Index list and canonical table pattern
-- [ ] Phase 6: Index detail, stats, settings, and danger zone
-- [ ] Phase 7: API keys
-- [ ] Phase 8: Tasks
-- [ ] Phase 9A: Documents core search and views
-- [ ] Phase 9B: Documents filters, geo, hybrid, import, and export
-- [ ] Phase 10: Search rules
-- [ ] Phase 11: PrimeVue removal and final hardening
+- [x] Phase 0: Characterization tests and migration harness
+- [x] Phase 1: Nuxt UI foundation and design system
+- [x] Phase 2: Feedback, confirmation, and pagination decoupling
+- [x] Phase 3: Dashboard application shell
+- [x] Phase 4: Connection and low-complexity pages
+- [x] Phase 5: Index list and canonical table pattern
+- [x] Phase 6: Index detail, stats, settings, and danger zone
+- [x] Phase 7: API keys
+- [x] Phase 8: Tasks
+- [x] Phase 9A: Documents core search and views
+- [x] Phase 9B: Documents filters, geo, hybrid, import, and export
+- [x] Phase 10: Search rules
+- [~] Phase 11: PrimeVue removal and final hardening
+
+## TODO:
+- [x] Task polling timeout guidance, 3-second initial toast delay, and per-task cancellation action.
+- [x] Replace fixed corner-radius classes with the Nuxt UI `--ui-radius` token; retain `rounded-full` for circular controls and indicators.
+- [x] Normalize fractional/odd flex gaps to even spacing utilities where the layout permits.
+- [x] Rename `AppTablePagination` to `AppPagination` and update all consumers.
+- [x] Try an alternate table View-link treatment; index list now uses `subtle`.
+- [x] Separate hybrid-search enabled state from configuration; configure/reopen without toggling off.
+- [x] Make dashboard navbar Refresh controls icon-only ghost buttons with accessible names.
+- [x] Move named application-owned types into `app/types/index.d.ts`.
+- [x] Keep invalid settings JSON in an editable draft, show a syntax error, block save, and preserve the full parsed settings payload on valid save.
+- [x] Treat canceled tasks as a non-success result in all mutation callers; only run success callbacks, navigation, modal close/import events, and list refreshes after a succeeded task.
+- [x] Use a soft `View` button for task rows, matching the index table action treatment.
+
+
+### Follow-up completion notes (2026-09-25)
+
+- Task polling now waits three seconds before its first status check, offers a `Cancel task` toast action bound to that invocation's task UID, and continues polling until the server reports a terminal status. A cancellation request is a warning toast; confirmed cancellation is an informational toast and does not enter the generic error handling path. Cancellation request failures surface a separate error toast. Exhausting the polling attempts adds a warning toast with an `Open Tasks` action and resolves as an unknown/incomplete outcome, avoiding a duplicate generic error toast. The delay applies only to client-side status polling: cancellation requests are sent immediately on click, and Meilisearch processes cancellation as a separate task (so a target may finish before cancellation is applied). E2E covers request UID, cancellation failure, terminal cancellation, and timeout guidance.
+- Task mutation consumers now gate success-only follow-up work on `status === 'succeeded'`. Task deletion returns its polled task result rather than its initial enqueued response, so a canceled deletion does not trigger the list refresh path as if it succeeded. Canceled create-index, import/update document, settings, primary-key, search-rule, and destructive-operation flows do not emit completion events, navigate away, or run success callbacks.
+- Task rows now use a neutral soft `View` button with a trailing arrow, matching the index table's view action while preserving opening the task details slideover and keyboard focus return.
+- Settings editing now keeps text in a separate string draft. Invalid JSON remains visible/editable, displays inline feedback, and disables Save; Cancel restores the server baseline. Valid JSON is parsed and sent as the full settings payload. Added regression coverage for malformed input and recovery/cancel behavior.
+- Hybrid search has an `Enabled` switch in its modal. Applying configuration commits enablement, embedder, and semantic ratio; reopening retains configuration; cancel leaves the current search unchanged; disabled search omits the hybrid request parameter. Desktop/mobile controls open configuration without toggling it.
+- Renamed the shared pagination component and updated all five consumers. Navbar refreshes are icon-only ghost controls with `aria-label="Refresh"`. The index table View action uses the subtle variant.
+- Replaced fixed rounded-corner utilities with `rounded-[var(--ui-radius)]`; retained fully circular status indicators, map markers, and floating controls. Normalized fractional/odd flex gaps to even increments where used.
+- Moved named application-owned type declarations from stores, composables, utilities, page scripts, and component scripts to `app/types/index.d.ts`.
+- Restored the index-management route to `/edit` and updated the Phase 6 primary-key E2E test accordingly.
+- Verification for the follow-up: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `git diff --check`, and the complete Chromium suite passed (66 tests). Playwright used port 3101 because port 3100 was already occupied. This completes the TODO list; Phase 11 remains in progress for its separate cross-browser, accessibility, visual, deployment, and final-definition-of-done checks.
 
 ## Phase 0: Characterization Tests and Migration Harness
 
@@ -331,7 +362,13 @@ npm run test:e2e
 
 Record fixture credentials, startup commands, and any intentionally deferred coverage here.
 
-- None yet.
+- Completed 2026-09-17. Playwright is configured in `playwright.config.ts`; `npm run test:e2e` builds the production application, starts an isolated `nuxt preview` on `127.0.0.1:3100`, and runs the blocking Chromium project. Use `npm run dev:traefik` for the development server exposed through Traefik at `http://meilisearch-manager.localhost` on port 3000.
+- The deterministic fixture lives in `e2e/fixtures/meilisearch.ts` and intercepts the real Meilisearch JavaScript client's requests. It requires no external Meilisearch process. Its instance is `Playwright Instance` at `http://127.0.0.1:3000/__meili` with API key `playwright-key`; values are test-only and never leave the intercepted browser context.
+- Committed smoke coverage includes empty-instance redirect, connection setup and persistence, every top-level navigation route, index opening, document search and pagination payloads, task filtering/details, key details, supported and unsupported search-rule gates, color mode, and keyboard dismissal of a modal and drawer.
+- Firefox and WebKit projects run only tests tagged `@cross-browser` through `npm run test:e2e:cross-browser`. Browser binaries were not installed or run in this session; Chromium remains the Phase 0 blocking browser as specified.
+- CI now runs non-mutating ESLint, typecheck, production build, installs Chromium with system dependencies, and runs the Chromium smoke suite.
+- Playwright artifacts are ignored. The Playwright MCP entry was added to `opencode.json` and validated with `opencode debug config`; restart OpenCode before expecting the new MCP server in an existing session.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (10 passed), and `opencode debug config`.
 
 ## Phase 1: Nuxt UI Foundation and Design System
 
@@ -387,7 +424,14 @@ NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-17. Added exact `@nuxt/ui` 4.11.0, local `@iconify-json/lucide`, and Tailwind CSS 4.3.3 dependencies while retaining PrimeVue for unmigrated views.
+- Registered `@nuxt/ui`, removed the duplicate manual Tailwind Vite plugin, and disabled Nuxt UI's automatic font and color-mode integrations. The existing explicit `@nuxt/fonts` module and VueUse `.dark` controller remain authoritative.
+- PrimeVue's auto-imported `useToast` is excluded to avoid colliding with Nuxt UI's composable; existing PrimeVue toast imports, toast renderer, confirmation provider, Aura-derived theme, global pass-through configuration, and `tailwindcss-primeui` remain in place.
+- `UApp` now wraps the active application tree. Nuxt UI's toast, tooltip, icon, and overlay providers are mounted without replacing current PrimeVue feedback behavior.
+- `app/app.config.ts` assigns the existing `meili` purple palette to `primary`, uses `slate` as the neutral palette, defines semantic status colors, and pins global Lucide icon defaults. The body and loading indicator now use Nuxt UI semantic tokens.
+- Global MapLibre, JSON viewer, and dark JSON editor styles remain loaded. Existing PrimeVue routes passed the Chromium characterization suite in light mode, and the color-mode test switched the application to dark mode successfully.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate`, and `npm run test:e2e` (10 passed).
+- `npm audit --omit=dev` reports 10 transitive advisories, including the existing unfixable critical `nuxt-maplibre`/`maplibre-gl` chain. Dependency remediation was not mixed into this UI foundation phase.
 
 ## Phase 2: Feedback, Confirmation, and Pagination Decoupling
 
@@ -400,18 +444,18 @@ Remove PrimeVue service and event-type dependencies from stores and domain compo
 - `app/stores/meilisearch.ts`
 - `app/composables/usePagination.ts`
 - `app/composables/meilisearch/*.ts`
-- Shared confirmation modal and feedback composables created in this phase
+- Shared confirmation modal and composable created in this phase
 
 ### Tasks
 
-1. Implement `useAppToast()` using Nuxt UI `useToast()`.
+1. Replace PrimeVue toast calls with Nuxt UI `useToast()` directly.
 2. Implement one reusable destructive confirmation modal.
 3. Implement `useConfirmAction()` with Nuxt UI `useOverlay()`.
 4. Replace PrimeVue toast imports in stores and Meilisearch composables.
 5. Replace PrimeVue confirmation calls without changing when actions run.
 6. Replace PrimeVue pagination event types with an application-owned event or direct `page`/`pageSize` methods.
 7. Preserve current page reset, offset calculation, scrolling, and total-clamping behavior.
-8. Add targeted tests for wrappers and pagination logic where practical.
+8. Add targeted tests for confirmation and pagination logic where practical.
 
 ### Behavioral requirements
 
@@ -441,7 +485,13 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Implementation completed 2026-09-18. Stores and domain composables use Nuxt UI `useToast()` directly with semantic colors and matching Lucide icons, readable durations, and native ID-based removal for task-polling notifications. Pending tasks use a reduced-motion-safe spinning loader because the toast progress API only represents remaining duration and cannot be indeterminate. No application toast wrapper is needed because the root `UApp` provides the toast infrastructure.
+- Added a reusable destructive `ConfirmActionModal.vue` and promise-based `useConfirmAction()` using Nuxt UI `useOverlay()`. The modal uses `defineModel<boolean>('open')` bound directly to `UModal`'s `v-model:open`; dismissals resolve once as cancellation. Instance, index, document, key, and dynamic search-rule confirmations invoke their existing asynchronous actions only after acceptance.
+- Removed PrimeVue service imports from `app/stores/meilisearch.ts` and every file under `app/composables/meilisearch/`. Existing notification text, task polling, refresh callbacks, and post-action navigation remain intact.
+- Replaced PrimeVue pagination event types with the application-owned `PaginationEvent`. `paginate()` accepts one-based pages for future `UPagination` migrations, while `handlePageEvent()` preserves the current PrimeVue zero-based adapter, page-size reset to page 1, offset calculation, post-fetch scrolling, and total clamping.
+- Added Playwright coverage for destructive confirmation cancellation and accepted asynchronous index deletion, including task polling and post-delete navigation. Extended the deterministic fixture only with the required delete-index and task-status responses.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (11 passed), and `git diff --check`. Source audits found no PrimeVue imports in the Phase 2 domain/store/pagination targets.
+- The development Docker target installs lockfile-pinned Playwright Chromium and its Debian system dependencies, so the unprivileged `node` user can run the Chromium suite without missing-library errors. No implementation tasks are known to remain.
 
 ## Phase 3: Dashboard Application Shell
 
@@ -509,7 +559,12 @@ Perform browser checks at 375, 768, and 1440 pixel widths in light and dark mode
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-18. The app layout now uses `UDashboardGroup`, a local-persisted, resizable `UDashboardSidebar`, `UNavigationMenu`, `UDashboardPanel`, `UDashboardNavbar`, and `UBreadcrumb`. The dashboard owns scrolling through `#app-scroll-container`, and pagination/task infinite scrolling use that container when it exists.
+- Navigation uses Nuxt UI menu types and Iconify Lucide icons. Explicit active state keeps Indexes and Search Rules highlighted on nested routes. The sidebar supports responsive drawer behavior without manual width watchers and includes instance actions in multi-instance mode only.
+- Instance switching uses `UDropdownMenu` and `UModal`/`USelect`; the new fixture also intercepts proxy-mode `/api/meilisearch/**` calls. The shell remains available in proxy mode without instance-management controls.
+- Nuxt UI automatic color mode is authoritative: legacy VueUse controller/plugins and Prime color-mode controls were removed, `ui.colorMode: false` was removed, `UColorModeSelect` is used in the sidebar footer, and JSON/map/chart consumers use Nuxt `useColorMode()`.
+- PrimeVue remains intentionally mounted for unmigrated routes, including `AppToast`, `ConfirmDialog`, `router-link-menus/Menu.vue`, and shared Prime menu types. Removed router wrappers were only used by the replaced shell.
+- Added dashboard E2E coverage for 375px keyboard navigation, 768px dark-mode panel scrolling/no horizontal overflow, 1440px nested active state and breadcrumbs, multi-instance switching, and proxy-mode behavior. Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (16 passed), and `git diff --check`.
 
 ## Phase 4: Connection and Low-Complexity Pages
 
@@ -568,7 +623,14 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-19. Connection error, new-instance setup, dashboard, backups, and experimental-feature pages now use Nuxt UI components with no PrimeVue references in the migrated pages.
+- Phase 4 routes own their `UDashboardPanel` through `AppDashboardPanel`. Breadcrumbs intentionally provide navbar identity instead of duplicate page titles, and page bodies own native scrolling so the scrollbar remains flush with the panel edge. Legacy routes retain the layout-owned panel until migrated.
+- New-instance setup uses `UForm`, `UFormField`, the existing Zod schema, first-invalid-field focus, and the existing persistence and health-check flow. Proxy-mode bypass and duplicate-host rejection remain covered.
+- Dashboard statistics use stock subtle `UPageCard` components in `UPageGrid`. Backups use `UTabs` and preserve distinct dump/snapshot task polling; experimental features use `USwitch` and continue submitting every returned feature key.
+- The backups nested route is the canonical child-action pattern: its parent route owns `AppDashboardPanel`, route navigation, and the generic `#sub-page-actions` navbar outlet. Each child teleports its stateful primary action into that outlet, so action controls remain outside the scroll body and are replaced on sub-route navigation. Reuse this pattern for later nested route families rather than adding a sub-layout.
+- External documentation links use Nuxt UI's NavigationMenu external-link treatment: `i-lucide-arrow-up-right` at `size-3 text-dimmed`.
+- Added Phase 4 fixture support and Playwright coverage for setup validation, duplicate hosts, connection retry, proxy mode, dashboard refresh, backup endpoints/task polling, experimental-feature payloads, responsive sidebar behavior, and flush panel scrolling.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (23 passed), and `git diff --check`.
 
 ## Phase 5: Index List and Canonical Table Pattern
 
@@ -624,7 +686,15 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-19. The indexes route now owns an `AppDashboardPanel` and implements the canonical remote-table pattern with typed `TableColumn<IndexRow>[]`, stable UID row IDs, a fixed-width right-pinned action column, external `UPagination`, and an explicit 20/50/100 `USelect` page-size control. `UTable` only renders the server response; it has no client pagination configuration.
+- `AppTablePagination` now provides the reusable Nuxt UI footer layout: a labelled page-size `USelect` in a `UFieldGroup` and an externally controlled `UPagination`. Pages keep remote-fetch callbacks local, while `usePagination()` derives the normalized total and result summary from an optional total getter.
+- Index loading, empty, error, and total-report states are explicit. Document counts continue to be enriched from instance statistics, primary keys use semantic badges with a `Not set` state, and pagination preserves offset calculation, page-size reset, panel scrolling, and total-shrink clamping.
+- `AppDashboardPanel` constrains its body as the sole vertical scroll viewport. The index card does not shrink, `UTable` retains only local horizontal overflow, and pagination returns the dashboard body to its top after a remote page change.
+- `CreateIndexModal.vue` now uses `UModal`, `UForm`, `UFormField`, and `UInput` with Zod UID validation, returned focus for invalid fields, visible server errors, and programmatic form submission from the modal footer. Empty primary keys are omitted from the create request; the modal closes as soon as the create task is enqueued, while the list/statistics refresh only after the task completes.
+- `useIndexes()` now exposes the one-based `paginate()` interface used by Nuxt UI controls. The PrimeVue `handlePageEvent()` adapter and legacy first-record index remain available in `usePagination()` for future unmigrated pages, but are no longer exposed by the index composable.
+- The deterministic fixture now supports indexed datasets, query-based index pagination, dynamic total changes, and stateful index creation. Added Phase 5 Playwright coverage for offsets, page-size reset, total clamping, optional-primary-key payloads, task-polled creation, validation focus, and a 375px pinned action/no-overflow check.
+- Corrected stale E2E routes introduced by the Phase 4 backup route split: navigation now targets `/backups/dumps`, and the backup smoke test targets the distinct dumps and snapshots routes.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (28 passed), and `git diff --check`.
 
 ## Phase 6: Index Detail, Stats, Settings, and Danger Zone
 
@@ -683,7 +753,13 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Do not modify index sub-pages while completing the backups pattern. When Phase 6 begins, make `app/pages/indexes/[uid].vue` the nested shell with the same `#sub-page-actions` action outlet, dashboard toolbar route navigation, and child-owned teleported actions.
+- Completed 2026-09-19. The index family now owns `AppDashboardPanel`, dynamic index breadcrumbs, a `UDashboardToolbar`, and typed `UNavigationMenu` route navigation for Stats, Documents, Settings, and Edit. The Documents page remains otherwise unmigrated for Phase 9, with only its navbar action teleport moved to the shared `#sub-page-actions` outlet.
+- Stats uses Nuxt UI alerts, skeletons, page cards, and a direct navbar refresh button. `FieldDistributionChart.vue` now manages a Chart.js doughnut canvas lifecycle directly, rebuilding safely for data and color-mode changes and providing an accessible empty/chart state.
+- Settings remains read-only initially, keeps the existing themed JSON editor, and moves Edit/Cancel/Save to the navbar outlet. It now refreshes on UID changes, maintains a cloned server baseline for cancellation, waits for settings task polling before returning to read-only mode, and preserves the full settings payload unchanged.
+- The Edit page owns its card layouts: the primary-key form is in the card body with its task-aware submit action in the card footer, while the danger warning is in the delete-card body and its destructive actions are in the footer. Primary-key updates retain the exact `{ primaryKey }` payload; delete-all-documents and delete-index retain their distinct confirmations, endpoints, task polling, and post-delete navigation. The obsolete `DeleteIndexDataDangerZone.vue` wrapper was removed.
+- Extended the deterministic fixture with stateful index settings and primary-key updates plus delete-all-documents support. Added `e2e/phase6-index-detail.spec.ts` for nested navigation/chart coverage, full settings payload/task coverage, and primary-key/delete-all behavior.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (31 passed), and `git diff --check`. Source audits found no PrimeVue references in Phase 6 files; PrimeVue remains intentionally in the deferred Documents page.
 
 ## Phase 7: API Keys
 
@@ -741,7 +817,15 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-20. The keys page now follows the Phase 5 canonical remote-table pattern: `AppDashboardPanel`, typed `TableColumn<Key>[]` with stable UID row IDs, right-pinned fixed-width row-action column (`id: 'actions'`, 80px, icon-only `UDropdownMenu` trigger with the accessible name "Show key actions"), external `AppTablePagination`, and explicit loading/empty/error states with retry.
+- This is the first `USlideover` family; Phase 8 (task details) should reuse it. During review the components were renamed to the Nuxt UI target naming (`CreateKeySlideover.vue`, `EditKeySlideover.vue`, `KeyDetailsSlideover.vue`), establishing the `*Drawer.vue` → `*Slideover.vue` convention documented under Component mapping. All three slideovers use `v-model:open`, `sm:max-w-2xl` content width (matching the old 40rem drawers), footer Cancel/Submit buttons, and the key details/edit slideovers stay mounted behind the page's `v-if="currentKey"` + 250ms cleanup watchers.
+- Reveal moved out of the table by review decision: table rows show only the masked key plus copy; masked/reveal (eye/eye-off `UButton` with aria-label) exists only in the key details slideover. Not yet a shared component.
+- `useKeys()` now exposes the one-based `paginate()` interface with a total getter and `paginationSummary`; `handlePageEvent()`/`firstDatasetIndex` are no longer exposed (only the keys page consumed them). Fetch/create/update/delete payloads and the `confirmDeleteKey()` flow are unchanged.
+- Intentional fixes recorded per the document: page meta title corrected from `Tasks` to `Keys`; "THe API Key" delete-toast typo fixed; the details-drawer expired badge now normalizes dates with `new Date()` because the Meilisearch client returns key dates as ISO strings at runtime (the old `expiresAt < today` Date/string comparison never triggered); create/edit forms show visible Zod validation (indexes ≥ 1, actions ≥ 1) and server errors in a `UAlert` (old code swallowed them).
+- Component-API findings that future phases must respect: (1) `UFormField` injects a single id to all child controls, so a second form control (e.g. `UCheckbox`) inside the same field collides with the first — keep checkboxes outside the `UFormField`; (2) submit buttons with `form="id"` attributes outside the form element do not trigger `UForm` submission through overlay portals — use the `CreateIndexModal` pattern (`form.value?.submit()` on click); (3) `UInputMenu` multiple mode does not propagate typed text through `v-model:search-term` — free-entry commit must read `event.target.value` from `keydown.enter.prevent`/`blur` (implemented in `CreateKeyDrawer.vue`; typed text remains visible in the input after committing a chip, which is deduplicated and harmless); (4) `USelectMenu` trigger has no useful accessible name without an associated label, and `UInputDate` uses `@internationalized/date` values (`fromDate`/`toDate()`/`today`/`toCalendarDateTime` from the transitive dependency).
+- Expiry uses a single `UInputDate` with `granularity="minute"` + 12-hour cycle, min value today, and a `Clear` button; the previous "tomorrow midnight" default display is replicated via `default-value` while the payload stays `null` unless picked. Key create/update/delete are synchronous REST operations in Meilisearch, so no task polling applies.
+- Fixture now holds three default keys (normal, `['*']` wildcard admin, expired) with stateful GET pagination, `POST /keys`, `PATCH /keys/:keyOrUid` (matched by uid or key string), and `DELETE /keys/:keyOrUid` (204); keys are deep-cloned per test to avoid cross-test mutation. `e2e/phase7-keys.spec.ts` covers pagination offsets/page-size reset, table masking with details-only reveal, create payload fidelity (empty uid omitted, actions trimmed/deduped, `['*']` mapping), edit limited to name/description, delete confirmation cancel/accept, expired badge, keyboard focus return, mobile pinned column, and dark-mode rendering. `navigation.spec.ts` now asserts `/keys` via breadcrumb with heading `Keys`.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (41 passed), and `git diff --check`. PrimeVue source audit over the five migrated files returned no matches. Playwright-MCP visual inspection was unavailable in this environment (Chrome channel not installable without root); browser checks relied on the committed Chromium suite including 375px and dark-mode cases.
 
 ## Phase 8: Tasks
 
@@ -752,7 +836,7 @@ Migrate task filtering, infinite loading, polling, details, and deletion.
 ### Primary files
 
 - `app/pages/tasks.vue`
-- `app/components/meilisearch/TaskDetailsDrawer.vue`
+- `app/components/meilisearch/TaskDetailsSlideover.vue` (rename of `TaskDetailsDrawer.vue` during this phase)
 - `app/components/meilisearch/DeleteTasksModal.vue`
 - `app/composables/meilisearch/useTasks.ts`
 
@@ -795,7 +879,18 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-20. The tasks page follows the Phase 5/7 canonical patterns: `AppDashboardPanel`, a `UDashboardToolbar` (wrapping via `:ui="{ root/left/right: 'flex-wrap' }"` for narrow screens) holding three `USelectMenu multiple` filters with `aria-label`s plus the 20/50/100/500 limit `UFieldGroup`/`USelect` and the shared `PollToggle` bound to `meilisearch-tasks-polling-enabled`, typed `TableColumn<Task>[]` with a right-pinned 96px actions column, a labeled "Details" `UButton` per row (no dropdown needed for a single action), and explicit error (`UAlert` + Retry), loading skeleton, empty ("No tasks found"), appending-spinner, and "Scroll to load more tasks" states.
+- `TaskDetailsDrawer.vue` was renamed to `TaskDetailsSlideover.vue` per the naming convention (`v-model:visible` → `v-model:open`, `USlideover`, `sm:max-w-4xl` ≈ the old 60rem drawer) and keeps the read-only `ThemedJsonEditor` (text mode) body. The page's open-state ref is now `taskDetailsSlideoverOpen`; the 250ms delayed `currentTask` cleanup and `v-if` + `Teleport to="body"` mount pattern match the keys slideovers.
+- `DeleteTasksModal.vue` uses `UModal` with content in `#body` (the UModal default slot is the trigger — putting content there renders it un-chromed in the page flow, intercepting clicks; this was caught by E2E), the shared `useConfirmAction()` as a nested confirmation modal above the filter modal, `canSubmit` requiring at least one filter, and filters written into the shared `deleteTasksQuery` only after confirmation acceptance. The three `USelectMenu` triggers need explicit `aria-label`s because `UFormField` labels do not name SelectMenu triggers (they fall back to the default "Show popup" aria-label, unlike `UInputMenu` inputs).
+- `useTasks.ts` required no changes; polling, stale-response protection, duplicate suppression, cursor appends, and delete task polling were preserved verbatim. The page's `useInfiniteScroll` target is now `.app-scroll-container` (legacy selector fallback dropped).
+- Intentional deviations: (1) `UTable :loading` uses `isFetchingTasks` only — `isPollingLatest` no longer blanks the table on every 5-second poll; activity remains visible via the PollToggle indicator; (2) filters moved from the DataTable filter row to `UDashboardToolbar`; (3) details slideover width 60rem → 56rem; (4) `e2e/tasks-keys.spec.ts` deleted (its keys case is covered by `phase7-keys.spec.ts`, its tasks case by the new Phase 8 spec); (5) `navigation.spec.ts` now checks `/tasks` identity via breadcrumb like the other migrated routes (no more page heading).
+- `getStatusSeverity` was replaced by `getTaskStatusColor` in `app/utils/index.ts` (Prime severity names → Nuxt UI semantic colors; `getRankingScoreSeverity` retained for Phase 9). The Prime-only `RefreshButton.vue` had no remaining users and was removed. `PageTitleSection`/`NotFoundMessage` remain for search-rules/documents.
+- Component-API findings for future phases: (1) meilisearch `TasksOrBatchesQuery`/`DeleteOrCancelTasksQuery` filter fields are `OptionStarOrList<T[]>` (they accept `'*'` and nested arrays) and do not type-fit `USelectMenu`'s plain-array model — bind selects to plain `ref<T[]>`s and build the typed query at fetch/submit time (implemented in `tasks.vue` and `DeleteTasksModal.vue`); (2) `USelectMenu` renders its trigger as `role="button"` while `USelect` renders `role="combobox"`; (3) SelectMenu popups portal to `<body>`, so option lookups must not be scoped to the dialog; (4) `UAlert` has no `role="alert"` — assert by visible text; (5) `USelect` numeric values are read back through `@update:model-value` with `Number($event)` (AppTablePagination pattern).
+- Fixture: `installMeilisearchMock` now holds a stateful `tasks` dataset (default `[task]` unchanged) with comma-or-repeated `statuses`/`types`/`indexUids` query filtering, `limit`, an inclusive `from` cursor (`next` = first task of the next page, per Meilisearch semantics), and `DELETE /tasks` removing matching tasks and reporting through `onDeleteTasksRequest(request, deletedCount)`. New options: `tasks`, `getTasks`, `onDeleteTasksRequest`.
+- `e2e/phase8-tasks.spec.ts` covers filter query params (statuses/types/indexUids/limit), cursor pagination without duplicates (60-task dataset, `from=51`, single row per uid), details slideover JSON/Escape/focus-return, delete flow (disabled until filtered, cancel preserves, accept sends `DELETE /tasks?statuses=…` + deleted-count + success toast + refreshed empty list), polling enable/immediate-poll/interval-tick/disable without duplicate timers, error alert + retry recovery, explicit empty state, and 375px pinned-action/no-overflow checks.
+- Verification passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `npm run test:e2e` (47 passed), and `git diff --check`. PrimeVue source audit over the migrated files returned no matches. Playwright-MCP visual inspection remains unavailable in this environment (per the Phase 7 note); browser checks relied on the committed Chromium suite including 375px cases.
+- Post-review refinements: filters/limit/polling moved from `UDashboardToolbar` into the tasks `UCard` `#header` (a single wrapping row, limit + `PollToggle` right-aligned via `ms-auto`, wrapping under the filters on narrow screens), and the table adopted the official sticky-header pattern: `UTable sticky` with table-owned vertical scrolling (`:ui="{ root: 'h-full tasks-table-scroll' }"`, card `flex min-h-0 flex-1 flex-col`), so the navbar/toolbar stay fixed and the column header sticks while rows scroll and infinitely load inside the table region. The infinite-scroll target is now `.tasks-table-scroll` (the table root) instead of `.app-scroll-container`; the panel body no longer scrolls on this page, so the floating scroll-to-top button does not appear there. E2E scroll targets updated accordingly.
+- The three task filters moved into a shared `AppFiltersPopover.vue` (`UPopover` chrome mirroring `AppPageActions`, stacked labeled `USelectMenu` fields, `w-72` with a `max-w-[calc(100vw-2rem)]` mobile guard). The trigger is a neutral-outline Filter button whose active-filter count renders via `UChip` (`size="3xl"` + `:ui="{ base: 'h-5 min-w-5 px-1.5 text-xs' }"` — stock chip sizes are notification dots, max 12px, too small for a count). The popover footer shows a full-width neutral-soft "Clear filters" button (with `USeparator`) only when `count > 0`; the component emits `clear`, the page resets the filter refs, and clearing intentionally leaves the popover open. Component-API notes: popover Escape after interacting with a nested `USelectMenu` proved unreliable in Chromium (focus returns to the select trigger) — the E2E suite closes the popover by toggling the trigger instead; outside-click dismissal works. This component is the intended second consumer for Phase 10 search-rules filters.
 
 ## Phase 9A: Documents Core Search and Views
 
@@ -849,7 +944,11 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-23. The documents route now uses one shared `UDashboardToolbar`, teleported into the index panel's new `#sub-page-toolbar` header outlet below the index route navigation. Search, estimated hits, standard sort, filter state, hybrid/ranking toggles, and the JSON/Card, Table, and conditional Geo view selector remain mounted while result presentations change. The toolbar wraps at narrow widths and every icon-only toggle/action has an accessible name and pressed state.
+- `useSearch()` now exposes the canonical one-based `paginate()` interface and `paginationSummary`; its 300 ms debounce, Enter search, page-size reset, and total clamping remain intact. JSON/Card, Table, and Geo share one result set and one `AppTablePagination` pattern with 20/50/100 sizes. View changes do not issue search requests.
+- Post-review pagination update (2026-09-23): document search retains the `master` branch's `offset`/`limit` request semantics, and pagination state remains local to each view. Document search fetches the index's `pagination.maxTotalHits` setting (falling back to Meilisearch's default of 1000), caps its reachable total with `min(estimatedTotalHits, maxTotalHits)`, and clamps the current page before issuing an out-of-range search. The request limit is also capped by `maxTotalHits` when it is smaller than the selected page size. Indexes, keys, and dynamic search rules retain their local reactive pagination.
+- JSON hits now use Nuxt UI cards, progress, image popovers, tooltips, and accessible actions. The server-backed table uses typed dynamic `TableColumn<RecordAny>[]`, primary/ranking and action pinning, stable primary-key row IDs when available, field and image `UPopover`s, semantic ranking badges, and a `UDropdownMenu` action column. It performs no client pagination or sorting. Loading, empty, search-error/retry, and pagination states are explicit.
+- Edit/delete behavior is available from JSON and table views; delete remains hidden without a primary key and still uses the shared destructive confirmation plus task polling. The unused `DocumentHitCard.vue` was removed after a final usage search.
 
 ## Phase 9B: Documents Filters, Geo, Hybrid, Import, and Export
 
@@ -859,11 +958,11 @@ Complete the document-management feature without implementing future search impr
 
 ### Primary files
 
-- `app/components/meilisearch/FilterDocumentsDrawer.vue`
+- `app/components/meilisearch/FilterDocumentsSlideover.vue` (rename of `FilterDocumentsDrawer.vue` during this phase)
 - `app/components/meilisearch/HybridSearchModal.vue`
 - `app/components/meilisearch/DocumentsGeoMap.vue`
-- `app/components/meilisearch/EditDocumentDrawer.vue`
-- `app/components/meilisearch/ImportDocumentsDrawer.vue`
+- `app/components/meilisearch/EditDocumentSlideover.vue` (rename of `EditDocumentDrawer.vue` during this phase)
+- `app/components/meilisearch/ImportDocumentsSlideover.vue` (rename of `ImportDocumentsDrawer.vue` during this phase)
 - `app/components/meilisearch/ExportDocumentsModal.vue`
 - `app/composables/meilisearch/useDocuments.ts`
 - `app/composables/meilisearch/useExportDocuments.ts`
@@ -916,7 +1015,12 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-23. `FilterDocumentsDrawer.vue`, `EditDocumentDrawer.vue`, and `ImportDocumentsDrawer.vue` were renamed to `FilterDocumentsSlideover.vue`, `EditDocumentSlideover.vue`, and `ImportDocumentsSlideover.vue`; all now use `USlideover` with `v-model:open`. Hybrid and export use `UModal`, file upload uses `UFileUpload`, and every migrated form/control uses Nuxt UI semantic components.
+- Filter expression logic was preserved: selected values are ORed within each facet, facets are ANDed together, apostrophes are escaped, and radius/bounding-box/polygon geo filters plus nearest/farthest geo sorting retain their existing Meilisearch expressions. Geo controls remain available only in Geo view and only produce expressions when `_geo` settings support them.
+- `DocumentsGeoMap.vue` retains `_geo` and GeoJSON Point parsing, center/bounds behavior, navigation controls, and light/dark MapLibre styles. Marker details now use keyboard-accessible `UPopover` triggers with responsive JSON content. Geo remains conditional on `_geo`/`_geojson` field distribution.
+- Hybrid search retains embedder availability gating, composite embedder labeling, semantic ratio, cancel behavior, and the exact `{ embedder, semanticRatio }` request. Import retains add-or-replace/add-or-update, JSON/CSV/manual input, task polling, errors, and the 100 MB limit. Export retains 1,000-document batches, two-pass CSV column discovery, custom/default filenames, and browser download behavior.
+- The deterministic fixture now supports configurable document/settings/stats data, ranking responses, facet search, stateful single-document deletion, import endpoints, and batched document reads. `e2e/phase9-documents.spec.ts` covers the shared taskbar, debounce and payloads, request-free view switching, table/ranking/sort/pagination behavior, facet escaping, geo filter/sort expressions, hybrid parameters, marker rendering, edit/delete overlays, import body, export filename/content, and 375px no-overflow behavior. The original document characterization test was updated for the accessible search name and current `/edit` route.
+- Verification before the subsequent visual and finite-pagination review fixes passed: `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, focused Phase 9 Chromium tests, and `git diff --check`. The latest review changes intentionally remain unverified until the requested final test pass. The most recent complete Chromium run passed 51 of 52 tests; its sole failure was the pre-existing Phase 6 primary-key test failing to find its input. No PrimeVue references remain in the documents page or its migrated document components.
 
 ## Phase 10: Search Rules
 
@@ -934,6 +1038,9 @@ Migrate search-rule gating, list, conditions, actions, and create/edit forms whi
 - `app/components/meilisearch/SearchRuleConditionModal.vue`
 - `app/components/meilisearch/SearchRuleActionModal.vue`
 - `app/composables/meilisearch/useDynamicSearchRules.ts`
+- `app/types/index.d.ts`
+- `e2e/fixtures/meilisearch.ts`
+- `e2e/phase10-search-rules.spec.ts`
 
 ### Page order
 
@@ -967,7 +1074,7 @@ Do not add the newer filter-based search-rule condition in this phase. That is t
 ### Acceptance criteria
 
 - Feature gating works for old versions, disabled flag, and enabled support.
-- Create/edit payloads match the baseline.
+- Create/edit payloads match the current dynamic-search-rules API.
 - Nested modal focus and keyboard behavior work.
 - Search-rule tables and forms contain no PrimeVue dependency.
 - Playwright covers gating and one complete create/edit/delete journey.
@@ -983,7 +1090,14 @@ npm run test:e2e
 
 ### Handoff notes
 
-- None yet.
+- Completed 2026-09-24 and finalized 2026-09-25. Search-rule feature gating, list, create/edit routes, shared form, condition modal, and pin-action modal now use Nuxt UI components and contain no PrimeVue dependency. Breadcrumbs remain the page-title source; create/edit use subtle cards, `UTextarea` for Description, and `AppDashboardPanel` actions for Cancel/Save.
+- The list follows the established `UTable`/`AppTablePagination`/`AppFiltersPopover` pattern. UID search is debounced and server-backed. The card header contains UID and non-searchable status filters, with Active/Inactive rendered using the same badges as the table. The dashboard actions include Refresh and New Rule. API `precedence` is normalized to the Priority column, object-shaped conditions are counted correctly, and local Priority sorting cycles unsorted → ascending → descending → unsorted.
+- The Meilisearch JavaScript SDK is pinned to `0.62.0`, whose native search-rule types match the supported server API. The form now uses SDK-backed `precedence`, object-shaped `SearchRuleConditions`, `words`, `SearchRuleAction[]`, and `SearchRuleUpdatePayload` directly. The temporary hand-written API payload type and `app/utils/search-rules.ts` compatibility adapter were removed; application-owned form/view types live in `app/types/index.d.ts`.
+- Query-empty, query-contains, and one-sided or bounded time conditions remain supported. Time inputs use native `datetime-local` through `UInput` and convert local entry to ISO strings on save. The newer filter-based condition remains explicitly deferred.
+- Pin actions use one free-entry autocomplete `UInputMenu` for document search or exact ID entry. Search results include document snippets; selecting a result or pressing Enter for an exact ID displays a JSON preview without search-triggered error toasts. Editing an existing action loads its saved document into the preview automatically, and missing documents are reported inline. Stale preview responses are ignored after the modal closes or its index/ID changes.
+- Search-rule mutations use the SDK's native task-backed return type. The composable follows the existing task polling/toast pattern and redirects only after completion, so the list fetch after navigation reflects the saved rule. The SDK's new `dsrUpdate` and `dsrClear` task types are also available in task filters.
+- The stateful Playwright fixture supports dynamic-search-rule list, read, update, and delete endpoints. `e2e/phase10-search-rules.spec.ts` covers create/edit/delete payload fidelity, inactive filtering, precedence display, the three-state Priority sort, autocomplete preview behavior, and automatic existing-document preview. The existing navigation suite covers version and experimental-feature gating.
+- Verification passed with ESLint, `npm run typecheck`, `npm run build`, and the focused Chromium Phase 10 suite (5 tests). Phase 11 remains responsible for dependency/configuration removal and the final all-source PrimeVue audit.
 
 ## Phase 11: PrimeVue Removal and Final Hardening
 
@@ -1084,7 +1198,13 @@ Run any unit, accessibility, and visual test scripts added during earlier phases
 
 ### Handoff notes
 
-- None yet.
+- PrimeVue runtime integration and application references were removed from the active app in the current Phase 11 slice. Removed packages: `primevue`, `@primevue/nuxt-module`, `@primevue/forms`, `@primeuix/themes`, `tailwindcss-primeui`, and the Prime-only `tailwind-merge` utility. `package-lock.json` was regenerated and a clean `npm ci` completed successfully.
+- Removed the Prime module/configuration, theme preset and global pass-through config, root Prime toast/confirmation providers, stale Prime menu wrapper, unused Prime message/error and page-title/not-found helpers, Prime-derived global types/helper, Prime CSS import/utilities, and the Prime MCP entry. Removed the obsolete Prime component-library link from the README. Nuxt UI and Playwright MCP entries remain; `UApp`, Nuxt UI theme palettes, JSON styles, MapLibre styles, and app behavior remain.
+- Source audit of `app/` found no matches for the Phase 11 PrimeVue/import/API/CSS patterns. `package.json` and `package-lock.json` contain no PrimeVue packages. Historical phase context in this migration handoff remains as migration documentation and is not included in the application bundle.
+- Verification passed: `npm ci`, `npx eslint . --max-warnings=0`, `npm run typecheck`, `npm run build`, `NUXT_PUBLIC_STATIC_DEPLOY=true npm run generate`, and `npx nuxt build --preset github_pages`. Chromium E2E: 60 passed, 1 failed; the only failure is the previously reported Phase 6 primary-key test failing to find the `Primary Key` input (`e2e/phase6-index-detail.spec.ts:80`), unrelated to PrimeVue removal. Playwright ran with a temporary port 3101 because the configured 3100 endpoint was occupied; `playwright.config.ts` was restored afterward.
+- Follow-up dashboard-shell cleanup: removed the `dashboardPanel` route-meta switch and the layout-owned fallback `UDashboardPanel`; all app-layout pages render or inherit their own `AppDashboardPanel`. Removed the fallback scroll container, layout scroll-to-top listener/button, and the `.legacy-app-scroll-container` pagination selector. Removed the unused pagination `firstDatasetIndex` and `handlePageEvent` adapter and their search-rules composable exports. `/backups` now uses the app layout and redirects to `/backups/dumps`; the navigation E2E test verifies the redirect and breadcrumb.
+- Follow-up verification: ESLint, typecheck, and Node build passed. Targeted Chromium navigation tests passed (2/2), including `/backups` direct entry. The complete Chromium run passed 60/62; it hit the known Phase 6 primary-key failure plus one intermittent Phase 10 create-rule preview assertion. The Phase 10 test passed on isolated rerun. Cross-browser execution remains blocked because Firefox and WebKit Playwright binaries are not installed. `playwright.config.ts` was restored to port 3100 after the run.
+- Phase 11 remains in progress. Remaining definition-of-done checks include resolving/revalidating the known Phase 6 failure, cross-browser smoke tests, automated accessibility checks and visual review, and runtime proxy/static deployment smoke tests. The separate `TODO` list under this handoff was not implemented in this slice.
 
 ## Functional Regression Checklist
 

@@ -1,21 +1,29 @@
+import type { SearchPaginationState } from '@/types'
 import type { Filter, HybridSearch, RecordAny, SearchParams, SearchResponse } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '@/composables/usePagination'
 
-export function useSearch(initialPerPage: number = 20) {
+export function useSearch(initialPerPage: number = 20, paginationState: SearchPaginationState = {}) {
     const toast = useToast()
     const meilisearchStore = useMeilisearchStore()
+    const searchResults = ref<SearchResponse | null>(null)
     const {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        resultText: paginationSummary,
         syncCurrentPageWithinTotal,
-        handlePageEvent,
-    } = usePagination(initialPerPage)
+        paginate,
+    } = usePagination(initialPerPage, {
+        total: () => reachableTotal(searchResults.value?.estimatedTotalHits),
+        itemLabel: 'documents',
+    })
 
-    const searchResults = ref<SearchResponse | null>(null)
+    function reachableTotal(total?: number) {
+        const maxTotalHits = paginationState.maxTotalHits?.value
+        return typeof maxTotalHits === 'number' ? Math.min(total ?? 0, maxTotalHits) : total ?? 0
+    }
+
     const searchQuery = ref('')
     const searchSort = ref<string[]>([])
     const searchGeoSort = ref<string | null>(null)
@@ -35,13 +43,17 @@ export function useSearch(initialPerPage: number = 20) {
 
     const isFetching = ref(false)
     const error = ref<string | null>(null)
+    const searchLimit = computed(() => {
+        const maxTotalHits = paginationState.maxTotalHits?.value
+        return typeof maxTotalHits === 'number' ? Math.min(perPage.value, maxTotalHits) : perPage.value
+    })
 
     const searchParams = computed<SearchParams>(() => {
         return {
             sort: searchSortValues.value.length > 0 ? searchSortValues.value : undefined,
             filter: searchFilter.value ?? undefined,
-            hybrid: hybridSearchConfig.value ?? undefined,
-            limit: perPage.value,
+            hybrid: hybridSearchEnabled.value ? hybridSearchConfig.value ?? undefined : undefined,
+            limit: searchLimit.value,
             offset: offset.value,
             showRankingScore: showRankingScore.value || undefined,
             showRankingScoreDetails: showRankingScore.value || undefined,
@@ -80,6 +92,8 @@ export function useSearch(initialPerPage: number = 20) {
     ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
         if (resetPagination) {
             currentPage.value = 1
+        } else if (typeof paginationState.maxTotalHits?.value === 'number') {
+            syncCurrentPageWithinTotal(paginationState.maxTotalHits.value)
         }
 
         const results = await search(indexUid, searchQuery.value, searchParams.value)
@@ -87,7 +101,7 @@ export function useSearch(initialPerPage: number = 20) {
             return results
         }
 
-        if (syncCurrentPageWithinTotal(results.estimatedTotalHits)) {
+        if (syncCurrentPageWithinTotal(reachableTotal(results.estimatedTotalHits))) {
             return search(indexUid, searchQuery.value, searchParams.value)
         }
 
@@ -97,10 +111,11 @@ export function useSearch(initialPerPage: number = 20) {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Search Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Search Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
@@ -108,8 +123,8 @@ export function useSearch(initialPerPage: number = 20) {
     return {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
+        paginationSummary,
         searchResults,
         searchQuery,
         searchSort,
@@ -121,7 +136,7 @@ export function useSearch(initialPerPage: number = 20) {
         isFetching,
         error,
         searchParams,
-        handlePageEvent,
+        paginate,
         search,
         searchPaginated,
     }

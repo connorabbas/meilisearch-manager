@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import JsonEditorVue from 'json-editor-vue'
 
-const { isDark } = useAppColorMode()
-const jsonEditorDarkModeClass = computed(() => isDark.value ? 'jse-theme-dark' : '')
+const colorMode = useColorMode()
+const jsonEditorDarkModeClass = computed(() => colorMode.value === 'dark' ? 'jse-theme-dark' : '')
 </script>
 
 <template>

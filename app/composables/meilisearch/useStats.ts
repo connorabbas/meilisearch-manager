@@ -1,5 +1,4 @@
 import type { IndexStats, Stats, Version } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useStats() {
@@ -10,6 +9,7 @@ export function useStats() {
     const indexStats = ref<IndexStats | null>(null)
     const version = ref<Version | null>(null)
     const isFetching = ref(false)
+    const isPolling = ref(false)
     const error = ref<string | null>(null)
 
     async function fetchStats(): Promise<Stats | undefined> {
@@ -78,13 +78,33 @@ export function useStats() {
         }
     }
 
+    async function pollIndexStats(uid: string): Promise<IndexStats | undefined> {
+        const client = meilisearchStore.getClient()
+        if (!client || isFetching.value || isPolling.value) {
+            return
+        }
+
+        isPolling.value = true
+
+        try {
+            const results = await client.index(uid).getStats()
+            indexStats.value = results
+            return results
+        } catch (err) {
+            console.error('Failed to poll index stats', err)
+        } finally {
+            isPolling.value = false
+        }
+    }
+
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Stats Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Stats Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
@@ -94,9 +114,11 @@ export function useStats() {
         indexStats,
         version,
         isFetching,
+        isPolling,
         error,
         fetchStats,
         fetchIndexStats,
+        pollIndexStats,
         fetchVersion,
     }
 }

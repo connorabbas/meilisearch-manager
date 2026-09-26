@@ -1,396 +1,326 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import SearchRuleConditionModal from './SearchRuleConditionModal.vue'
 import SearchRuleActionModal from './SearchRuleActionModal.vue'
-import ConfirmPopup from 'primevue/confirmpopup'
-import { useConfirm } from 'primevue/useconfirm'
-import { Pencil, Plus, Trash2 } from '@lucide/vue'
 import type {
-    SearchRuleCondition,
     SearchRuleAction,
     SearchRuleQueryCondition,
     SearchRuleTimeCondition,
 } from 'meilisearch'
+import type { SearchRuleConditionEntry, SearchRuleFormState } from '@/types'
 
-export interface SearchRuleFormState {
-    uid: string
-    description: string
-    priority: number | null
-    active: boolean
-    conditions: SearchRuleCondition[]
-    actions: SearchRuleAction[]
-}
-
-const props = defineProps<{
-    isEdit?: boolean,
-}>()
-
+const props = defineProps<{ isEdit?: boolean }>()
 const modelValue = defineModel<SearchRuleFormState>({ required: true })
-const isLoading = defineModel<boolean>('isLoading', { default: false })
+defineModel<boolean>('isLoading', { default: false })
 
-const emit = defineEmits<{
-    save: []
-    cancel: []
-}>()
-
-const confirm = useConfirm()
-
-const canSave = computed(() => {
-    return (
-        modelValue.value.uid.trim().length > 0 &&
-        modelValue.value.conditions.length > 0 &&
-        modelValue.value.actions.length > 0
-    )
+const { confirmAction } = useConfirmAction()
+const conditionOpen = ref(false)
+const actionOpen = ref(false)
+const originalConditionScope = ref<'query' | 'time' | null>(null)
+const editingConditionScope = ref<'query' | 'time'>('query')
+const actionIndex = ref<number | null>(null)
+const editingCondition = ref<SearchRuleQueryCondition | SearchRuleTimeCondition>({ isEmpty: true })
+const editingAction = ref<SearchRuleAction>({
+    selector: { indexUid: null, id: '' },
+    action: { type: 'pin', position: 0 },
 })
 
-// Condition dialog
-const searchRuleConditionModalVisible = ref(false)
-const editingCondition = ref<SearchRuleCondition>({ scope: 'query', isEmpty: true })
-const editingConditionIndex = ref<number | null>(null)
+const conditionRows = computed<SearchRuleConditionEntry[]>(() => [
+    ...(modelValue.value.conditions.query
+        ? [{ scope: 'query' as const, condition: modelValue.value.conditions.query }]
+        : []),
+    ...(modelValue.value.conditions.time
+        ? [{ scope: 'time' as const, condition: modelValue.value.conditions.time }]
+        : []),
+])
+const conditionColumns: TableColumn<SearchRuleConditionEntry>[] = [
+    { id: 'scope', header: 'Scope' },
+    { id: 'details', header: 'Details' },
+    { id: 'actions', header: '', size: 96, meta: { class: { th: 'text-end', td: 'text-end' } } },
+]
+const actionColumns: TableColumn<SearchRuleAction>[] = [
+    { id: 'type', header: 'Type' },
+    { id: 'index', header: 'Index' },
+    { id: 'document', header: 'Document ID' },
+    { id: 'position', header: 'Position' },
+    { id: 'actions', header: '', size: 96, meta: { class: { th: 'text-end', td: 'text-end' } } },
+]
 
-function openAddCondition() {
-    editingConditionIndex.value = null
-    editingCondition.value = { scope: 'query', isEmpty: true }
-    searchRuleConditionModalVisible.value = true
-}
+function formatCondition(value: SearchRuleConditionEntry) {
+    if (value.scope === 'query') {
+        const query = value.condition
 
-function openEditCondition(index: number) {
-    editingConditionIndex.value = index
-    editingCondition.value = structuredClone(toRaw(modelValue.value.conditions[index])) as SearchRuleCondition
-    searchRuleConditionModalVisible.value = true
-}
-
-function confirmRemoveCondition(event: Event, index: number) {
-    confirm.require({
-        target: event.currentTarget as HTMLElement,
-        message: 'Are you sure you want to delete this condition?',
-        rejectProps: {
-            label: 'Cancel',
-            severity: 'secondary',
-            text: true,
-        },
-        acceptProps: {
-            label: 'Delete',
-            severity: 'danger',
-        },
-        accept: () => {
-            modelValue.value.conditions.splice(index, 1)
-        },
-    })
-}
-
-function onConditionSave() {
-    if (editingConditionIndex.value === null) {
-        modelValue.value.conditions.push(editingCondition.value)
-    } else {
-        modelValue.value.conditions[editingConditionIndex.value] = editingCondition.value
-    }
-}
-
-function formatCondition(condition: SearchRuleCondition): string {
-    if (condition.scope === 'query') {
-        const c = condition as SearchRuleQueryCondition
-        if (c.isEmpty) {
-            return 'Query is empty'
-        }
-        if (c.contains) {
-            return `Query contains "${c.contains}"`
-        }
+        if (query.isEmpty) return 'Query is empty'
+        if (query.words) return `Query contains "${query.words}"`
         return 'Query condition'
     }
-    const c = condition as SearchRuleTimeCondition
-    const start = c.start ? new Date(c.start).toLocaleString() : 'any time'
-    const end = c.end ? new Date(c.end).toLocaleString() : 'any time'
+
+    const time = value.condition
+    const start = time.start ? new Date(time.start).toLocaleString() : 'any time'
+    const end = time.end ? new Date(time.end).toLocaleString() : 'any time'
+
     return `Time window: ${start} - ${end}`
 }
 
-// Action dialog
-const searchRuleActionModalVisible = ref(false)
-const editingAction = ref<SearchRuleAction>({
-    selector: { indexUid: null, id: null },
-    action: { type: 'pin', position: 0 },
-})
-const editingActionIndex = ref<number | null>(null)
+function addCondition() {
+    const scope = modelValue.value.conditions.query ? 'time' : 'query'
+    originalConditionScope.value = null
+    editingConditionScope.value = scope
+    editingCondition.value = scope === 'query' ? { isEmpty: true } : {}
+    conditionOpen.value = true
+}
 
-function openAddAction() {
-    editingActionIndex.value = null
-    editingAction.value = {
-        selector: { indexUid: null, id: null },
-        action: { type: 'pin', position: 0 },
+function editCondition(row: SearchRuleConditionEntry) {
+    const value = row.condition
+    if (!value) return
+
+    originalConditionScope.value = row.scope
+    editingConditionScope.value = row.scope
+    editingCondition.value = structuredClone(toRaw(value))
+    conditionOpen.value = true
+}
+
+function saveCondition() {
+    const originalScope = originalConditionScope.value
+    if (originalScope && originalScope !== editingConditionScope.value) {
+        modelValue.value.conditions[originalScope] = undefined
     }
-    searchRuleActionModalVisible.value = true
+
+    if (editingConditionScope.value === 'query') {
+        modelValue.value.conditions.query = editingCondition.value as SearchRuleQueryCondition
+    } else {
+        modelValue.value.conditions.time = editingCondition.value as SearchRuleTimeCondition
+    }
 }
 
-function openEditAction(index: number) {
-    editingActionIndex.value = index
-    editingAction.value = structuredClone(toRaw(modelValue.value.actions[index])) as SearchRuleAction
-    searchRuleActionModalVisible.value = true
-}
-
-function confirmRemoveAction(event: Event, index: number) {
-    confirm.require({
-        target: event.currentTarget as HTMLElement,
-        message: 'Are you sure you want to delete this action?',
-        rejectProps: {
-            label: 'Cancel',
-            severity: 'secondary',
-            text: true,
-        },
-        acceptProps: {
-            label: 'Delete',
-            severity: 'danger',
-        },
-        accept: () => {
-            modelValue.value.actions.splice(index, 1)
-        },
+function removeCondition(scope: 'query' | 'time') {
+    void confirmAction({
+        title: 'Delete condition',
+        description: 'Are you sure you want to delete this condition?',
+        confirmLabel: 'Delete',
+    }, async () => {
+        modelValue.value.conditions[scope] = undefined
     })
 }
 
-function onActionSave() {
-    if (editingActionIndex.value === null) {
+function addAction() {
+    actionIndex.value = null
+    editingAction.value = {
+        selector: { indexUid: null, id: '' },
+        action: { type: 'pin', position: 0 },
+    }
+    actionOpen.value = true
+}
+
+function editAction(index: number) {
+    const value = modelValue.value.actions[index]
+    if (!value) return
+
+    actionIndex.value = index
+    editingAction.value = structuredClone(toRaw(value))
+    actionOpen.value = true
+}
+
+function saveAction() {
+    if (actionIndex.value === null) {
         modelValue.value.actions.push(editingAction.value)
     } else {
-        modelValue.value.actions[editingActionIndex.value] = editingAction.value
+        modelValue.value.actions[actionIndex.value] = editingAction.value
     }
+}
+
+function removeAction(index: number) {
+    void confirmAction({
+        title: 'Delete action',
+        description: 'Are you sure you want to delete this action?',
+        confirmLabel: 'Delete',
+    }, async () => {
+        modelValue.value.actions.splice(index, 1)
+    })
 }
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <ConfirmPopup />
+    <div class="flex flex-col gap-6">
         <SearchRuleConditionModal
-            v-model:visible="searchRuleConditionModalVisible"
+            v-model:open="conditionOpen"
+            v-model:scope="editingConditionScope"
             v-model:condition="editingCondition"
-            @save="onConditionSave"
+            @save="saveCondition"
         />
         <SearchRuleActionModal
-            v-model:visible="searchRuleActionModalVisible"
+            v-model:open="actionOpen"
             v-model:action="editingAction"
-            @save="onActionSave"
+            @save="saveAction"
         />
 
-        <!-- General Card -->
-        <Card>
-            <template #title>
-                <div class="flex items-center justify-between mb-3">
-                    <span>General</span>
-                    <div class="flex items-center gap-3 text-sm!">
-                        <label for="rule-active">Active</label>
-                        <ToggleSwitch
-                            id="rule-active"
-                            v-model="modelValue.active"
-                        />
-                    </div>
+        <UCard variant="subtle">
+            <template #header>
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold">General</span>
+                    <USwitch
+                        v-model="modelValue.active"
+                        label="Active"
+                    />
                 </div>
             </template>
-            <template #content>
-                <div class="flex flex-col gap-6">
-                    <div class="flex flex-col sm:flex-row gap-6">
-                        <div class="flex flex-col gap-2 grow">
-                            <label for="rule-uid">Rule UID</label>
-                            <InputText
-                                id="rule-uid"
-                                v-model="modelValue.uid"
-                                placeholder="e.g. summer-sale"
-                                type="text"
-                                :disabled="props.isEdit"
-                                fluid
-                            />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="rule-priority">Priority</label>
-                            <InputNumber
-                                id="rule-priority"
-                                v-model="modelValue.priority"
-                                :min="0"
-                                placeholder="optional priority"
-                                fluid
-                            />
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="rule-description">Description</label>
-                        <InputText
-                            id="rule-description"
-                            v-model="modelValue.description"
-                            placeholder="optional description"
-                            type="text"
-                            fluid
-                        />
-                    </div>
-                </div>
-            </template>
-        </Card>
 
-        <!-- Conditions Card -->
-        <Card>
-            <template #title>
-                <div class="flex items-center justify-between mb-3">
-                    <span>Conditions</span>
-                    <Button
+            <div class="grid gap-6 sm:grid-cols-[1fr_12rem]">
+                <UFormField
+                    label="Rule UID"
+                    required
+                >
+                    <UInput
+                        v-model="modelValue.uid"
+                        placeholder="e.g. summer-sale"
+                        :disabled="props.isEdit"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField
+                    label="Priority"
+                    hint="Optional"
+                >
+                    <UInputNumber
+                        v-model="modelValue.precedence"
+                        :min="0"
+                        class="w-full"
+                    />
+                </UFormField>
+            </div>
+
+            <UFormField
+                label="Description"
+                hint="Optional"
+                class="mt-6"
+            >
+                <UTextarea
+                    v-model="modelValue.description"
+                    placeholder="Describe the reason for this rule"
+                    class="w-full"
+                />
+            </UFormField>
+        </UCard>
+
+        <UCard
+            variant="subtle"
+            :ui="{ body: 'p-0 sm:p-0' }"
+        >
+            <template #header>
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold">Conditions</span>
+                    <UButton
                         label="Add Condition"
-                        size="small"
-                        @click="openAddCondition"
-                    >
-                        <template #icon>
-                            <Plus />
-                        </template>
-                    </Button>
+                        icon="i-lucide-plus"
+                        size="sm"
+                        variant="outline"
+                        :disabled="conditionRows.length >= 2"
+                        @click="addCondition"
+                    />
                 </div>
             </template>
-            <template #content>
-                <DataTable
-                    :value="modelValue.conditions"
-                    column-resize-mode="expand"
-                    scrollable
-                >
-                    <template #empty>
-                        <NotFoundMessage subject="Condition" />
-                    </template>
-                    <Column header="Scope">
-                        <template #body="{ data }">
-                            <Tag
-                                :value="(data as SearchRuleCondition).scope"
-                                severity="info"
-                            />
-                        </template>
-                    </Column>
-                    <Column header="Details">
-                        <template #body="{ data }">
-                            {{ formatCondition(data as SearchRuleCondition) }}
-                        </template>
-                    </Column>
-                    <Column
-                        frozen
-                        align-frozen="right"
-                    >
-                        <template #body="{ index }">
-                            <div class="flex items-center gap-2">
-                                <Button
-                                    v-tooltip.top="'Edit Condition'"
-                                    severity="secondary"
-                                    rounded
-                                    text
-                                    @click="openEditCondition(index)"
-                                >
-                                    <template #icon>
-                                        <Pencil class="size-4!" />
-                                    </template>
-                                </Button>
-                                <Button
-                                    v-tooltip.top="'Delete Condition'"
-                                    severity="secondary"
-                                    rounded
-                                    text
-                                    @click="confirmRemoveCondition($event, index)"
-                                >
-                                    <template #icon>
-                                        <Trash2 class="size-4!" />
-                                    </template>
-                                </Button>
-                            </div>
-                        </template>
-                    </Column>
-                </DataTable>
-            </template>
-        </Card>
 
-        <!-- Actions Card -->
-        <Card>
-            <template #title>
-                <div class="flex items-center justify-between mb-3">
-                    <span>Actions</span>
-                    <Button
+            <UTable
+                :data="conditionRows"
+                :columns="conditionColumns"
+            >
+                <template #scope-cell="{ row }">
+                    <UBadge
+                        :label="row.original.scope"
+                        color="neutral"
+                        variant="subtle"
+                    />
+                </template>
+                <template #details-cell="{ row }">{{ formatCondition(row.original) }}</template>
+                <template #actions-cell="{ row }">
+                    <div class="flex justify-end gap-2">
+                        <UButton
+                            :aria-label="`Edit condition ${row.index + 1}`"
+                            icon="i-lucide-pencil"
+                            color="neutral"
+                            variant="outline"
+                            size="sm"
+                            @click="editCondition(row.original)"
+                        />
+                        <UButton
+                            :aria-label="`Delete condition ${row.index + 1}`"
+                            icon="i-lucide-trash-2"
+                            color="error"
+                            variant="outline"
+                            size="sm"
+                            @click="removeCondition(row.original.scope)"
+                        />
+                    </div>
+                </template>
+                <template #empty>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-list-x"
+                        title="No conditions"
+                    />
+                </template>
+            </UTable>
+        </UCard>
+
+        <UCard
+            variant="subtle"
+            :ui="{ body: 'p-0 sm:p-0' }"
+        >
+            <template #header>
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold">Actions</span>
+                    <UButton
                         label="Add Action"
-                        size="small"
-                        @click="openAddAction"
-                    >
-                        <template #icon>
-                            <Plus />
-                        </template>
-                    </Button>
+                        icon="i-lucide-plus"
+                        size="sm"
+                        variant="outline"
+                        @click="addAction"
+                    />
                 </div>
             </template>
-            <template #content>
-                <DataTable
-                    :value="modelValue.actions"
-                    column-resize-mode="expand"
-                    scrollable
-                >
-                    <template #empty>
-                        <NotFoundMessage subject="Action" />
-                    </template>
-                    <Column header="Type">
-                        <template #body="{ data }">
-                            <Tag
-                                :value="(data as SearchRuleAction).action.type"
-                                severity="info"
-                            />
-                        </template>
-                    </Column>
-                    <Column header="Index">
-                        <template #body="{ data }">
-                            {{ (data as SearchRuleAction).selector.indexUid }}
-                        </template>
-                    </Column>
-                    <Column header="Document ID">
-                        <template #body="{ data }">
-                            {{ (data as SearchRuleAction).selector.id }}
-                        </template>
-                    </Column>
-                    <Column header="Position">
-                        <template #body="{ data }">
-                            {{ (data as SearchRuleAction).action.position }}
-                        </template>
-                    </Column>
-                    <Column
-                        frozen
-                        align-frozen="right"
-                    >
-                        <template #body="{ index }">
-                            <div class="flex items-center gap-2">
-                                <Button
-                                    v-tooltip.top="'Edit Action'"
-                                    severity="secondary"
-                                    rounded
-                                    text
-                                    @click="openEditAction(index)"
-                                >
-                                    <template #icon>
-                                        <Pencil class="size-4!" />
-                                    </template>
-                                </Button>
-                                <Button
-                                    v-tooltip.top="'Delete Action'"
-                                    severity="secondary"
-                                    rounded
-                                    text
-                                    @click="confirmRemoveAction($event, index)"
-                                >
-                                    <template #icon>
-                                        <Trash2 class="size-4!" />
-                                    </template>
-                                </Button>
-                            </div>
-                        </template>
-                    </Column>
-                </DataTable>
-            </template>
-        </Card>
 
-        <!-- Footer Actions -->
-        <div class="flex justify-end gap-4">
-            <Button
-                label="Cancel"
-                severity="secondary"
-                text
-                @click="emit('cancel')"
-            />
-            <Button
-                label="Save Rule"
-                :loading="isLoading"
-                :disabled="!canSave"
-                @click="emit('save')"
-            />
-        </div>
+            <UTable
+                :data="modelValue.actions"
+                :columns="actionColumns"
+            >
+                <template #type-cell="{ row }">
+                    <UBadge
+                        :label="row.original.action.type"
+                        color="neutral"
+                        variant="subtle"
+                    />
+                </template>
+                <template #index-cell="{ row }">{{ row.original.selector.indexUid }}</template>
+                <template #document-cell="{ row }">{{ row.original.selector.id }}</template>
+                <template #position-cell="{ row }">{{ row.original.action.position }}</template>
+                <template #actions-cell="{ row }">
+                    <div class="flex justify-end gap-2">
+                        <UButton
+                            :aria-label="`Edit action ${row.index + 1}`"
+                            icon="i-lucide-pencil"
+                            color="neutral"
+                            variant="outline"
+                            size="sm"
+                            @click="editAction(row.index)"
+                        />
+                        <UButton
+                            :aria-label="`Delete action ${row.index + 1}`"
+                            icon="i-lucide-trash-2"
+                            color="error"
+                            variant="outline"
+                            size="sm"
+                            @click="removeAction(row.index)"
+                        />
+                    </div>
+                </template>
+                <template #empty>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-list-x"
+                        title="No actions"
+                    />
+                </template>
+            </UTable>
+        </UCard>
     </div>
 </template>

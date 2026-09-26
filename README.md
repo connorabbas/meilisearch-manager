@@ -26,6 +26,16 @@ This project is the refactored Nuxt version of the original Vue SPA project: [co
 
 Check out the live demo (hosted with GitHub pages): [https://connorabbas.github.io/meilisearch-manager/](https://connorabbas.github.io/meilisearch-manager/)
 
+### Local Development
+
+When running the Docker development environment behind the included Traefik route, start Nuxt with:
+
+```bash
+npm run dev:traefik
+```
+
+This listens on port 3000 and is available at `http://meilisearch-manager.localhost`. The Playwright suite uses an isolated production preview on `127.0.0.1:3100`, so it does not reuse or stop the development server.
+
 ## Configuration
 
 The app supports two distinct operational modes, each designed for a different use case.
@@ -103,13 +113,13 @@ See [DOCKER.md](./DOCKER.md) for image tags, Docker Compose examples, Traefik Ba
 
 ## Tech Stack
 
-- [Nuxt 4](https://nuxt.com/)
 - [Vue 3](https://vuejs.org/) with Composition API and [TypeScript](https://www.typescriptlang.org/)
-- [PrimeVue v4](https://v4.primevue.org/)
-- [Pinia](https://pinia.vuejs.org/) via [`@pinia/nuxt`](https://nuxt.com/modules/pinia)
+- [Nuxt 4](https://nuxt.com/)
+- [Nuxt UI](https://ui.nuxt.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 - [VueUse](https://vueuse.org/)
-- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Pinia](https://pinia.vuejs.org/) via [`@pinia/nuxt`](https://nuxt.com/modules/pinia)
 - [`@nuxt/fonts`](https://nuxt.com/modules/fonts)
-- [Lucide Vue](https://lucide.dev/)
+- [Lucide Icons](https://lucide.dev/)
 - [Meilisearch JavaScript/TypeScript client](https://github.com/meilisearch/meilisearch-js)
 - [Zod](https://zod.dev/)

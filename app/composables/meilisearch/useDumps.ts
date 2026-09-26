@@ -1,5 +1,4 @@
 import type { EnqueuedTask, Task } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useTasks } from './useTasks'
 
@@ -49,10 +48,11 @@ export function useDumps() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Dumps Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Dumps Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

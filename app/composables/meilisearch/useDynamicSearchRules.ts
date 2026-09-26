@@ -1,20 +1,19 @@
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '../usePagination'
-import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload } from 'meilisearch'
+import { useTasks } from './useTasks'
+import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload, Task } from 'meilisearch'
 
 export function useDynamicSearchRules(initialPerPage: number = 20) {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
+    const { pollTaskStatus } = useTasks()
     const meilisearchStore = useMeilisearchStore()
     const {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
         syncCurrentPageWithinTotal,
-        handlePageEvent,
+        paginate,
     } = usePagination(initialPerPage)
 
     const rulesResults = ref<ResourceResults<SearchRule[]> | null>(null)
@@ -29,7 +28,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     const rulesQuery = computed<SearchRuleListPayload>(() => {
         const filter: SearchRuleListFilterPayload = {}
         if (searchQuery.value.trim()) {
-            filter.attributePatterns = [`*${searchQuery.value.trim()}*`]
+            filter.query = searchQuery.value.trim()
         }
         if (activeFilter.value !== null) {
             filter.active = activeFilter.value
@@ -107,7 +106,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     async function createOrUpdate(
         uid: string,
         payload: SearchRuleUpdatePayload
-    ): Promise<SearchRule | undefined> {
+    ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -118,14 +117,12 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            const result = await client.updateDynamicSearchRule(uid, payload)
-            toast.add({
-                severity: 'success',
-                summary: 'Rule Saved',
-                detail: `Search rule "${uid}" was saved successfully`,
-                life: 3000,
-            })
-            return result
+            const enqueuedTask = await client.updateDynamicSearchRule(uid, payload)
+            return await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `An update task for search rule "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `Search rule "${uid}" was saved successfully`,
+            )
         } catch (err) {
             error.value = (err as Error).message
             throw err
@@ -134,7 +131,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         }
     }
 
-    async function deleteRule(uid: string): Promise<void> {
+    async function deleteRule(uid: string): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -145,7 +142,12 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            await client.deleteDynamicSearchRule(uid)
+            const enqueuedTask = await client.deleteDynamicSearchRule(uid)
+            return await pollTaskStatus(
+                enqueuedTask.taskUid,
+                `A delete task for search rule "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
+                `Search rule "${uid}" was deleted successfully`,
+            )
         } catch (err) {
             error.value = (err as Error).message
             throw err
@@ -158,35 +160,24 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         uid: string,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: 'Are you sure you want to delete this search rule?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteRule(uid).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you sure you want to delete this search rule?',
+            confirmLabel: 'Delete',
+        }, async () => {
+            const task = await deleteRule(uid)
+            if (task?.status === 'succeeded') onDeletedCallback?.()
         })
     }
 
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Search Rules Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Search Rules Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
@@ -194,7 +185,6 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
     return {
         currentPage,
         perPage,
-        firstDatasetIndex,
         offset,
         rules,
         rulesResults,
@@ -204,7 +194,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error,
         searchQuery,
         activeFilter,
-        handlePageEvent,
+        paginate,
         fetchRules,
         fetchRulesPaginated,
         fetchRule,

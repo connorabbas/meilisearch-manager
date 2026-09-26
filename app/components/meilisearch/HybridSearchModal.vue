@@ -5,15 +5,13 @@ import type { IndexEmbedderOption } from '@/types'
 const props = defineProps<{
     embedders: IndexEmbedderOption[]
 }>()
-const emit = defineEmits<{
-    cancel: []
-}>()
-
-const visible = defineModel<boolean>('visible', { default: false })
+const open = defineModel<boolean>('open', { default: false })
 
 const hybridSearch = defineModel<HybridSearch | null>('hybridSearch', { required: true })
+const enabled = defineModel<boolean>('enabled', { required: true })
 
 const hybridSearchState = reactive({
+    enabled: false,
     embedder: '',
     semanticRatio: 0.5,
 })
@@ -33,13 +31,17 @@ const selectedEmbedderModel = computed<string | undefined>(() => {
 const semanticRatioLabel = computed(() => `${Math.round(hybridSearchState.semanticRatio * 100)}% semantic`)
 
 function resetForm() {
+    hybridSearchState.enabled = enabled.value
     hybridSearchState.embedder = hybridSearch.value?.embedder ?? props.embedders[0]?.name ?? ''
     hybridSearchState.semanticRatio = hybridSearch.value?.semanticRatio ?? 0.5
 }
 
 function handleCancel() {
-    visible.value = false
-    emit('cancel')
+    open.value = false
+}
+
+function updateSemanticRatio(value: number[] | undefined) {
+    hybridSearchState.semanticRatio = value?.[0] ?? 0.5
 }
 
 function handleHybridSearchConfig() {
@@ -51,17 +53,18 @@ function handleHybridSearchConfig() {
         embedder: hybridSearchState.embedder,
         semanticRatio: hybridSearchState.semanticRatio,
     }
-    visible.value = false
+    enabled.value = hybridSearchState.enabled
+    open.value = false
 }
 
-watch(visible, (isVisible) => {
+watch(open, (isVisible) => {
     if (isVisible) {
         resetForm()
     }
 })
 
 watch(() => props.embedders, () => {
-    if (!visible.value) {
+    if (!open.value) {
         return
     }
 
@@ -72,71 +75,64 @@ watch(() => props.embedders, () => {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="visible"
-        class="w-[30rem]"
-        position="center"
-        header="Hybrid Search"
-        :draggable="false"
-        dismissableMask
-        modal
+    <UModal
+        v-model:open="open"
+        title="Hybrid Search"
+        :ui="{ content: 'sm:max-w-lg' }"
     >
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-2">
-                <label
-                    for="hybrid-search-embedder"
-                    class="font-medium"
-                >Embedder</label>
-                <Select
-                    id="hybrid-search-embedder"
-                    v-model="hybridSearchState.embedder"
-                    :options="embedders"
-                    optionLabel="label"
-                    optionValue="name"
-                    placeholder="Select an embedder"
-                    fluid
+        <template #body>
+            <div class="flex flex-col gap-6">
+                <USwitch
+                    v-model="hybridSearchState.enabled"
+                    label="Enabled"
+                    description="Include semantic similarity in document searches."
                 />
-                <small
-                    v-if="selectedEmbedderModel"
-                    class="text-muted-color"
-                >Model: {{ selectedEmbedderModel }}</small>
-            </div>
+                <UFormField
+                    label="Embedder"
+                    :hint="selectedEmbedderModel ? `Model: ${selectedEmbedderModel}` : undefined"
+                >
+                    <USelect
+                        v-model="hybridSearchState.embedder"
+                        :items="embedders"
+                        value-key="name"
+                        placeholder="Select an embedder"
+                        class="w-full"
+                    />
+                </UFormField>
 
-            <div class="flex flex-col gap-3">
-                <div class="flex items-center justify-between gap-4">
-                    <label
-                        for="hybrid-search-semantic-ratio"
-                        class="font-medium"
-                    >Semantic ratio</label>
-                    <span class="text-sm text-muted-color">{{ semanticRatioLabel }}</span>
-                </div>
-                <Slider
-                    id="hybrid-search-semantic-ratio"
-                    v-model="hybridSearchState.semanticRatio"
-                    :min="0"
-                    :max="1"
-                    :step="0.05"
-                />
-                <div class="flex justify-between text-xs text-muted-color">
-                    <span>Full-text</span>
-                    <span>Semantic</span>
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <label class="font-medium">Semantic ratio</label>
+                        <span class="text-sm text-muted">{{ semanticRatioLabel }}</span>
+                    </div>
+                    <USlider
+                        :model-value="[hybridSearchState.semanticRatio]"
+                        :min="0"
+                        :max="1"
+                        :step="0.05"
+                        @update:model-value="updateSemanticRatio"
+                    />
+                    <div class="flex justify-between text-xs text-muted">
+                        <span>Full-text</span>
+                        <span>Semantic</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <div class="flex w-full justify-end gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
+                    color="neutral"
+                    variant="outline"
                     @click="handleCancel"
                 />
-                <Button
-                    label="Submit"
+                <UButton
+                    label="Apply"
                     :disabled="!hybridSearchState.embedder"
                     @click="handleHybridSearchConfig"
                 />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>

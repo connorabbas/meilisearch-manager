@@ -1,12 +1,10 @@
 import { Meilisearch, type ContentType, type EnqueuedTask, type RecordAny, type Task } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { useConfirm } from 'primevue'
 import { useTasks } from './useTasks'
 
 export function useDocuments() {
     const toast = useToast()
-    const confirm = useConfirm()
+    const { confirmAction } = useConfirmAction()
     const meilisearchStore = useMeilisearchStore()
     const { pollTaskStatus } = useTasks()
 
@@ -250,25 +248,14 @@ export function useDocuments() {
         documentId: string | number,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: `Are you absolutely sure you want to delete the document: "${documentId}"?`,
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteDocument(indexUid, documentId).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: `Are you absolutely sure you want to delete the document: "${documentId}"?`,
+            confirmLabel: 'Delete',
+        }, async () => {
+            await deleteDocument(indexUid, documentId).then((task) => {
+                if (task?.status === 'succeeded') onDeletedCallback?.()
+            })
         })
     }
 
@@ -311,35 +298,25 @@ export function useDocuments() {
         indexUid: string,
         onDeletedCallback?: () => void
     ) {
-        confirm.require({
-            group: 'delete',
-            message: 'Are you absolutely sure you want to delete all the documents in this index?',
-            header: 'Danger Zone',
-            rejectLabel: 'Cancel',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                text: true,
-            },
-            acceptProps: {
-                label: 'Delete',
-                severity: 'danger',
-            },
-            accept: async () => {
-                await deleteAllDocuments(indexUid).then(() => {
-                    onDeletedCallback?.()
-                })
-            },
+        void confirmAction({
+            title: 'Danger Zone',
+            description: 'Are you absolutely sure you want to delete all the documents in this index?',
+            confirmLabel: 'Delete',
+        }, async () => {
+            await deleteAllDocuments(indexUid).then((task) => {
+                if (task?.status === 'succeeded') onDeletedCallback?.()
+            })
         })
     }
 
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Documents Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Documents Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
