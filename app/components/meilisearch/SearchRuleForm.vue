@@ -213,6 +213,7 @@ function removeAction(index: number) {
                         label="Add Condition"
                         icon="i-lucide-plus"
                         size="sm"
+                        variant="outline"
                         :disabled="conditionRows.length >= 2"
                         @click="addCondition"
                     />
@@ -272,6 +273,7 @@ function removeAction(index: number) {
                         label="Add Action"
                         icon="i-lucide-plus"
                         size="sm"
+                        variant="outline"
                         @click="addAction"
                     />
                 </div>
