@@ -107,7 +107,7 @@ test('primary key and delete-all-documents keep their distinct task-backed opera
         onUpdateIndexRequest: request => primaryKeyPayload = request.postDataJSON(),
         onDeleteAllDocumentsRequest: () => deleteAllRequests++,
     })
-    await page.goto('/indexes/movies/manage')
+    await page.goto('/indexes/movies/edit')
 
     const primaryKey = page.getByLabel('Primary Key')
     await expect(primaryKey).toHaveValue('id')
@@ -124,6 +124,6 @@ test('primary key and delete-all-documents keep their distinct task-backed opera
     await page.getByRole('button', { name: 'Delete all documents' }).click()
     await confirmation.getByRole('button', { name: 'Delete' }).click()
     await expect.poll(() => deleteAllRequests).toBe(1)
-    await expect(page).toHaveURL(/\/indexes\/movies\/manage$/)
+    await expect(page).toHaveURL(/\/indexes\/movies\/edit$/)
     await expect(page.getByText('All documents from index: "movies" have been successfully deleted', { exact: true })).toBeVisible()
 })

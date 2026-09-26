@@ -52,7 +52,7 @@ test('destructive confirmation cancels safely and awaits accepted work', async (
         onDeleteIndexRequest: () => deleteRequests++,
     })
 
-    await page.goto('/indexes/movies/manage')
+    await page.goto('/indexes/movies/edit')
     await page.getByRole('button', { name: 'Delete this index' }).click()
 
     const confirmation = page.getByRole('dialog', { name: 'Danger Zone' })
