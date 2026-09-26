@@ -161,16 +161,7 @@ const availableEmbedders = computed<IndexEmbedderOption[]>(() => Object.entries(
     const details = [getEmbedderSource(settings), getEmbedderModel(settings)].filter(Boolean).join(', ')
     return [{ name, label: details ? `${name} (${details})` : name, settings }]
 }))
-watch(hybridSearchEnabled, (enabled) => {
-    if (enabled && availableEmbedders.value.length) hybridModalOpen.value = true
-    else if (enabled) hybridSearchEnabled.value = false
-    else {
-        hybridModalOpen.value = false
-        hybridSearchConfig.value = null
-    }
-})
-watch(hybridSearchConfig, () => searchPaginated(indexUid.value, true))
-watch(hybridModalOpen, open => { if (!open && hybridSearchEnabled.value && !hybridSearchConfig.value) hybridSearchEnabled.value = false })
+watch([hybridSearchEnabled, hybridSearchConfig], () => searchPaginated(indexUid.value, true))
 watch(availableEmbedders, (value) => {
     if (!value.some(embedder => embedder.name === hybridSearchConfig.value?.embedder)) {
         hybridSearchEnabled.value = false
@@ -231,7 +222,7 @@ function openFilters() {
 }
 function toggleHybridSearch() {
     searchOptionsOpen.value = false
-    hybridSearchEnabled.value = !hybridSearchEnabled.value
+    hybridModalOpen.value = true
 }
 
 onMounted(() => {
@@ -345,11 +336,10 @@ onMounted(() => {
                             text="Hybrid search"
                         >
                             <UButton
-                                aria-label="Toggle hybrid search"
+                                aria-label="Configure hybrid search"
                                 icon="i-lucide-sparkles"
                                 :color="hybridSearchEnabled ? 'primary' : 'neutral'"
                                 :variant="hybridSearchEnabled ? 'soft' : 'outline'"
-                                :aria-pressed="hybridSearchEnabled"
                                 @click="toggleHybridSearch"
                             />
                         </UTooltip>
@@ -420,7 +410,7 @@ onMounted(() => {
                                 <UButton
                                     v-if="availableEmbedders.length"
                                     label="Hybrid search"
-                                    aria-label="Toggle hybrid search"
+                                    aria-label="Configure hybrid search"
                                     icon="i-lucide-sparkles"
                                     :color="hybridSearchEnabled ? 'primary' : 'neutral'"
                                     :variant="hybridSearchEnabled ? 'soft' : 'outline'"
@@ -479,8 +469,8 @@ onMounted(() => {
                 v-if="availableEmbedders.length"
                 v-model:open="hybridModalOpen"
                 v-model:hybrid-search="hybridSearchConfig"
+                v-model:enabled="hybridSearchEnabled"
                 :embedders="availableEmbedders"
-                @cancel="hybridSearchEnabled = false"
             />
         </Teleport>
 

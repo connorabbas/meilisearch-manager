@@ -52,7 +52,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
         return {
             sort: searchSortValues.value.length > 0 ? searchSortValues.value : undefined,
             filter: searchFilter.value ?? undefined,
-            hybrid: hybridSearchConfig.value ?? undefined,
+            hybrid: hybridSearchEnabled.value ? hybridSearchConfig.value ?? undefined : undefined,
             limit: searchLimit.value,
             offset: offset.value,
             showRankingScore: showRankingScore.value || undefined,

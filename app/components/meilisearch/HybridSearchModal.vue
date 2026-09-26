@@ -5,15 +5,13 @@ import type { IndexEmbedderOption } from '@/types'
 const props = defineProps<{
     embedders: IndexEmbedderOption[]
 }>()
-const emit = defineEmits<{
-    cancel: []
-}>()
-
 const open = defineModel<boolean>('open', { default: false })
 
 const hybridSearch = defineModel<HybridSearch | null>('hybridSearch', { required: true })
+const enabled = defineModel<boolean>('enabled', { required: true })
 
 const hybridSearchState = reactive({
+    enabled: false,
     embedder: '',
     semanticRatio: 0.5,
 })
@@ -33,13 +31,13 @@ const selectedEmbedderModel = computed<string | undefined>(() => {
 const semanticRatioLabel = computed(() => `${Math.round(hybridSearchState.semanticRatio * 100)}% semantic`)
 
 function resetForm() {
+    hybridSearchState.enabled = enabled.value
     hybridSearchState.embedder = hybridSearch.value?.embedder ?? props.embedders[0]?.name ?? ''
     hybridSearchState.semanticRatio = hybridSearch.value?.semanticRatio ?? 0.5
 }
 
 function handleCancel() {
     open.value = false
-    emit('cancel')
 }
 
 function updateSemanticRatio(value: number[] | undefined) {
@@ -55,6 +53,7 @@ function handleHybridSearchConfig() {
         embedder: hybridSearchState.embedder,
         semanticRatio: hybridSearchState.semanticRatio,
     }
+    enabled.value = hybridSearchState.enabled
     open.value = false
 }
 
@@ -83,6 +82,11 @@ watch(() => props.embedders, () => {
     >
         <template #body>
             <div class="flex flex-col gap-6">
+                <USwitch
+                    v-model="hybridSearchState.enabled"
+                    label="Enabled"
+                    description="Include semantic similarity in document searches."
+                />
                 <UFormField
                     label="Embedder"
                     :hint="selectedEmbedderModel ? `Model: ${selectedEmbedderModel}` : undefined"
@@ -124,7 +128,7 @@ watch(() => props.embedders, () => {
                     @click="handleCancel"
                 />
                 <UButton
-                    label="Submit"
+                    label="Apply"
                     :disabled="!hybridSearchState.embedder"
                     @click="handleHybridSearchConfig"
                 />
