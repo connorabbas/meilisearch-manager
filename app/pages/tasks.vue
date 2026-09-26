@@ -206,7 +206,7 @@ const columnPinning = ref({ right: ['actions'] })
                     icon="i-lucide-refresh-cw"
                     loading-icon="i-lucide-refresh-cw"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     :loading="isFetchingTasks"
                     @click="refreshTasksList()"
                 />
