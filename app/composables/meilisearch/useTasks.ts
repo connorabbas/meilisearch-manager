@@ -1,5 +1,5 @@
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import type { Task, TasksOrBatchesQuery, TasksResults, DeleteOrCancelTasksQuery, TaskType, TaskStatus, EnqueuedTask } from 'meilisearch'
+import type { Task, TasksOrBatchesQuery, TasksResults, DeleteOrCancelTasksQuery, TaskType, TaskStatus } from 'meilisearch'
 
 export const TASK_TYPES = [
     'documentAdditionOrUpdate',
@@ -258,7 +258,15 @@ export function useTasks() {
                     throw new Error(taskResponse.error?.message ? `Task Failed: ${taskResponse.error.message}` : 'Task failed.')
                 }
                 if (taskResponse.status === 'canceled') {
-                    throw new Error(taskResponse.error?.message ? `Task Cancelled: ${taskResponse.error.message}` : 'Task cancelled.')
+                    toast.add({
+                        id: `task-cancelled-${taskUid}`,
+                        color: 'info',
+                        icon: 'i-lucide-ban',
+                        title: 'Task cancelled',
+                        description: `Task ${taskUid} was cancelled successfully.`,
+                        duration: 5000,
+                    })
+                    return taskResponse
                 }
                 if (taskResponse.status === 'enqueued' || taskResponse.status === 'processing') {
                     attempts++
@@ -267,7 +275,20 @@ export function useTasks() {
                 }
                 throw new Error(`Unknown task status: ${taskResponse.status}`)
             }
-            throw new Error(`Task did not complete after ${maxAttempts} attempts, please check the Tasks log`)
+            toast.add({
+                color: 'warning',
+                icon: 'i-lucide-list-todo',
+                title: 'Task is still running',
+                description: 'Polling timed out. Check the Tasks view for the latest status.',
+                duration: 10000,
+                actions: [{
+                    label: 'Open Tasks',
+                    color: 'neutral',
+                    variant: 'outline',
+                    onClick: () => { void navigateTo('/tasks') },
+                }],
+            })
+            return
         } finally {
             checkingTaskStatus.value = false
             // Add slight delay as not to clash with potential error toasts
@@ -279,7 +300,7 @@ export function useTasks() {
         }
     }
 
-    async function deleteTasks(): Promise<EnqueuedTask | undefined> {
+    async function deleteTasks(): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -292,13 +313,13 @@ export function useTasks() {
         try {
             const enqueuedTask = await client.tasks.deleteTasks(deleteTasksQuery.value)
 
-            await pollTaskStatus(
+            const result = await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `A delete tasks job has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
                 'Tasks matching the filter have been successfully deleted',
             )
 
-            return enqueuedTask
+            return result
         } catch (err) {
             error.value = (err as Error).message
             throw err

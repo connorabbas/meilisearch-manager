@@ -253,8 +253,8 @@ export function useDocuments() {
             description: `Are you absolutely sure you want to delete the document: "${documentId}"?`,
             confirmLabel: 'Delete',
         }, async () => {
-            await deleteDocument(indexUid, documentId).then(() => {
-                onDeletedCallback?.()
+            await deleteDocument(indexUid, documentId).then((task) => {
+                if (task?.status === 'succeeded') onDeletedCallback?.()
             })
         })
     }
@@ -303,8 +303,8 @@ export function useDocuments() {
             description: 'Are you absolutely sure you want to delete all the documents in this index?',
             confirmLabel: 'Delete',
         }, async () => {
-            await deleteAllDocuments(indexUid).then(() => {
-                onDeletedCallback?.()
+            await deleteAllDocuments(indexUid).then((task) => {
+                if (task?.status === 'succeeded') onDeletedCallback?.()
             })
         })
     }

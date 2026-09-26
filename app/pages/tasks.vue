@@ -99,7 +99,7 @@ function showTask(task: Task) {
 async function handleDeleteTasks() {
     try {
         const result = await deleteTasks()
-        if (result) {
+        if (result?.status === 'succeeded') {
             await refreshTasksList()
         }
     } catch {

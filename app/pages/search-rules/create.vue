@@ -71,7 +71,8 @@ async function handleSave() {
     }
 
     try {
-        await createOrUpdate(formState.uid, payload)
+        const task = await createOrUpdate(formState.uid, payload)
+        if (task?.status !== 'succeeded') return
         await navigateTo('/search-rules')
     } catch {
         // error handled by composable

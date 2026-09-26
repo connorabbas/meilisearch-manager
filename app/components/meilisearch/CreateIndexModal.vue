@@ -32,10 +32,11 @@ async function submitNewIndex(event: FormSubmitEvent<CreateIndexForm>) {
         const primaryKey = event.data.primaryKey || undefined
         const options: IndexOptions | undefined = primaryKey ? { primaryKey } : undefined
 
-        await createIndex(event.data.uid, options, () => {
+        const task = await createIndex(event.data.uid, options)
+        if (task?.status === 'succeeded') {
             open.value = false
-        })
-        emit('index-created')
+            emit('index-created')
+        }
     } catch (error) {
         submitError.value = (error as Error).message
     }

@@ -25,8 +25,8 @@ async function handleUpdatePrimaryKey() {
     if (!state.primaryKey) return
 
     try {
-        await updateIndex(props.indexUid, state.primaryKey)
-        emit('refetch-index')
+        const task = await updateIndex(props.indexUid, state.primaryKey)
+        if (task?.status === 'succeeded') emit('refetch-index')
     } catch {
         // The composable exposes failures inline and through a toast.
     }

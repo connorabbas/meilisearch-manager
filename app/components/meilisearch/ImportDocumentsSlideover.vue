@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ContentType, RecordAny } from 'meilisearch'
+import type { ContentType, RecordAny, Task } from 'meilisearch'
 import { Mode } from 'vanilla-jsoneditor'
 import ThemedJsonEditor from '../ThemedJsonEditor.vue'
 import { useDocuments } from '@/composables/meilisearch/useDocuments'
@@ -51,17 +51,19 @@ const btnDisabled = computed(() => {
 
 async function handleSaveDocument() {
     try {
+        let task: Task | undefined
         if (importMethod.value === 'manual') {
             // TODO: handle JSON errors (reference settings)
-            await addOrUpdateDocuments(importMode.value, props.indexUid, newDocuments.value, props.primaryKey)
+            task = await addOrUpdateDocuments(importMode.value, props.indexUid, newDocuments.value, props.primaryKey)
         } else {
             if (!newDocumentsFile.value) {
                 return
             }
 
-            await addOrUpdateDocumentsFromFile(importMode.value, props.indexUid, newDocumentsFile.value, uploadContentType.value)
+            task = await addOrUpdateDocumentsFromFile(importMode.value, props.indexUid, newDocumentsFile.value, uploadContentType.value)
         }
 
+        if (task?.status !== 'succeeded') return
         open.value = false
         emit('documents-imported')
     } catch {

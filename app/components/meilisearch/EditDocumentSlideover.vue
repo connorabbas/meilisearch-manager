@@ -22,7 +22,8 @@ const { addOrUpdateDocuments, isSendingTask, error } = useDocuments()
 const updatedDocument = ref<RecordAny>(props.document ?? {})
 function handleSaveDocument() {
     addOrUpdateDocuments('update', props.indexUid, [updatedDocument.value], props.primaryKey)
-        .then(() => {
+        .then((task) => {
+            if (task?.status !== 'succeeded') return
             open.value = false
             emit('document-updated')
         })

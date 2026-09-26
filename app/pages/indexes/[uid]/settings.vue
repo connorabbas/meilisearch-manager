@@ -61,7 +61,8 @@ async function handleUpdateSettings() {
     }
 
     try {
-        await updateSettings(indexUid.value, settings.value)
+        const task = await updateSettings(indexUid.value, parsedSettings)
+        if (task?.status !== 'succeeded') return
         await loadSettings()
         editMode.value = false
     } catch {

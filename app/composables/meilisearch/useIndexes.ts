@@ -226,8 +226,8 @@ export function useIndexes(initialPerPage: number = 20) {
         }, async () => {
             await deleteIndex(uid, (task) => {
                 onTaskEnqueued?.(task)
-            }).then(() => {
-                onDeletedCallback?.()
+            }).then((task) => {
+                if (task?.status === 'succeeded') onDeletedCallback?.()
             })
         })
     }
