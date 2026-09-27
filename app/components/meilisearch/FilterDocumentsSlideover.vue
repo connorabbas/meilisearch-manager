@@ -29,6 +29,7 @@ const facetTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const facetRequestIds = new Map<string, number>()
 const facetQueries = new Map<string, string>()
 const facetFiltersEmpty = computed(() => Object.keys(facetFilters.value).length === 0)
+const activeFilterExpression = computed(() => typeof filter.value === 'string' ? filter.value : null)
 const mode = ref<'facets' | 'builder'>('facets')
 const modes = [
     { label: 'Facets', value: 'facets' },
@@ -36,6 +37,7 @@ const modes = [
 ]
 const builderState = ref(createFilterBuilderState())
 const appliedAttributeFilter = ref<string | null>(null)
+const isApplying = ref(false)
 const availableFields = computed(() => filterFields(props.filterableAttributes, props.knownFields ?? []))
 const builderFields = computed(() => availableFields.value.filter(field => field.equality || field.comparison))
 const builderExpression = computed(() => {
@@ -326,12 +328,17 @@ const applyDisabled = computed(() => !!builderExpression.value.error && mode.val
     || !!geoFilterValidationMessage.value || !!geoSortValidationMessage.value
     || (draftFilter.value === filter.value && geoSortExpression.value === geoSort.value))
 
-function applyFilters() {
+async function applyFilters() {
     if (applyDisabled.value) return
+    isApplying.value = true
     appliedAttributeFilter.value = mode.value === 'facets' ? facetFilterExpression.value : builderExpression.value.value
     filter.value = draftFilter.value
     geoSort.value = geoSortExpression.value
-    open.value = false
+    await nextTick()
+    if (!props.searching) {
+        isApplying.value = false
+        open.value = false
+    }
 }
 
 watch(selectedAttributes, async (newVal, oldVal) => {
@@ -368,17 +375,6 @@ watch(selectedAttributes, async (newVal, oldVal) => {
 })
 function switchMode(value: 'facets' | 'builder') {
     if (mode.value === value) return
-    selectedAttributes.value = []
-    for (const timer of facetTimers.values()) clearTimeout(timer)
-    facetRequestIds.clear()
-    facetQueries.clear()
-    facetFilters.value = {}
-    appliedAttributeFilter.value = null
-    builderState.value = createFilterBuilderState()
-    geoFilterMode.value = 'none'
-    geoSortDirection.value = 'none'
-    filter.value = null
-    geoSort.value = null
     mode.value = value
 }
 
@@ -388,6 +384,12 @@ watch(() => props.enableGeoFilters, (enabled) => {
         geoSortDirection.value = 'none'
         filter.value = appliedAttributeFilter.value
         geoSort.value = null
+    }
+})
+watch(() => props.searching, (searching) => {
+    if (isApplying.value && !searching) {
+        isApplying.value = false
+        open.value = false
     }
 })
 watch(() => props.indexUid, () => {
@@ -421,6 +423,13 @@ onBeforeUnmount(() => {
                     aria-label="Filter mode"
                     class="w-full"
                     @update:model-value="switchMode($event as 'facets' | 'builder')"
+                />
+                <UAlert
+                    v-if="activeFilterExpression"
+                    color="neutral"
+                    variant="subtle"
+                    title="Currently applied"
+                    :description="activeFilterExpression"
                 />
                 <DocumentFilterBuilder
                     v-if="mode === 'builder'"
@@ -623,8 +632,9 @@ onBeforeUnmount(() => {
         <template #footer>
             <div class="flex w-full justify-end">
                 <UButton
-                    label="Apply filters"
-                    :disabled="applyDisabled"
+                    :label="isApplying ? 'Searching' : 'Apply filters'"
+                    :loading="isApplying"
+                    :disabled="applyDisabled || isApplying"
                     @click="applyFilters"
                 />
             </div>

@@ -137,6 +137,7 @@ export type MeilisearchMockOptions = {
     indexes?: FixtureIndex[],
     getIndexes?: (request: Request, indexes: FixtureIndex[]) => FixtureIndex[],
     onSearchRequest?: (request: Request) => void,
+    searchDelayMs?: number,
     onFacetSearchRequest?: (request: Request) => void,
     documents?: Array<Record<string, unknown>>,
     indexStats?: Omit<typeof indexStats, 'fieldDistribution'> & { fieldDistribution: Record<string, number> },
@@ -314,6 +315,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, movieSettings.pagination)
         } else if (path === '/indexes/movies/search') {
             options.onSearchRequest?.(request)
+            if (options.searchDelayMs) await new Promise(resolve => setTimeout(resolve, options.searchDelayMs))
             const body = request.postDataJSON() as { offset?: number, limit?: number, q?: string, showRankingScore?: boolean, showRankingScoreDetails?: boolean }
             const offset = body.offset ?? 0
             const limit = body.limit ?? 20

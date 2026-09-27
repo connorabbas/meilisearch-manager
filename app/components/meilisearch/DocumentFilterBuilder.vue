@@ -249,7 +249,8 @@ async function copyExpression() {
         <UButton
             label="Clear"
             color="neutral"
-            variant="ghost"
+            icon="i-lucide-x"
+            variant="outline"
             class="self-start"
             @click="clear"
         />

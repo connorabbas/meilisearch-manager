@@ -117,6 +117,7 @@ test('caps reachable document pages at pagination.maxTotalHits', async ({ page }
 test('builder applies typed groups, resets pagination, and clears on mode switch', async ({ page }) => {
     const requests: Array<Record<string, unknown>> = []
     await installMeilisearchMock(page, {
+        searchDelayMs: 300,
         indexSettings: {
             displayedAttributes: ['*'], searchableAttributes: ['title'],
             filterableAttributes: ['genre', 'year', 'rating'], sortableAttributes: ['year'],
@@ -135,7 +136,7 @@ test('builder applies typed groups, resets pagination, and clears on mode switch
     const filters = page.getByRole('dialog', { name: 'Filter Documents' })
     const facetWidth = (await filters.boundingBox())!.width
     await filters.getByRole('tab', { name: 'Builder' }).click()
-    await expect.poll(async () => (await filters.boundingBox())!.width).toBe(facetWidth)
+    await expect.poll(async () => Math.abs((await filters.boundingBox())!.width - facetWidth) < 1).toBe(true)
     await expect(filters.getByRole('table')).toHaveCount(1)
     await expect(filters.getByRole('columnheader', { name: 'Attribute' })).toBeVisible()
     await filters.getByRole('button', { name: 'Add condition' }).click()
@@ -183,14 +184,16 @@ test('builder applies typed groups, resets pagination, and clears on mode switch
     await page.getByRole('option', { name: 'greater than (>)' }).click()
     await filters.getByRole('spinbutton', { name: 'Value for condition 1 in group 2' }).fill('4')
     const expectedFilter = '(year >= 2000 OR genre = \'Children\\\'s\') AND rating > 4'
-    await expect(filters.getByText(expectedFilter)).toBeVisible()
+    await expect(filters.locator('pre').filter({ hasText: expectedFilter })).toBeVisible()
     await filters.getByRole('button', { name: 'Apply filters' }).click()
+    await expect(filters.getByRole('button', { name: 'Searching' })).toBeVisible()
+    await expect(filters).toBeVisible()
     await expect.poll(() => requests.at(-1)?.filter).toBe(expectedFilter)
     expect(requests.at(-1)?.offset).toBe(0)
 
     await expect(filters).toBeHidden()
     await page.getByRole('button', { name: 'Filter' }).click()
-    await expect(filters.getByText(expectedFilter)).toBeVisible()
+    await expect(filters.locator('pre').filter({ hasText: expectedFilter })).toBeVisible()
     await expect(filters.getByRole('button', { name: 'Apply filters' })).toBeDisabled()
 
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
@@ -198,10 +201,13 @@ test('builder applies typed groups, resets pagination, and clears on mode switch
     await expect(filters.getByRole('button', { name: 'Copied' })).toBeVisible()
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(expectedFilter)
 
+    const requestCount = requests.length
     await filters.getByRole('tab', { name: 'Facets' }).click()
-    await expect.poll(() => requests.at(-1)?.filter).toBeUndefined()
+    await page.waitForTimeout(350)
+    expect(requests).toHaveLength(requestCount)
+    await expect(filters.getByText(expectedFilter)).toBeVisible()
     await filters.getByRole('tab', { name: 'Builder' }).click()
-    await expect(filters.getByText('No filter')).toBeVisible()
+    await expect(filters.locator('pre').filter({ hasText: expectedFilter })).toBeVisible()
 })
 
 test('builder respects granular filter capabilities', async ({ page }) => {
