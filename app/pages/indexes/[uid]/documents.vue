@@ -262,11 +262,13 @@ onMounted(() => {
         </Teleport>
 
         <Teleport to="#sub-page-toolbar">
-            <UDashboardToolbar :ui="{
-                root: 'min-w-0 flex-wrap py-3 gap-2',
-                left: 'min-w-0 w-full flex-wrap xl:flex-1 gap-2',
-                right: 'min-w-0 w-full flex-wrap justify-between xl:w-auto xl:justify-start gap-2'
-            }">
+            <UDashboardToolbar
+                :ui="{
+                    root: 'min-w-0 flex-wrap py-3 gap-2',
+                    left: 'min-w-0 w-full flex-wrap xl:flex-1 gap-2',
+                    right: 'min-w-0 w-full flex-wrap justify-between xl:w-auto xl:justify-start gap-2'
+                }"
+            >
                 <template #left>
                     <UBadge
                         color="neutral"
