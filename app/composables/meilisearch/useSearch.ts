@@ -31,6 +31,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
     const hybridSearchEnabled = ref(false)
     const hybridSearchConfig = ref<HybridSearch | null>(null)
     const showRankingScore = ref(false)
+    const rankingScoreThreshold = ref(0)
 
     const searchSortValues = computed<string[]>(() => {
         const sortValues = [...searchSort.value]
@@ -43,6 +44,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
 
     const isFetching = ref(false)
     const error = ref<string | null>(null)
+    let latestSearch = 0
     const searchLimit = computed(() => {
         const maxTotalHits = paginationState.maxTotalHits?.value
         return typeof maxTotalHits === 'number' ? Math.min(perPage.value, maxTotalHits) : perPage.value
@@ -57,6 +59,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
             offset: offset.value,
             showRankingScore: showRankingScore.value || undefined,
             showRankingScoreDetails: showRankingScore.value || undefined,
+            rankingScoreThreshold: rankingScoreThreshold.value || undefined,
         }
     })
 
@@ -65,6 +68,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
         query?: string,
         params?: SearchParams
     ): Promise<SearchResponse<RecordAny, SearchParams> | undefined> {
+        const requestId = ++latestSearch
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -76,13 +80,15 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
 
         try {
             const results = await client.index(indexUid).search(query, params)
+            if (requestId !== latestSearch) return
             searchResults.value = results
             return results
         } catch (err) {
+            if (requestId !== latestSearch) return
             searchResults.value = null
             error.value = (err as Error).message
         } finally {
-            isFetching.value = false
+            if (requestId === latestSearch) isFetching.value = false
         }
     }
 
@@ -133,6 +139,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
         hybridSearchEnabled,
         hybridSearchConfig,
         showRankingScore,
+        rankingScoreThreshold,
         isFetching,
         error,
         searchParams,
