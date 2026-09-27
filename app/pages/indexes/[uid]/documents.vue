@@ -9,6 +9,7 @@ import ExportDocumentsModal from '@/components/meilisearch/ExportDocumentsModal.
 import FilterDocumentsSlideover from '@/components/meilisearch/FilterDocumentsSlideover.vue'
 import HybridSearchModal from '@/components/meilisearch/HybridSearchModal.vue'
 import ImportDocumentsSlideover from '@/components/meilisearch/ImportDocumentsSlideover.vue'
+import RankingScoreModal from '@/components/meilisearch/RankingScoreModal.vue'
 import { useDocuments } from '@/composables/meilisearch/useDocuments'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import { useSearch } from '@/composables/meilisearch/useSearch'
@@ -48,6 +49,7 @@ const {
     hybridSearchEnabled,
     hybridSearchConfig,
     showRankingScore,
+    rankingScoreThreshold,
     isFetching: isSearching,
     error: searchError,
     searchPaginated,
@@ -113,6 +115,7 @@ const exportModalOpen = ref(false)
 const editSlideoverOpen = ref(false)
 const currentDocument = ref<RecordAny | null>(null)
 const hybridModalOpen = ref(false)
+const rankingScoreModalOpen = ref(false)
 const searchOptionsOpen = ref(false)
 
 watch(searchFilter, () => searchPaginated(indexUid.value, true))
@@ -163,6 +166,7 @@ const availableEmbedders = computed<IndexEmbedderOption[]>(() => Object.entries(
     return [{ name, label: details ? `${name} (${details})` : name, settings }]
 }))
 watch([hybridSearchEnabled, hybridSearchConfig], () => searchPaginated(indexUid.value, true))
+watch([showRankingScore, rankingScoreThreshold], () => searchPaginated(indexUid.value, true))
 watch(availableEmbedders, (value) => {
     if (!value.some(embedder => embedder.name === hybridSearchConfig.value?.embedder)) {
         hybridSearchEnabled.value = false
@@ -212,10 +216,9 @@ async function changePageSize(pageSize: number) {
         dataView.value === 'table' ? 'documents-table-scroll' : undefined,
     )
 }
-async function toggleRanking() {
+function openRankingScoreModal() {
     searchOptionsOpen.value = false
-    showRankingScore.value = !showRankingScore.value
-    await searchPaginated(indexUid.value, true)
+    rankingScoreModalOpen.value = true
 }
 function openFilters() {
     searchOptionsOpen.value = false
@@ -357,13 +360,12 @@ onMounted(() => {
                                     />
                                     <UButton
                                         label="Show ranking score"
-                                        aria-label="Toggle ranking score"
+                                        aria-label="Configure ranking score"
                                         icon="i-lucide-trophy"
                                         :color="showRankingScore ? 'primary' : 'neutral'"
                                         :variant="showRankingScore ? 'soft' : 'outline'"
-                                        :aria-pressed="showRankingScore"
                                         class="w-full justify-center"
-                                        @click="toggleRanking"
+                                        @click="openRankingScoreModal"
                                     />
                                 </div>
                             </template>
@@ -414,14 +416,13 @@ onMounted(() => {
                                 @click="toggleHybridSearch"
                             />
                         </UTooltip>
-                        <UTooltip text="Show ranking score">
+                        <UTooltip text="Configure ranking score">
                             <UButton
-                                aria-label="Toggle ranking score"
+                                aria-label="Configure ranking score"
                                 icon="i-lucide-trophy"
                                 :color="showRankingScore ? 'primary' : 'neutral'"
                                 :variant="showRankingScore ? 'soft' : 'outline'"
-                                :aria-pressed="showRankingScore"
-                                @click="toggleRanking"
+                                @click="openRankingScoreModal"
                             />
                         </UTooltip>
                     </div>
@@ -475,6 +476,11 @@ onMounted(() => {
                 v-model:hybrid-search="hybridSearchConfig"
                 v-model:enabled="hybridSearchEnabled"
                 :embedders="availableEmbedders"
+            />
+            <RankingScoreModal
+                v-model:open="rankingScoreModalOpen"
+                v-model:enabled="showRankingScore"
+                v-model:ranking-score-threshold="rankingScoreThreshold"
             />
         </Teleport>
 

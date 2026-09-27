@@ -31,6 +31,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
     const hybridSearchEnabled = ref(false)
     const hybridSearchConfig = ref<HybridSearch | null>(null)
     const showRankingScore = ref(false)
+    const rankingScoreThreshold = ref(0)
 
     const searchSortValues = computed<string[]>(() => {
         const sortValues = [...searchSort.value]
@@ -58,6 +59,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
             offset: offset.value,
             showRankingScore: showRankingScore.value || undefined,
             showRankingScoreDetails: showRankingScore.value || undefined,
+            rankingScoreThreshold: rankingScoreThreshold.value || undefined,
         }
     })
 
@@ -137,6 +139,7 @@ export function useSearch(initialPerPage: number = 20, paginationState: SearchPa
         hybridSearchEnabled,
         hybridSearchConfig,
         showRankingScore,
+        rankingScoreThreshold,
         isFetching,
         error,
         searchParams,
