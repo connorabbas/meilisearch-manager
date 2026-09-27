@@ -3,8 +3,7 @@ import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearc
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
 import SearchRuleForm from '@/components/meilisearch/SearchRuleForm.vue'
-import { isVersionAtLeast } from '@/utils'
-import type { SearchRule, SearchRuleUpdatePayload } from 'meilisearch'
+import { supportsSearchRules, type Rule, type RuleUpdate } from '@/types/search-rules'
 import type { SearchRuleFormState } from '@/types'
 
 definePageMeta({
@@ -44,7 +43,7 @@ await Promise.all([
 ])
 
 const isSupportedVersion = computed(() => {
-    return version.value ? isVersionAtLeast(version.value.pkgVersion, '1.41.0') : false
+    return supportsSearchRules(version.value?.pkgVersion)
 })
 
 const isFeatureEnabled = computed(() => {
@@ -57,7 +56,7 @@ if (isFeatureAvailable.value && ruleUid.value) {
     await fetchRule(ruleUid.value)
 }
 
-function toFormState(rule?: SearchRule | null): SearchRuleFormState {
+function toFormState(rule?: Rule | null): SearchRuleFormState {
     const value = rule ? toRaw(rule) : null
 
     return {
@@ -66,7 +65,7 @@ function toFormState(rule?: SearchRule | null): SearchRuleFormState {
         precedence: value?.precedence ?? null,
         active: value?.active ?? true,
         conditions: structuredClone(value?.conditions ?? {}),
-        actions: structuredClone(value?.actions ?? []),
+        actions: structuredClone(value?.actions ?? { pin: [], scale: [] }),
     }
 }
 
@@ -79,13 +78,14 @@ watch(currentRule, (rule) => {
 }, { immediate: true })
 
 const canSave = computed(() => {
-    return formState.uid.trim().length > 0
+    return isFeatureAvailable.value && !!currentRule.value && formState.uid.trim().length > 0
         && Object.values(formState.conditions).some(Boolean)
-        && formState.actions.length > 0
+        && (formState.actions.pin?.length || formState.actions.scale?.length)
 })
 
 async function handleSave() {
-    const payload: SearchRuleUpdatePayload = {
+    if (!canSave.value) return
+    const payload: RuleUpdate = {
         description: formState.description || null,
         precedence: formState.precedence,
         active: formState.active,

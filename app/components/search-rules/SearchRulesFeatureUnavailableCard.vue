@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { MIN_SEARCH_RULE_VERSION } from '@/types/search-rules'
 defineProps<{
     isSupportedVersion: boolean
     version?: string | null
     isFeatureEnabled: boolean
     featureName: string
-    minVersion?: string
 }>()
 </script>
 
@@ -20,7 +20,7 @@ defineProps<{
             </div>
             <div class="max-w-md space-y-3 text-muted">
                 <p v-if="!isSupportedVersion">
-                    Your Meilisearch instance must be version <strong>{{ minVersion ?? '1.41.0' }}</strong> or higher.
+                    Your Meilisearch instance must be version <strong>{{ MIN_SEARCH_RULE_VERSION }}</strong> or higher.
                     Current version: <strong>{{ version ?? 'unknown' }}</strong>.
                 </p>
                 <p v-if="!isFeatureEnabled">

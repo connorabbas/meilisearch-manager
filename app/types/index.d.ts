@@ -4,11 +4,12 @@ import type {
     Hit,
     IndexObject,
     RecordAny,
-    SearchRuleAction,
     SearchRuleConditions,
+    SearchRuleFilterCondition,
     SearchRuleQueryCondition,
     SearchRuleTimeCondition,
 } from 'meilisearch'
+import type { RuleActions } from './search-rules'
 
 export interface MeilisearchInstanceConfig {
     id: string;
@@ -62,12 +63,13 @@ export type SearchRuleFormState = {
     precedence: number | null;
     active: boolean;
     conditions: SearchRuleConditions;
-    actions: SearchRuleAction[];
+    actions: RuleActions;
 };
 
 export type SearchRuleConditionEntry =
     | { scope: 'query'; condition: SearchRuleQueryCondition }
-    | { scope: 'time'; condition: SearchRuleTimeCondition };
+    | { scope: 'time'; condition: SearchRuleTimeCondition }
+    | { scope: 'filter'; condition: SearchRuleFilterCondition };
 
 export type SearchRuleDocumentOption = {
     label: string;
