@@ -151,7 +151,7 @@ watch(open, value => {
                         v-if="values.length && !filterValid"
                         color="warning"
                         variant="subtle"
-                        icon="i-lucide-alert-triangle"
+                        icon="i-lucide-triangle-alert"
                         title="Enter distinct attributes and nonempty values."
                     />
                     <div
