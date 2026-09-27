@@ -87,6 +87,12 @@ test('mobile document toolbar keeps search and views visible while collapsing se
     await expect(page.getByRole('button', { name: 'Configure hybrid search' }).last()).toBeVisible()
     await page.getByRole('button', { name: 'Toggle ranking score' }).last().click()
     await expect.poll(() => requests.some(request => request.showRankingScore === true)).toBe(true)
+    await page.getByRole('button', { name: 'Open search options' }).click()
+    await page.getByRole('button', { name: 'Filter' }).last().click()
+    const filters = page.getByRole('dialog', { name: 'Filter Documents' })
+    await expect.poll(async () => (await filters.boundingBox())!.width).toBe(390)
+    await page.setViewportSize({ width: 900, height: 844 })
+    await expect.poll(async () => (await filters.boundingBox())!.width).toBe(900)
 })
 
 test('caps reachable document pages at pagination.maxTotalHits', async ({ page }) => {
@@ -106,6 +112,137 @@ test('caps reachable document pages at pagination.maxTotalHits', async ({ page }
     await expect(page.getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByRole('button', { name: 'Next Page' })).toBeDisabled()
     expect(requests.some(request => Number(request.offset) >= 25)).toBe(false)
+})
+
+test('builder applies typed groups, resets pagination, and clears on mode switch', async ({ page }) => {
+    const requests: Array<Record<string, unknown>> = []
+    await installMeilisearchMock(page, {
+        indexSettings: {
+            displayedAttributes: ['*'], searchableAttributes: ['title'],
+            filterableAttributes: ['genre', 'year', 'rating'], sortableAttributes: ['year'],
+            rankingRules: ['words'], stopWords: [], separatorTokens: [], nonSeparatorTokens: [],
+            dictionary: [], synonyms: {}, distinctAttribute: null, typoTolerance: { enabled: true },
+            faceting: { maxValuesPerFacet: 100, sortFacetValuesBy: { '*': 'alpha' } },
+            pagination: { maxTotalHits: 1000 }, embedders: {}, searchCutoffMs: null, localizedAttributes: [],
+        },
+        onSearchRequest: request => requests.push(request.postDataJSON()),
+    })
+    await openDocuments(page)
+    await page.getByRole('button', { name: 'Next Page' }).click()
+    await expect.poll(() => requests.at(-1)?.offset).toBe(20)
+
+    await page.getByRole('button', { name: 'Filter' }).click()
+    const filters = page.getByRole('dialog', { name: 'Filter Documents' })
+    const facetWidth = (await filters.boundingBox())!.width
+    await filters.getByRole('tab', { name: 'Builder' }).click()
+    await expect.poll(async () => (await filters.boundingBox())!.width).toBe(facetWidth)
+    await expect(filters.getByRole('table')).toHaveCount(1)
+    await expect(filters.getByRole('columnheader', { name: 'Attribute' })).toBeVisible()
+    await filters.getByRole('button', { name: 'Add condition' }).click()
+    const tableFillsCard = await filters.getByRole('table').evaluate((table) => {
+        const cell = table.querySelector('tbody td')!
+        const select = cell.querySelector('button')!
+        const padding = parseFloat(getComputedStyle(cell).paddingLeft) + parseFloat(getComputedStyle(cell).paddingRight)
+        return table.getBoundingClientRect().width >= table.parentElement!.getBoundingClientRect().width - 1
+            && table.parentElement!.scrollWidth <= table.parentElement!.clientWidth
+            && select.getBoundingClientRect().width >= cell.getBoundingClientRect().width - padding - 1
+    })
+    expect(tableFillsCard).toBe(true)
+    await filters.getByRole('combobox', { name: 'Attribute for condition 1 in group 1' }).click()
+    await page.getByRole('option', { name: 'year', exact: true }).click()
+    await filters.getByRole('combobox', { name: 'Value type for condition 1 in group 1' }).click()
+    await page.getByRole('option', { name: 'Number', exact: true }).click()
+    await filters.getByRole('combobox', { name: 'Operator for condition 1 in group 1' }).click()
+    await page.getByRole('option', { name: 'at least (>=)' }).click()
+    await filters.getByRole('spinbutton', { name: 'Value for condition 1 in group 1' }).fill('2000')
+
+    await filters.getByRole('button', { name: 'Add condition' }).click()
+    await filters.getByRole('combobox', { name: 'Attribute for condition 2 in group 1' }).click()
+    await page.getByRole('option', { name: 'genre', exact: true }).click()
+    await filters.getByRole('textbox', { name: 'Value for condition 2 in group 1' }).fill('Children\'s')
+    await expect(filters.getByRole('textbox', { name: 'Value for condition 2 in group 1' })).toHaveValue('Children\'s')
+    await expect(filters.getByText('genre = \'Children\\\'s\'')).toBeVisible()
+    await filters.getByRole('combobox', { name: 'Match conditions in group 1' }).click()
+    await page.getByRole('option', { name: 'Any (OR)' }).click()
+    await expect(filters.getByText('(year >= 2000 OR genre = \'Children\\\'s\')')).toBeVisible()
+    expect(requests.some(request => request.filter)).toBe(false)
+
+    await filters.getByRole('button', { name: 'Close' }).click()
+    await page.getByRole('button', { name: 'Filter' }).click()
+    await expect(filters.getByRole('tab', { name: 'Builder' })).toHaveAttribute('data-state', 'active')
+    await expect(filters.getByRole('spinbutton', { name: 'Value for condition 1 in group 1' })).toHaveValue('2000')
+    await expect(filters.getByRole('textbox', { name: 'Value for condition 2 in group 1' })).toHaveValue('Children\'s')
+    await expect(filters.getByText('(year >= 2000 OR genre = \'Children\\\'s\')')).toBeVisible()
+
+    await filters.getByRole('button', { name: 'Add group' }).click()
+    await filters.getByRole('combobox', { name: 'Attribute for condition 1 in group 2' }).click()
+    await page.getByRole('option', { name: 'rating', exact: true }).click()
+    await filters.getByRole('combobox', { name: 'Value type for condition 1 in group 2' }).click()
+    await page.getByRole('option', { name: 'Number', exact: true }).click()
+    await filters.getByRole('combobox', { name: 'Operator for condition 1 in group 2' }).click()
+    await page.getByRole('option', { name: 'greater than (>)' }).click()
+    await filters.getByRole('spinbutton', { name: 'Value for condition 1 in group 2' }).fill('4')
+    const expectedFilter = '(year >= 2000 OR genre = \'Children\\\'s\') AND rating > 4'
+    await expect(filters.getByText(expectedFilter)).toBeVisible()
+    await filters.getByRole('button', { name: 'Apply filters' }).click()
+    await expect.poll(() => requests.at(-1)?.filter).toBe(expectedFilter)
+    expect(requests.at(-1)?.offset).toBe(0)
+
+    await expect(filters).toBeHidden()
+    await page.getByRole('button', { name: 'Filter' }).click()
+    await expect(filters.getByText(expectedFilter)).toBeVisible()
+    await expect(filters.getByRole('button', { name: 'Apply filters' })).toBeDisabled()
+
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await filters.getByRole('button', { name: 'Copy', exact: true }).click()
+    await expect(filters.getByRole('button', { name: 'Copied' })).toBeVisible()
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(expectedFilter)
+
+    await filters.getByRole('tab', { name: 'Facets' }).click()
+    await expect.poll(() => requests.at(-1)?.filter).toBeUndefined()
+    await filters.getByRole('tab', { name: 'Builder' }).click()
+    await expect(filters.getByText('No filter')).toBeVisible()
+})
+
+test('builder respects granular filter capabilities', async ({ page }) => {
+    await installMeilisearchMock(page, {
+        version: '1.14.0',
+        indexStats: {
+            numberOfDocuments: 1, isIndexing: false,
+            fieldDistribution: { id: 1, genre: 1, year: 1, 'author.name': 1 },
+            numberOfEmbeddedDocuments: 0, numberOfEmbeddings: 0,
+            rawDocumentDbSize: 512, avgDocumentSize: 512,
+        },
+        indexSettings: {
+            displayedAttributes: ['*'], searchableAttributes: ['title'],
+            filterableAttributes: [
+                { attributePatterns: ['genre'], features: { facetSearch: true, filter: { equality: true, comparison: false } } },
+                { attributePatterns: ['year'], features: { facetSearch: false, filter: { equality: false, comparison: true } } },
+                'author',
+                { attributePatterns: ['*'], features: { facetSearch: false, filter: { equality: true, comparison: false } } },
+            ],
+            sortableAttributes: [], rankingRules: ['words'], stopWords: [], separatorTokens: [], nonSeparatorTokens: [],
+            dictionary: [], synonyms: {}, distinctAttribute: null, typoTolerance: { enabled: true },
+            faceting: { maxValuesPerFacet: 100, sortFacetValuesBy: { '*': 'alpha' } },
+            pagination: { maxTotalHits: 1000 }, embedders: {}, searchCutoffMs: null, localizedAttributes: [],
+        },
+    })
+    await openDocuments(page)
+    await page.getByRole('button', { name: 'Filter' }).click()
+    const filters = page.getByRole('dialog', { name: 'Filter Documents' })
+    await filters.getByRole('button', { name: 'Filterable facets' }).click()
+    await expect(page.getByRole('option', { name: 'genre', exact: true })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'year', exact: true })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+
+    await filters.getByRole('tab', { name: 'Builder' }).click()
+    await filters.getByRole('button', { name: 'Add condition' }).click()
+    await filters.getByRole('combobox', { name: 'Attribute for condition 1 in group 1' }).click()
+    await expect(page.getByRole('option', { name: 'author.name', exact: true })).toBeVisible()
+    await page.getByRole('option', { name: 'year', exact: true }).click()
+    await filters.getByRole('combobox', { name: 'Operator for condition 1 in group 1' }).click()
+    await expect(page.getByRole('option', { name: 'greater than (>)' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'is (=)' })).toHaveCount(0)
 })
 
 test('image thumbnails open a reusable modal preview in JSON and table views', async ({ page }) => {
@@ -141,6 +278,7 @@ test('image thumbnails open a reusable modal preview in JSON and table views', a
 
 test('facet, geo, and hybrid controls preserve search parameters', async ({ page }) => {
     const requests: Array<Record<string, unknown>> = []
+    const facetQueries: string[] = []
     await installMeilisearchMock(page, {
         documents: [{ id: 1, title: 'Geo movie', genre: 'Children\'s', _geo: { lat: 45.47, lng: 9.18 } }],
         indexStats: {
@@ -172,6 +310,7 @@ test('facet, geo, and hybrid controls preserve search parameters', async ({ page
             localizedAttributes: [],
         },
         onSearchRequest: request => requests.push(request.postDataJSON()),
+        onFacetSearchRequest: request => facetQueries.push(request.postDataJSON().facetQuery),
     })
     await openDocuments(page)
     await expect(page.getByRole('tab', { name: 'Geo' })).toBeVisible()
@@ -198,8 +337,13 @@ test('facet, geo, and hybrid controls preserve search parameters', async ({ page
     await page.getByRole('option', { name: 'genre' }).click()
     await page.keyboard.press('Escape')
     await filters.getByRole('button', { name: 'genre values' }).click()
+    await page.getByPlaceholder('Search facet values').fill('Drama')
+    await expect.poll(() => facetQueries.includes('Drama')).toBe(true)
+    await expect(page.getByRole('option', { name: /Children's/ })).toHaveCount(0)
+    await page.getByPlaceholder('Search facet values').fill('')
+    await expect(page.getByRole('option', { name: /Children's/ })).toBeVisible()
     await page.getByRole('option', { name: /Children's/ }).click()
-    await expect.poll(() => requests.some(request => request.filter === '(genre = \'Children\\\'s\')')).toBe(true)
+    expect(requests.some(request => request.filter)).toBe(false)
     await page.keyboard.press('Escape')
 
     await filters.getByRole('combobox', { name: 'Geo filter' }).click()
@@ -207,13 +351,35 @@ test('facet, geo, and hybrid controls preserve search parameters', async ({ page
     await filters.getByRole('textbox', { name: 'Latitude', exact: true }).fill('45.47')
     await filters.getByRole('textbox', { name: 'Longitude', exact: true }).fill('9.18')
     await filters.getByRole('textbox', { name: 'Radius (meters)' }).fill('2000')
+    expect(requests.some(request => request.filter)).toBe(false)
+    await filters.getByRole('button', { name: 'Apply filters' }).click()
     await expect.poll(() => requests.at(-1)?.filter).toBe('(genre = \'Children\\\'s\') AND _geoRadius(45.47, 9.18, 2000)')
+    await expect(filters).toBeHidden()
+    await page.getByRole('button', { name: 'Filter' }).click()
 
     await filters.getByRole('combobox', { name: 'Geo sort' }).click()
     await page.getByRole('option', { name: 'Nearest First' }).click()
     await filters.getByRole('textbox', { name: 'Reference latitude' }).fill('48.85')
     await filters.getByRole('textbox', { name: 'Reference longitude' }).fill('2.29')
+    await filters.getByRole('button', { name: 'Apply filters' }).click()
     await expect.poll(() => requests.some(request => JSON.stringify(request.sort) === JSON.stringify(['_geoPoint(48.85, 2.29):asc']))).toBe(true)
+    await expect(filters).toBeHidden()
+    await page.getByRole('button', { name: 'Filter' }).click()
+
+    await filters.getByRole('tab', { name: 'Builder' }).click()
+    await filters.getByRole('button', { name: 'Add condition' }).click()
+    await filters.getByRole('textbox', { name: 'Value for condition 1 in group 1' }).fill('Drama')
+    await filters.getByRole('button', { name: 'Add group' }).click()
+    await filters.getByRole('textbox', { name: 'Value for condition 1 in group 2' }).fill('Comedy')
+    await filters.getByRole('combobox', { name: 'Match groups' }).click()
+    await page.getByRole('option', { name: 'Any (OR)' }).click()
+    await filters.getByRole('combobox', { name: 'Geo filter' }).click()
+    await page.getByRole('option', { name: 'Radius' }).click()
+    await filters.getByRole('textbox', { name: 'Latitude', exact: true }).fill('45.47')
+    await filters.getByRole('textbox', { name: 'Longitude', exact: true }).fill('9.18')
+    await filters.getByRole('textbox', { name: 'Radius (meters)' }).fill('2000')
+    await filters.getByRole('button', { name: 'Apply filters' }).click()
+    await expect.poll(() => requests.at(-1)?.filter).toBe('(genre = \'Drama\' OR genre = \'Comedy\') AND _geoRadius(45.47, 9.18, 2000)')
 })
 
 test('document edit and delete actions use accessible overlays and confirmation', async ({ page }) => {

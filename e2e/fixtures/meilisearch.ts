@@ -137,6 +137,7 @@ export type MeilisearchMockOptions = {
     indexes?: FixtureIndex[],
     getIndexes?: (request: Request, indexes: FixtureIndex[]) => FixtureIndex[],
     onSearchRequest?: (request: Request) => void,
+    onFacetSearchRequest?: (request: Request) => void,
     documents?: Array<Record<string, unknown>>,
     indexStats?: Omit<typeof indexStats, 'fieldDistribution'> & { fieldDistribution: Record<string, number> },
     indexSettings?: Omit<typeof indexSettings, 'embedders'> & { embedders: Record<string, unknown> },
@@ -332,7 +333,11 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
                 estimatedTotalHits: documents.length,
             })
         } else if (path === '/indexes/movies/facet-search') {
-            await json(route, { facetHits: [{ value: 'Drama', count: 2 }, { value: 'Children\'s', count: 1 }], facetQuery: null, processingTimeMs: 1 })
+            options.onFacetSearchRequest?.(request)
+            const query = (request.postDataJSON() as { facetQuery?: string }).facetQuery ?? ''
+            const facetHits = [{ value: 'Drama', count: 2 }, { value: 'Children\'s', count: 1 }]
+                .filter(hit => hit.value.toLowerCase().includes(query.toLowerCase()))
+            await json(route, { facetHits, facetQuery: query, processingTimeMs: 1 })
         } else if (path === '/indexes/movies/settings/filterable-attributes') {
             await json(route, movieSettings.filterableAttributes)
         } else if (path === '/indexes/movies/settings/sortable-attributes') {
