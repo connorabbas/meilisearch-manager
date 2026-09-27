@@ -32,7 +32,10 @@ test('shared taskbar drives search, views, sorting, ranking, and pagination', as
     await expect(page.getByRole('table')).toBeVisible()
     expect(requests).toHaveLength(beforeViewChange)
 
-    await page.getByRole('button', { name: 'Toggle ranking score' }).click()
+    await page.getByRole('button', { name: 'Configure ranking score' }).click()
+    const rankingScore = page.getByRole('dialog', { name: 'Ranking Score' })
+    await rankingScore.getByRole('switch', { name: 'Show ranking score' }).check()
+    await rankingScore.getByRole('button', { name: 'Apply' }).click()
     await expect.poll(() => requests.some(request => request.showRankingScore === true && request.showRankingScoreDetails === true)).toBe(true)
     await expect(page.getByRole('columnheader', { name: 'Ranking Score' })).toBeVisible()
 
@@ -85,7 +88,10 @@ test('mobile document toolbar keeps search and views visible while collapsing se
     await expect(page.getByRole('combobox', { name: 'Sort documents' }).last()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Filter' }).last()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Configure hybrid search' }).last()).toBeVisible()
-    await page.getByRole('button', { name: 'Toggle ranking score' }).last().click()
+    await page.getByRole('button', { name: 'Configure ranking score' }).last().click()
+    const rankingScore = page.getByRole('dialog', { name: 'Ranking Score' })
+    await rankingScore.getByRole('switch', { name: 'Show ranking score' }).check()
+    await rankingScore.getByRole('button', { name: 'Apply' }).click()
     await expect.poll(() => requests.some(request => request.showRankingScore === true)).toBe(true)
     await page.getByRole('button', { name: 'Open search options' }).click()
     await page.getByRole('button', { name: 'Filter' }).last().click()
