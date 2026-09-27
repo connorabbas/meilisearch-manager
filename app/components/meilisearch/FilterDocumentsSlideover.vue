@@ -2,14 +2,19 @@
 import { useFacetSearch } from '@/composables/meilisearch/useFacetSearch'
 import type { Filter, FilterableAttributes, SortableAttributes } from 'meilisearch'
 import type { FacetFilterGroup, GeoFilterMode, GeoSortDirection } from '@/types'
+import DocumentFilterBuilder from '@/components/meilisearch/DocumentFilterBuilder.vue'
+import { compileGroups, createFilterBuilderState, filterFields, quoteFilterField, quoteFilterValue } from '@/utils/documentFilters'
+import { isVersionAtLeast } from '@/utils'
 
 const props = defineProps<{
     indexUid: string,
     filterableAttributes?: FilterableAttributes | null,
     sortableAttributes?: SortableAttributes | null,
     searching?: boolean,
-    totalHits?: number,
     enableGeoFilters?: boolean,
+    knownFields?: string[],
+    version?: string | null,
+    searchQuery?: string,
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
@@ -20,10 +25,29 @@ const { searchFacetValues } = useFacetSearch()
 
 const selectedAttributes = ref<string[]>([])
 const facetFilters = ref<Record<string, FacetFilterGroup>>({})
+const facetTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const facetRequestIds = new Map<string, number>()
+const facetQueries = new Map<string, string>()
 const facetFiltersEmpty = computed(() => Object.keys(facetFilters.value).length === 0)
+const mode = ref<'facets' | 'builder'>('facets')
+const modes = [
+    { label: 'Facets', value: 'facets' },
+    { label: 'Builder', value: 'builder' },
+]
+const builderState = ref(createFilterBuilderState())
+const appliedAttributeFilter = ref<string | null>(null)
+const availableFields = computed(() => filterFields(props.filterableAttributes, props.knownFields ?? []))
+const builderFields = computed(() => availableFields.value.filter(field => field.equality || field.comparison))
+const builderExpression = computed(() => {
+    try {
+        return { value: compileGroups(builderState.value.groups, builderState.value.join, builderFields.value, props.version ?? null), error: null }
+    } catch (error) {
+        return { value: null, error: (error as Error).message }
+    }
+})
 
 const facetAttributeOptions = computed(() => {
-    return ((props.filterableAttributes as string[]) ?? []).filter(attribute => attribute !== '_geo')
+    return availableFields.value.filter(field => field.facetSearch && field.equality).map(field => field.name)
 })
 
 const geoFilterMode = ref<GeoFilterMode>('none')
@@ -55,7 +79,9 @@ const geoSortLat = ref('')
 const geoSortLng = ref('')
 
 const hasGeoFilterSupport = computed(() => {
-    return ((props.filterableAttributes as string[]) ?? []).includes('_geo')
+    return (props.filterableAttributes ?? []).some(entry => typeof entry === 'string'
+        ? entry === '_geo' || entry === '*'
+        : entry.attributePatterns.includes('_geo') || entry.attributePatterns.includes('*'))
 })
 const hasGeoSortSupport = computed(() => {
     return ((props.sortableAttributes as string[]) ?? []).includes('_geo')
@@ -71,8 +97,30 @@ function updateFacetFilterValue(attributeName: string, value: string[]) {
     facetFilter.value = value
 }
 
-function escapeFilterValue(value: string) {
-    return value.replaceAll('\'', '\\\'')
+function searchFacet(attribute: string, query: string) {
+    if (facetQueries.get(attribute) === query || (!facetQueries.has(attribute) && !query)) return
+    facetQueries.set(attribute, query)
+    const pending = facetTimers.get(attribute)
+    if (pending) clearTimeout(pending)
+    const requestId = (facetRequestIds.get(attribute) ?? 0) + 1
+    facetRequestIds.set(attribute, requestId)
+    facetTimers.set(attribute, setTimeout(async () => {
+        const otherFilters = Object.values(facetFilters.value).filter(group => group.attribute !== attribute && group.value.length)
+            .map(group => `(${group.value.map(value => `${quoteFilterField(group.attribute)} = ${quoteFilterValue(value)}`).join(' OR ')})`).join(' AND ')
+        const indexUid = props.indexUid
+        const result = await searchFacetValues(indexUid, {
+            facetName: attribute,
+            facetQuery: query,
+            q: props.searchQuery,
+            filter: otherFilters || undefined,
+        })
+        const current = facetFilters.value[attribute]
+        if (!current || !selectedAttributes.value.includes(attribute) || indexUid !== props.indexUid || facetRequestIds.get(attribute) !== requestId) return
+        current.facetHits = [
+            ...(result?.facetHits ?? []),
+            ...current.facetHits.filter(hit => current.value.includes(hit.value) && !result?.facetHits.some(item => item.value === hit.value)),
+        ]
+    }, 250))
 }
 
 function parseNumberValue(value: string): number | null {
@@ -107,7 +155,7 @@ function parsePolygonCoordinates(value: string): Array<[number, number]> | null 
 
         const lat = parseNumberValue(latInput)
         const lng = parseNumberValue(lngInput)
-        if (lat === null || lng === null) {
+        if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
             return null
         }
 
@@ -126,7 +174,7 @@ const facetFilterExpression = computed<string | null>(() => {
     Object.values(facetFilters.value).forEach((facetGroup) => {
         if (facetGroup.value.length > 0) {
             const attributeFilters = facetGroup.value
-                .map(value => `${facetGroup.attribute} = '${escapeFilterValue(value)}'`)
+                .map(value => `${quoteFilterField(facetGroup.attribute)} = ${quoteFilterValue(value)}`)
                 .join(' OR ')
 
             if (attributeFilters) {
@@ -147,7 +195,7 @@ const geoFilterExpression = computed<string | null>(() => {
         const lat = parseNumberValue(radiusLat.value)
         const lng = parseNumberValue(radiusLng.value)
         const meters = parseNumberValue(radiusMeters.value)
-        if (lat === null || lng === null || meters === null) {
+        if (lat === null || lng === null || meters === null || meters <= 0 || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
             return null
         }
 
@@ -200,7 +248,7 @@ const geoFilterValidationMessage = computed<string | null>(() => {
         const lat = parseNumberValue(radiusLat.value)
         const lng = parseNumberValue(radiusLng.value)
         const meters = parseNumberValue(radiusMeters.value)
-        if (lat === null || lng === null || meters === null || meters <= 0) {
+        if (lat === null || lng === null || meters === null || meters <= 0 || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
             return 'Radius values must be valid numbers and radius must be greater than 0.'
         }
     }
@@ -212,12 +260,15 @@ const geoFilterValidationMessage = computed<string | null>(() => {
         }
 
         const parsedValues = values.map(parseNumberValue)
-        if (parsedValues.some(value => value === null)) {
+        if (parsedValues.some(value => value === null) || Math.abs(parsedValues[0]!) > 90 || Math.abs(parsedValues[2]!) > 90 || Math.abs(parsedValues[1]!) > 180 || Math.abs(parsedValues[3]!) > 180) {
             return 'Bounding box coordinates must be valid numbers.'
         }
     }
 
     if (geoFilterMode.value === 'polygon') {
+        if (!props.version || !isVersionAtLeast(props.version, '1.22.0')) {
+            return 'Polygon filtering requires Meilisearch 1.22 or later.'
+        }
         if (!polygonPointsInput.value.trim()) {
             return 'Enter at least 3 lines with "lat,lng" coordinates.'
         }
@@ -230,15 +281,6 @@ const geoFilterValidationMessage = computed<string | null>(() => {
     return null
 })
 
-const combinedFilterExpression = computed<string | null>(() => {
-    const expressions = [facetFilterExpression.value, geoFilterExpression.value].filter(Boolean)
-    if (expressions.length === 0) {
-        return null
-    }
-
-    return expressions.join(' AND ')
-})
-
 const geoSortExpression = computed<string | null>(() => {
     if (!props.enableGeoFilters || geoSortDirection.value === 'none' || !hasGeoSortSupport.value) {
         return null
@@ -246,7 +288,7 @@ const geoSortExpression = computed<string | null>(() => {
 
     const lat = parseNumberValue(geoSortLat.value)
     const lng = parseNumberValue(geoSortLng.value)
-    if (lat === null || lng === null) {
+    if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
         return null
     }
 
@@ -267,12 +309,30 @@ const geoSortValidationMessage = computed<string | null>(() => {
 
     const lat = parseNumberValue(geoSortLat.value)
     const lng = parseNumberValue(geoSortLng.value)
-    if (lat === null || lng === null) {
+    if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
         return 'Geo sort coordinates must be valid numbers.'
     }
 
     return null
 })
+
+const draftFilter = computed(() => {
+    const attributeFilter = mode.value === 'facets' ? facetFilterExpression.value : builderExpression.value.value
+    const geo = geoFilterExpression.value
+    if (attributeFilter && geo) return `${mode.value === 'builder' ? `(${attributeFilter})` : attributeFilter} AND ${geo}`
+    return attributeFilter || geo
+})
+const applyDisabled = computed(() => !!builderExpression.value.error && mode.value === 'builder'
+    || !!geoFilterValidationMessage.value || !!geoSortValidationMessage.value
+    || (draftFilter.value === filter.value && geoSortExpression.value === geoSort.value))
+
+function applyFilters() {
+    if (applyDisabled.value) return
+    appliedAttributeFilter.value = mode.value === 'facets' ? facetFilterExpression.value : builderExpression.value.value
+    filter.value = draftFilter.value
+    geoSort.value = geoSortExpression.value
+    open.value = false
+}
 
 watch(selectedAttributes, async (newVal, oldVal) => {
     const added = newVal.filter(item => !oldVal?.includes(item))
@@ -284,6 +344,7 @@ watch(selectedAttributes, async (newVal, oldVal) => {
             const result = await searchFacetValues(props.indexUid, {
                 facetName: attributeName,
             })
+            if (!selectedAttributes.value.includes(attributeName) || mode.value !== 'facets') return
             facetFilters.value[attributeName] = {
                 attribute: attributeName,
                 facetHits: result?.facetHits ?? [],
@@ -295,6 +356,9 @@ watch(selectedAttributes, async (newVal, oldVal) => {
     // remove facet filters when un-checked
     if (removed.length > 0) {
         removed.forEach((attributeName) => {
+            clearTimeout(facetTimers.get(attributeName))
+            facetRequestIds.set(attributeName, (facetRequestIds.get(attributeName) ?? 0) + 1)
+            facetQueries.delete(attributeName)
             const nextFacetFilters = { ...facetFilters.value }
 
             Reflect.deleteProperty(nextFacetFilters, attributeName)
@@ -302,19 +366,43 @@ watch(selectedAttributes, async (newVal, oldVal) => {
         })
     }
 })
-watch(combinedFilterExpression, (newVal) => {
-    filter.value = newVal
-}, { immediate: true })
-
-watch(geoSortExpression, (newVal) => {
-    geoSort.value = newVal
-}, { immediate: true })
+function switchMode(value: 'facets' | 'builder') {
+    if (mode.value === value) return
+    selectedAttributes.value = []
+    for (const timer of facetTimers.values()) clearTimeout(timer)
+    facetRequestIds.clear()
+    facetQueries.clear()
+    facetFilters.value = {}
+    appliedAttributeFilter.value = null
+    builderState.value = createFilterBuilderState()
+    geoFilterMode.value = 'none'
+    geoSortDirection.value = 'none'
+    filter.value = null
+    geoSort.value = null
+    mode.value = value
+}
 
 watch(() => props.enableGeoFilters, (enabled) => {
     if (!enabled) {
         geoFilterMode.value = 'none'
         geoSortDirection.value = 'none'
+        filter.value = appliedAttributeFilter.value
+        geoSort.value = null
     }
+})
+watch(() => props.indexUid, () => {
+    selectedAttributes.value = []
+    facetFilters.value = {}
+    appliedAttributeFilter.value = null
+    builderState.value = createFilterBuilderState()
+    geoFilterMode.value = 'none'
+    geoSortDirection.value = 'none'
+    mode.value = 'facets'
+    filter.value = null
+    geoSort.value = null
+})
+onBeforeUnmount(() => {
+    for (const timer of facetTimers.values()) clearTimeout(timer)
 })
 </script>
 
@@ -322,13 +410,27 @@ watch(() => props.enableGeoFilters, (enabled) => {
     <USlideover
         v-model:open="open"
         title="Filter Documents"
-        :ui="{ content: 'sm:max-w-lg' }"
+        :ui="{ content: 'max-w-none lg:max-w-3xl' }"
     >
         <template #body>
-            <!-- TODO: manual input search -->
             <div class="mt-1 relative flex flex-col gap-4">
+                <UTabs
+                    :model-value="mode"
+                    :items="modes"
+                    :content="false"
+                    aria-label="Filter mode"
+                    class="w-full"
+                    @update:model-value="switchMode($event as 'facets' | 'builder')"
+                />
+                <DocumentFilterBuilder
+                    v-if="mode === 'builder'"
+                    v-model:state="builderState"
+                    :fields="builderFields"
+                    :version="props.version ?? null"
+                    :expression="builderExpression"
+                />
                 <UAlert
-                    v-if="facetAttributeOptions.length === 0"
+                    v-if="mode === 'facets' && facetAttributeOptions.length === 0"
                     variant="subtle"
                     color="warning"
                     icon="i-lucide-triangle-alert"
@@ -336,7 +438,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
                     description="Update the filterableAttributes index setting to filter by facets."
                 />
                 <UFormField
-                    v-if="facetAttributeOptions.length > 0"
+                    v-if="mode === 'facets' && facetAttributeOptions.length > 0"
                     label="Facets"
                 >
                     <USelectMenu
@@ -349,9 +451,9 @@ watch(() => props.enableGeoFilters, (enabled) => {
                         class="w-full"
                     />
                 </UFormField>
-                <USeparator v-if="!facetFiltersEmpty" />
+                <USeparator v-if="mode === 'facets' && !facetFiltersEmpty" />
                 <div
-                    v-if="!facetFiltersEmpty"
+                    v-if="mode === 'facets' && !facetFiltersEmpty"
                     class="flex flex-col gap-6"
                 >
                     <div
@@ -365,6 +467,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
                                 :items="facetFilter.facetHits"
                                 :disabled="props.searching"
                                 :search-input="{ placeholder: 'Search facet values' }"
+                                :ignore-filter="true"
                                 value-key="value"
                                 label-key="value"
                                 :aria-label="`${facetFilter.attribute} values`"
@@ -372,6 +475,7 @@ watch(() => props.enableGeoFilters, (enabled) => {
                                 clear
                                 class="w-full"
                                 @update:model-value="(value) => updateFacetFilterValue(facetFilter.attribute, value)"
+                                @update:search-term="(value) => searchFacet(facetFilter.attribute, value)"
                             >
                                 <template #item-label="{ item }">{{ item.value }} ({{ item.count }})</template>
                             </USelectMenu>
@@ -517,11 +621,12 @@ watch(() => props.enableGeoFilters, (enabled) => {
             </div>
         </template>
         <template #footer>
-            <div
-                v-if="props.totalHits"
-                class="flex justify-center text-muted"
-            >
-                {{ props.totalHits.toLocaleString('en-US') }} estimated total hits
+            <div class="flex w-full justify-end">
+                <UButton
+                    label="Apply filters"
+                    :disabled="applyDisabled"
+                    @click="applyFilters"
+                />
             </div>
         </template>
     </USlideover>

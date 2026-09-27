@@ -24,7 +24,7 @@ const indexUid = computed(() => String(route.params.uid ?? ''))
 
 const { currentIndex, fetchIndex } = useIndexes()
 const { isSendingTask, confirmDeleteDocument } = useDocuments()
-const { indexStats, fetchIndexStats } = useStats()
+const { indexStats, version, fetchIndexStats, fetchVersion } = useStats()
 const {
     sortableAttributes,
     filterableAttributes,
@@ -68,6 +68,7 @@ async function fetchData() {
         fetchIndex(indexUid.value),
         fetchIndexStats(indexUid.value),
         fetchPagination(indexUid.value),
+        fetchVersion(),
     ])
     await searchPaginated(indexUid.value)
 }
@@ -258,13 +259,11 @@ onMounted(() => {
         </Teleport>
 
         <Teleport to="#sub-page-toolbar">
-            <UDashboardToolbar
-                :ui="{
-                    root: 'min-w-0 flex-wrap py-3 gap-2',
-                    left: 'min-w-0 w-full flex-wrap xl:flex-1 gap-2',
-                    right: 'min-w-0 w-full flex-wrap justify-between xl:w-auto xl:justify-start gap-2'
-                }"
-            >
+            <UDashboardToolbar :ui="{
+                root: 'min-w-0 flex-wrap py-3 gap-2',
+                left: 'min-w-0 w-full flex-wrap xl:flex-1 gap-2',
+                right: 'min-w-0 w-full flex-wrap justify-between xl:w-auto xl:justify-start gap-2'
+            }">
                 <template #left>
                     <UBadge
                         color="neutral"
@@ -334,7 +333,7 @@ onMounted(() => {
                                     </USelect>
                                     <UChip
                                         :show="Boolean(searchFilter || searchGeoSort)"
-                                        inset
+                                        size="xl"
                                     >
                                         <UButton
                                             label="Filter"
@@ -463,10 +462,12 @@ onMounted(() => {
                 v-model:geo-sort="searchGeoSort"
                 :index-uid="indexUid"
                 :filterable-attributes="filterableAttributes"
+                :known-fields="fieldNames"
+                :version="version?.pkgVersion"
+                :search-query="searchQuery"
                 :sortable-attributes="sortableAttributes"
                 :searching="isSearching"
                 :enable-geo-filters="dataView === 'geo'"
-                :total-hits="totalHits"
             />
             <HybridSearchModal
                 v-if="availableEmbedders.length"
