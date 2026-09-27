@@ -80,9 +80,9 @@ function handleDeleteAllDocuments() {
                 variant="subtle"
             >
                 <UAlert
-                    color="error"
+                    color="warning"
                     variant="subtle"
-                    icon="i-lucide-triangle-alert"
+                    icon="i-lucide-alert-triangle"
                     title="Warning"
                     description="Please proceed with caution. These actions cannot be undone."
                 />

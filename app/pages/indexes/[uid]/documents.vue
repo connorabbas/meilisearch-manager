@@ -297,7 +297,7 @@ onMounted(() => {
                                     color="neutral"
                                     variant="link"
                                     size="sm"
-                                    icon="i-lucide-circle-x"
+                                    icon="i-lucide-x"
                                     aria-label="Clear search"
                                     @click="searchQuery = ''"
                                 />

@@ -56,7 +56,7 @@ watch(() => props.document, (newVal: RecordAny | null) => {
                     v-if="hasErrors"
                     variant="subtle"
                     color="error"
-                    icon="i-lucide-circle-alert"
+                    icon="i-lucide-circle-x"
                     title="Unable to save document"
                     :description="jsonError || error || undefined"
                 />
