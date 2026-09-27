@@ -3,8 +3,7 @@ import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearc
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
 import SearchRuleForm from '@/components/meilisearch/SearchRuleForm.vue'
-import { isVersionAtLeast } from '@/utils'
-import type { SearchRuleUpdatePayload } from 'meilisearch'
+import { supportsSearchRules, type RuleUpdate } from '@/types/search-rules'
 import type { SearchRuleFormState } from '@/types'
 
 definePageMeta({
@@ -38,7 +37,7 @@ await Promise.all([
 ])
 
 const isSupportedVersion = computed(() => {
-    return version.value ? isVersionAtLeast(version.value.pkgVersion, '1.41.0') : false
+    return supportsSearchRules(version.value?.pkgVersion)
 })
 
 const isFeatureEnabled = computed(() => {
@@ -53,16 +52,18 @@ const formState = reactive<SearchRuleFormState>({
     precedence: null,
     active: true,
     conditions: {},
-    actions: [],
+    actions: { pin: [], scale: [] },
 })
 const canSave = computed(() => {
-    return formState.uid.trim().length > 0
+    return isFeatureAvailable.value && formState.uid.trim().length > 0
+        && formState.uid.trim() !== '__meilisearch_metadata'
         && Object.values(formState.conditions).some(Boolean)
-        && formState.actions.length > 0
+        && (formState.actions.pin?.length || formState.actions.scale?.length)
 })
 
 async function handleSave() {
-    const payload: SearchRuleUpdatePayload = {
+    if (!canSave.value) return
+    const payload: RuleUpdate = {
         description: formState.description || null,
         precedence: formState.precedence,
         active: formState.active,

@@ -23,10 +23,7 @@ services:
 
   meilisearch:
     image: 'getmeili/meilisearch:${MEILISEARCH_VERSION:-latest}'
-    # command:
-    #   - /bin/meilisearch
-    #   - --upgrade-db # v1.51 and up
-    #   - --experimental-dumpless-upgrade # v1.50 and below
+    command: ["meilisearch", "--upgrade-db"] # v1.51 and up
     restart: unless-stopped
     stop_grace_period: 1m
     ports:

@@ -142,7 +142,7 @@ watch(newDocumentsFile, (file) => {
                     v-if="error"
                     variant="subtle"
                     color="error"
-                    icon="i-lucide-circle-alert"
+                    icon="i-lucide-circle-x"
                     title="Error importing documents"
                     :description="error"
                 />
@@ -182,7 +182,7 @@ watch(newDocumentsFile, (file) => {
                                     v-if="fileError"
                                     variant="subtle"
                                     color="error"
-                                    icon="i-lucide-circle-alert"
+                                    icon="i-lucide-circle-x"
                                     :description="fileError"
                                 />
                             </div>
@@ -193,7 +193,7 @@ watch(newDocumentsFile, (file) => {
                                     v-if="jsonError"
                                     variant="subtle"
                                     color="error"
-                                    icon="i-lucide-circle-alert"
+                                    icon="i-lucide-circle-x"
                                     :description="jsonError"
                                 />
                                 <ThemedJsonEditor

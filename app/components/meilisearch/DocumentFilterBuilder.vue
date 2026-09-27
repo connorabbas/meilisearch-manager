@@ -125,9 +125,9 @@ async function copyExpression() {
                         />
                         <UButton
                             v-if="state.groups.length > 1"
-                            icon="i-lucide-x"
-                            variant="ghost"
-                            color="neutral"
+                            icon="i-lucide-trash-2"
+                            variant="outline"
+                            color="error"
                             size="sm"
                             :aria-label="`Remove group ${groupIndex + 1}`"
                             @click="state.groups.splice(groupIndex, 1)"
@@ -195,9 +195,9 @@ async function copyExpression() {
                 <template #actions-cell="{ row }">
                     <div class="flex justify-end">
                         <UButton
-                            icon="i-lucide-x"
-                            color="neutral"
-                            variant="ghost"
+                            icon="i-lucide-trash-2"
+                            color="error"
+                            variant="outline"
                             size="sm"
                             :aria-label="`Remove condition ${row.index + 1} in group ${groupIndex + 1}`"
                             @click="group.conditions.splice(row.index, 1)"
@@ -220,6 +220,7 @@ async function copyExpression() {
             v-if="!fields.length"
             color="warning"
             variant="subtle"
+            icon="i-lucide-triangle-alert"
             title="No filterable attributes"
             description="Enable filterable attributes in index settings to build a filter."
         />
@@ -227,6 +228,7 @@ async function copyExpression() {
             v-if="props.expression.error"
             color="warning"
             variant="subtle"
+            icon="i-lucide-triangle-alert"
             :description="props.expression.error"
         />
         <div class="space-y-2">
@@ -247,9 +249,9 @@ async function copyExpression() {
                 class="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-elevated p-3 text-xs">{{ props.expression.value ?? 'No filter' }}</pre>
         </div>
         <UButton
-            label="Clear"
-            color="neutral"
-            icon="i-lucide-x"
+            label="Clear All"
+            color="error"
+            icon="i-lucide-trash-2"
             variant="outline"
             class="self-start"
             @click="clear"

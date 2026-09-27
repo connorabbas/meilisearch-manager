@@ -80,7 +80,7 @@ function handleDeleteAllDocuments() {
                 variant="subtle"
             >
                 <UAlert
-                    color="error"
+                    color="warning"
                     variant="subtle"
                     icon="i-lucide-triangle-alert"
                     title="Warning"

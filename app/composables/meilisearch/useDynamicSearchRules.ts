@@ -1,7 +1,8 @@
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { usePagination } from '../usePagination'
 import { useTasks } from './useTasks'
-import type { SearchRule, SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, SearchRuleUpdatePayload, Task } from 'meilisearch'
+import type { SearchRuleListPayload, SearchRuleListFilterPayload, ResourceResults, Task } from 'meilisearch'
+import type { Rule, RuleUpdate } from '@/types/search-rules'
 
 export function useDynamicSearchRules(initialPerPage: number = 20) {
     const toast = useToast()
@@ -16,9 +17,9 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         paginate,
     } = usePagination(initialPerPage)
 
-    const rulesResults = ref<ResourceResults<SearchRule[]> | null>(null)
-    const rules = ref<SearchRule[]>([])
-    const currentRule = ref<SearchRule | null>(null)
+    const rulesResults = ref<ResourceResults<Rule[]> | null>(null)
+    const rules = ref<Rule[]>([])
+    const currentRule = ref<Rule | null>(null)
     const isFetching = ref(false)
     const isLoading = ref(false)
     const error = ref<string | null>(null)
@@ -40,7 +41,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         }
     })
 
-    async function fetchRules(params?: SearchRuleListPayload): Promise<ResourceResults<SearchRule[]> | undefined> {
+    async function fetchRules(params?: SearchRuleListPayload): Promise<ResourceResults<Rule[]> | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -51,7 +52,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            const results = await client.getDynamicSearchRules(params)
+            const results = await client.getDynamicSearchRules(params) as unknown as ResourceResults<Rule[]>
             rulesResults.value = results
             rules.value = results.results
             return results
@@ -64,7 +65,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         }
     }
 
-    async function fetchRulesPaginated(resetPagination: boolean = false): Promise<ResourceResults<SearchRule[]> | undefined> {
+    async function fetchRulesPaginated(resetPagination: boolean = false): Promise<ResourceResults<Rule[]> | undefined> {
         if (resetPagination) {
             currentPage.value = 1
         }
@@ -81,7 +82,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         return results
     }
 
-    async function fetchRule(uid: string): Promise<SearchRule | undefined> {
+    async function fetchRule(uid: string): Promise<Rule | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
             error.value = 'Meilisearch client not connected'
@@ -92,7 +93,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            const result = await client.getDynamicSearchRule(uid)
+            const result = await client.getDynamicSearchRule(uid) as unknown as Rule
             currentRule.value = result
             return result
         } catch (err) {
@@ -105,7 +106,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
 
     async function createOrUpdate(
         uid: string,
-        payload: SearchRuleUpdatePayload
+        payload: RuleUpdate
     ): Promise<Task | undefined> {
         const client = meilisearchStore.getClient()
         if (!client) {
@@ -117,7 +118,7 @@ export function useDynamicSearchRules(initialPerPage: number = 20) {
         error.value = null
 
         try {
-            const enqueuedTask = await client.updateDynamicSearchRule(uid, payload)
+            const enqueuedTask = await client.updateDynamicSearchRule(uid, payload as Parameters<typeof client.updateDynamicSearchRule>[1])
             return await pollTaskStatus(
                 enqueuedTask.taskUid,
                 `An update task for search rule "${uid}" has been enqueued (taskUid: ${enqueuedTask.taskUid})`,
