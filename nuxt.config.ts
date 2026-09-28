@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/css/main.css'],
     devtools: { enabled: false },
-    modules: ['@nuxt/ui', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint', 'nuxt-maplibre'],
+    modules: ['@nuxt/ui', '@nuxt/fonts', '@pinia/nuxt', '@nuxt/eslint'],
     nitro: {
         prerender: {
             crawlLinks: false,
