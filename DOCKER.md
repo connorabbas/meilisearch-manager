@@ -16,9 +16,9 @@ Both variants support `linux/amd64` and `linux/arm64`.
 | Target | Tag | Description |
 |--------|-----|-------------|
 | Node | `node-latest` | Latest Node single-instance proxy build |
-| Node | `node-<semver>` | Specific release, such as `node-1.6.0` |
+| Node | `node-<semver>` | Specific release, such as `node-2.0.0` |
 | Nginx | `nginx-latest` | Latest nginx static multi-instance build |
-| Nginx | `nginx-<semver>` | Specific release, such as `nginx-1.6.0` |
+| Nginx | `nginx-<semver>` | Specific release, such as `nginx-2.0.0` |
 
 ## Nginx Image (Multi-Instance)
 
@@ -70,9 +70,11 @@ networks:
   meili:
 ```
 
+Open the Manager at <http://localhost:8080> and add `http://localhost:7700` as the Meilisearch host. The instance URL must be reachable from your browser, not just from inside Docker. Use the development `masterKey` for this local example. The Meilisearch image defaults to 1.54.0 so restarting with the same data does not silently upgrade it.
+
 ## Node Image (Single-Instance Proxy)
 
-The `node` images run Single-Instance Proxy Mode behind a Nitro server. This mode manages one preconfigured Meilisearch instance through the app's `/api/meilisearch/*` proxy. The images are built on top of the official [Docker Hardened Images](https://www.docker.com/products/hardened-images/) (`dhi.io/node:22-alpine`), providing a minimal runtime with near-zero CVEs; this base image does not add app-level authentication.
+The `node` images run Single-Instance Proxy Mode behind a Nitro server. This mode manages one preconfigured Meilisearch instance through the app's `/api/meilisearch/*` proxy. The images use the official [Docker Hardened Images](https://www.docker.com/products/hardened-images/) Node base (`dhi.io/node:22-alpine`). This base image does not add app-level authentication.
 
 > [!NOTE]
 > The `node` images expose port `3000` and require the `NUXT_MEILISEARCH_HOST` and `NUXT_MEILISEARCH_API_KEY` runtime variables to be set.
@@ -82,11 +84,11 @@ The `node` images run Single-Instance Proxy Mode behind a Nitro server. This mod
 > [!CAUTION]
 > **Single-Instance Proxy Mode has no built-in authentication.** The `/api/meilisearch/*` catch-all proxy injects the admin API key server-side, but the route itself accepts any request that reaches it.
 >
-> **You MUST deploy this behind an authentication layer in production environments** (e.g., Traefik Basic Auth, VPN, Cloudflare Access) or restrict it to a private network. Exposing the node image directly to the internet without authentication is equivalent to giving public admin access to your Meilisearch instance.
+> **You MUST deploy this behind an authentication layer in production environments** (e.g., Traefik Basic Auth, Authentik, Authelia, Cloudflare Access) or restrict it to a private network or VPN. Exposing the node image directly to the internet without authentication is equivalent to giving public admin access to your Meilisearch instance.
 
 ### Docker Compose
 
-Example production-ready compose stack using [Traefik](https://doc.traefik.io/traefik/reference/install-configuration/providers/docker/) as a reverse proxy with [Basic Auth](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/basicauth/) middleware. Traefik would typically be set up as its own service in a different compose stack. You can reference [this example](https://github.com/connorabbas/traefik-docker-compose/blob/master/docker-compose.yml).
+Example Compose stack using [Traefik](https://doc.traefik.io/traefik/reference/install-configuration/providers/docker/) to publish the Manager and Meilisearch on separate HTTPS domains. Traefik [Basic Auth](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/basicauth/) protects the Manager, while external applications use scoped Meilisearch API keys to access Meilisearch. You can use a different proxy or authentication setup if it protects the entire Manager app. Traefik is expected to run separately with a `traefik_proxy` Docker network, a `websecure` entrypoint, and a `letsencrypt` certificate resolver. See [this Traefik Compose example](https://github.com/connorabbas/traefik-docker-compose) for a reference setup.
 
 > [!IMPORTANT]
 > This example includes Traefik Basic Auth via inline labels. The proxy route (`/api/meilisearch/*`) has no built-in authentication, so the reverse proxy must enforce auth before requests reach the app.
@@ -105,12 +107,12 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.docker.network=traefik_proxy'
-      - 'traefik.http.routers.meilisearch-manager.rule=Host(`${MEILISEARCH_MANAGER_DOMAIN:-meilisearch-manager.yourdomain.com}`)'
+      - 'traefik.http.routers.meilisearch-manager.rule=Host(`${MEILISEARCH_MANAGER_DOMAIN:?Set MEILISEARCH_MANAGER_DOMAIN}`)'
       - 'traefik.http.routers.meilisearch-manager.entrypoints=websecure'
       - 'traefik.http.routers.meilisearch-manager.tls=true'
       - 'traefik.http.routers.meilisearch-manager.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.meilisearch-manager.middlewares=meilisearch-manager-auth'
-      - 'traefik.http.middlewares.meilisearch-manager-auth.basicauth.users=adminuser:<your_hashed_pw>'
+      - 'traefik.http.middlewares.meilisearch-manager-auth.basicauth.users=${TRAEFIK_AUTH_USERS:?Set TRAEFIK_AUTH_USERS}'
       - 'traefik.http.middlewares.meilisearch-manager-auth.basicauth.removeheader=true'
       - 'traefik.http.services.meilisearch-manager.loadbalancer.server.port=3000'
       - 'traefik.http.services.meilisearch-manager.loadbalancer.healthcheck.path=/up'
@@ -122,7 +124,7 @@ services:
       - meili
 
   meilisearch:
-    image: getmeili/meilisearch:${MEILISEARCH_VERSION:-latest}
+    image: getmeili/meilisearch:${MEILISEARCH_VERSION:?Set MEILISEARCH_VERSION}
     container_name: meilisearch-manager-instance
     environment:
       MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
@@ -137,7 +139,7 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.docker.network=traefik_proxy'
-      - 'traefik.http.routers.meilisearch-instance.rule=Host(`${MEILISEARCH_INSTANCE_DOMAIN:-search.yourdomain.com}`)'
+      - 'traefik.http.routers.meilisearch-instance.rule=Host(`${MEILISEARCH_INSTANCE_DOMAIN:?Set MEILISEARCH_INSTANCE_DOMAIN}`)'
       - 'traefik.http.routers.meilisearch-instance.entrypoints=websecure'
       - 'traefik.http.routers.meilisearch-instance.tls=true'
       - 'traefik.http.routers.meilisearch-instance.tls.certresolver=letsencrypt'
@@ -156,6 +158,8 @@ networks:
     name: traefik_proxy
     external: true
 ```
+
+Set a specific `MEILISEARCH_VERSION`, real domain names, a strong `MEILISEARCH_MASTER_KEY`, and `TRAEFIK_AUTH_USERS` in `.env`. Create a separate admin-level key for the Manager using the [Meilisearch keys API](https://www.meilisearch.com/docs/reference/api/keys), then set it as `MEILISEARCH_MANAGER_API_KEY`. Do not use the master key as the Manager key. Put a bcrypt `user:hash` value in `TRAEFIK_AUTH_USERS` and wrap it in single quotes in `.env` so `$` stays literal. If you put a hash directly in a Compose label instead, escape each `$` as `$$`. Keep `.env` out of version control.
 
 ### Architecture Notes
 
@@ -223,7 +227,7 @@ If you expose Meilisearch itself under a path prefix, Traefik should strip that 
 ```yml
 services:
   meilisearch:
-    image: getmeili/meilisearch:${MEILISEARCH_VERSION:-latest}
+    image: getmeili/meilisearch:${MEILISEARCH_VERSION:?Set MEILISEARCH_VERSION}
     container_name: meilisearch-instance
     environment:
       MEILI_NO_ANALYTICS: ${MEILISEARCH_NO_ANALYTICS:-true}
