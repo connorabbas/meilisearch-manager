@@ -1,8 +1,6 @@
 # Meilisearch Manager
 
-A Nuxt-based web UI for managing Meilisearch instances.
-
-This project is the refactored Nuxt version of the original Vue SPA project: [connorabbas/meilisearch-manager-legacy](https://github.com/connorabbas/meilisearch-manager-legacy).
+An easy to use web UI for managing self-hosted Meilisearch instances. Free and open source.
 
 ## Features
 
