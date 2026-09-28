@@ -21,7 +21,7 @@ This project is the refactored Nuxt version of the original Vue SPA project: [co
 - :iphone: **Responsive** layout
 - :waning_crescent_moon: **Dark mode** support
 
-> [!INFO]
+> [!IMPORTANT]
 > Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but Search Rules are unavailable due to breaking changes to their API.
 
 ## Getting Started
