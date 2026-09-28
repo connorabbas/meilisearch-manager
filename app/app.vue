@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { AlertCircle } from '@lucide/vue'
 import 'vue3-json-viewer/dist/vue3-json-viewer.css'
 import 'vanilla-jsoneditor/themes/jse-theme-dark.css'
 
@@ -12,21 +11,11 @@ useHead(() => ({
 </script>
 
 <template>
-    <AppToast />
-    <ConfirmDialog
-        group="delete"
-        :draggable="false"
-        blockScroll
-    >
-        <template #icon>
-            <AlertCircle />
-        </template>
-    </ConfirmDialog>
-    <NuxtLoadingIndicator color="var(--p-primary-500)" />
-    <NuxtLayout>
-        <!-- include tailwind css classes defined in nuxt.config.ts for body tag -->
-        <!-- antialiased font-sans h-full bg-surface-100 dark:bg-surface-950 -->
-        <NuxtRouteAnnouncer />
-        <NuxtPage />
-    </NuxtLayout>
+    <UApp>
+        <NuxtLoadingIndicator color="var(--ui-primary)" />
+        <NuxtLayout>
+            <NuxtRouteAnnouncer />
+            <NuxtPage />
+        </NuxtLayout>
+    </UApp>
 </template>

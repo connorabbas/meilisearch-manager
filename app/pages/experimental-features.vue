@@ -1,132 +1,133 @@
 <script setup lang="ts">
-import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
-import PageTitleSection from '@/components/PageTitleSection.vue'
-import { camelCaseToReadable } from '@/utils'
-import { Home } from '@lucide/vue'
 import type { RuntimeTogglableFeatures } from 'meilisearch'
+import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
+import { camelCaseToReadable } from '@/utils'
 
 const experimentalFeaturesDocsUrl = 'https://www.meilisearch.com/docs/resources/help/experimental_features_overview#experimental-features-overview'
 
 definePageMeta({
     layout: 'app',
     title: 'Experimental Features',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Experimental Features' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Experimental Features' }]
 })
 
 const {
     features,
     isFetching,
     isSubmitting,
+    error,
     fetchExperimentalFeatures,
     updateExperimentalFeatures,
 } = useExperimentalFeatures()
 
 await fetchExperimentalFeatures()
 
-const formState = reactive<Record<string, boolean>>({})
+const formState = ref<Record<string, boolean>>({})
 
 function syncFormState() {
     if (!features.value) return
-    for (const [key, value] of Object.entries(features.value)) {
-        formState[key] = value ?? false
-    }
+
+    formState.value = Object.fromEntries(
+        Object.entries(features.value).map(([key, value]) => [key, value ?? false])
+    )
 }
 
 syncFormState()
+watch(features, syncFormState, { deep: true })
 
-watch(() => features.value, syncFormState, { deep: true })
-
-const featureKeys = computed(() => {
-    if (!features.value) return []
-    return Object.keys(features.value)
-})
+const featureKeys = computed(() => features.value ? Object.keys(features.value) : [])
 
 async function handleSave() {
     const payload: RuntimeTogglableFeatures = {}
-    for (const [key, value] of Object.entries(formState)) {
-        payload[key as keyof RuntimeTogglableFeatures] = value
+    for (const key of featureKeys.value) {
+        payload[key as keyof RuntimeTogglableFeatures] = formState.value[key] ?? false
     }
-    await updateExperimentalFeatures(payload)
+
+    try {
+        await updateExperimentalFeatures(payload)
+    } catch {
+        // The composable exposes the error inline and through a toast.
+    }
 }
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8 max-w-2xl">
-        <PageTitleSection>
-            <template #title>
-                Experimental Features
-            </template>
-        </PageTitleSection>
+    <AppDashboardPanel id="experimental-features">
+        <div class="mx-auto max-w-xl space-y-4 md:space-y-6">
+            <UAlert
+                v-if="error"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-circle-x"
+                title="Unable to load experimental features"
+                :description="error"
+                :actions="[{ label: 'Retry', onClick: fetchExperimentalFeatures }]"
+            />
 
-        <Card
-            pt:body:class="max-w-2xl space-y-3"
-            pt:caption:class="space-y-1"
-        >
-            <template #title>
-                Configure Experimental Features
-            </template>
-            <template #subtitle>
-                <span>
-                    Enable/disable API-route backed features, not all features are
-                    configured via API, some require a CLI flag or ENV variable. See the
-                </span>
-                <Button
-                    as="a"
-                    label="experimental features overview"
-                    variant="link"
-                    :href="experimentalFeaturesDocsUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-0 no-underline rounded-none! inline"
-                />
-                <span class="pl-1">docs to learn more.</span>
-            </template>
-            <template #content>
-                <div class="flex flex-col gap-6 pt-4">
+            <UCard
+                title="Configure Experimental Features"
+                variant="subtle"
+            >
+                <template #description>
+                    Enable API-backed experimental features. Some features instead require a CLI flag or environment
+                    variable.
+                    <AppExternalLink
+                        :href="experimentalFeaturesDocsUrl"
+                        label="Read the experimental features overview"
+                        class="p-0"
+                    />
+                </template>
+
+                <div
+                    v-if="isFetching"
+                    aria-label="Loading experimental features"
+                    class="space-y-4"
+                >
+                    <USkeleton
+                        v-for="item in 5"
+                        :key="item"
+                        class="h-10 w-full rounded-[var(--ui-radius)]"
+                    />
+                </div>
+
+                <div
+                    v-else-if="featureKeys.length"
+                    class="divide-y divide-default"
+                >
                     <div
-                        v-if="isFetching"
-                        class="flex flex-col gap-4"
+                        v-for="key in featureKeys"
+                        :key="key"
+                        class="py-4 first:pt-0 last:pb-0"
                     >
-                        <Skeleton
-                            v-for="i in 5"
-                            :key="i"
-                            height="2.5rem"
-                            class="w-full"
-                        />
-                    </div>
-
-                    <div
-                        v-else
-                        class="flex flex-col gap-4"
-                    >
-                        <div
-                            v-for="key in featureKeys"
-                            :key="key"
-                            class="flex items-center gap-4"
-                        >
-                            <ToggleSwitch
-                                :id="`feature-${key}`"
-                                v-model="formState[key]"
-                            />
-                            <label
-                                :for="`feature-${key}`"
-                                class="text-sm font-medium"
-                            >
-                                {{ camelCaseToReadable(key) }}
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <Button
-                            label="Save"
-                            :loading="isSubmitting"
-                            :disabled="isFetching"
-                            @click="handleSave"
+                        <USwitch
+                            v-model="formState[key]"
+                            :label="camelCaseToReadable(key)"
+                            :disabled="isSubmitting"
                         />
                     </div>
                 </div>
-            </template>
-        </Card>
-    </div>
+
+                <UAlert
+                    v-else-if="!error"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-lucide-flask-conical"
+                    title="No runtime features available"
+                    description="This Meilisearch instance did not return any configurable experimental features."
+                />
+
+                <template #footer>
+                    <div class="flex justify-end">
+                        <UButton
+                            label="Save"
+                            icon="i-lucide-save"
+                            :loading="isSubmitting"
+                            :disabled="isFetching || featureKeys.length === 0"
+                            @click="handleSave"
+                        />
+                    </div>
+                </template>
+            </UCard>
+        </div>
+    </AppDashboardPanel>
 </template>

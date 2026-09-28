@@ -1,5 +1,4 @@
 import type { SearchForFacetValuesParams, SearchForFacetValuesResponse } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useFacetSearch() {
@@ -39,10 +38,11 @@ export function useFacetSearch() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Facet Search Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Facet Search Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

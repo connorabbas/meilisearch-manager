@@ -6,18 +6,19 @@
             "url": "https://nuxt.com/mcp",
             "enabled": true
         },
-        "primevue": {
+        "nuxt-ui": {
+            "type": "remote",
+            "url": "https://ui.nuxt.com/mcp",
+            "enabled": true
+        },
+        "playwright": {
             "type": "local",
-            "enabled": true,
             "command": [
                 "npx",
                 "-y",
-                "-p",
-                "@modelcontextprotocol/sdk@1.25.2",
-                "-p",
-                "@primevue/mcp@4.5.4",
-                "primevue-mcp"
-            ]
+                "@playwright/mcp"
+            ],
+            "enabled": true
         }
     }
 }

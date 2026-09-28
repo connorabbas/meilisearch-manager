@@ -1,5 +1,4 @@
 import type { RuntimeTogglableFeatures } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 
 export function useExperimentalFeatures() {
@@ -49,10 +48,11 @@ export function useExperimentalFeatures() {
             const result = await client.updateExperimentalFeatures(newFeatures)
             features.value = result
             toast.add({
-                severity: 'success',
-                summary: 'Features Saved',
-                detail: 'The experimental features have been successfully updated',
-                life: 5000,
+                color: 'success',
+                icon: 'i-lucide-circle-check',
+                title: 'Features Saved',
+                description: 'The experimental features have been successfully updated',
+                duration: 5000,
             })
             return result
         } catch (err) {
@@ -66,10 +66,11 @@ export function useExperimentalFeatures() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Experimental Features Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Experimental Features Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })

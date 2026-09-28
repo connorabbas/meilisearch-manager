@@ -1,48 +1,57 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { useInfiniteScroll, useIntervalFn, useStorage } from '@vueuse/core'
 import { useTasks, TASK_TYPES, TASK_STATUSES } from '@/composables/meilisearch/useTasks'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
-import { Home, Info, Trash2 } from '@lucide/vue'
-import type { Task, TasksOrBatchesQuery } from 'meilisearch'
-import { formatDate, getStatusSeverity } from '@/utils'
-import TaskDetailsDrawer from '@/components/meilisearch/TaskDetailsDrawer.vue'
+import type { Task, TasksOrBatchesQuery, TaskStatus, TaskType } from 'meilisearch'
+import { formatDate, getTaskStatusColor } from '@/utils'
+import TaskDetailsSlideover from '@/components/meilisearch/TaskDetailsSlideover.vue'
 import DeleteTasksModal from '@/components/meilisearch/DeleteTasksModal.vue'
 
 definePageMeta({
     layout: 'app',
     title: 'Tasks',
-    breadcrumbs: [{ route: { name: 'dashboard' }, lucideIcon: Home }, { label: 'Tasks' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Tasks' }]
 })
 
-const { tasks, isFetching: isFetchingTasks, isPollingLatest, hasMore, fetchTasks, fetchAndAppendTasks, pollLatestTasks, deleteTasksQuery, isDeletingTasks, deleteTasks } = useTasks()
+const { tasks, isFetching: isFetchingTasks, hasMore, error, fetchTasks, fetchAndAppendTasks, pollLatestTasks, deleteTasksQuery, isDeletingTasks, deleteTasks } = useTasks()
 const { indexes, isFetching: isFetchingIndexes, fetchAllIndexes } = useIndexes()
 const tasksPollingEnabled = useStorage<boolean>('meilisearch-tasks-polling-enabled', false)
 
-const tableLoading = computed(() => isPollingLatest.value || isFetchingTasks.value)
-
-const tasksParams = reactive<TasksOrBatchesQuery>({
-    limit: 50,
-})
+// Filters are kept in plain arrays because TasksOrBatchesQuery fields accept
+// wildcard and nested-array variants the selects never produce.
+const tasksLimit = ref(20)
+const statusFilter = ref<TaskStatus[]>([])
+const typeFilter = ref<TaskType[]>([])
+const indexUidFilter = ref<string[]>([])
 
 const currentTasksQuery = computed<TasksOrBatchesQuery>(() => {
     const query: TasksOrBatchesQuery = {
-        limit: tasksParams.limit,
+        limit: tasksLimit.value,
     }
 
-    if (tasksParams.statuses?.length) {
-        query.statuses = tasksParams.statuses
+    if (statusFilter.value.length) {
+        query.statuses = [...statusFilter.value]
     }
-    if (tasksParams.types?.length) {
-        query.types = tasksParams.types
+    if (typeFilter.value.length) {
+        query.types = [...typeFilter.value]
     }
-    if (tasksParams.indexUids?.length) {
-        query.indexUids = tasksParams.indexUids
+    if (indexUidFilter.value.length) {
+        query.indexUids = [...indexUidFilter.value]
     }
 
     return query
 })
 
-const scrollTarget = shallowRef<Window | null>(null)
+const activeFilterCount = computed(() => statusFilter.value.length + typeFilter.value.length + indexUidFilter.value.length)
+
+function clearFilters() {
+    statusFilter.value = []
+    typeFilter.value = []
+    indexUidFilter.value = []
+}
+
+const scrollTarget = shallowRef<HTMLElement | null>(null)
 const { reset: resetInfiniteScroll } = useInfiniteScroll(
     scrollTarget,
     async () => {
@@ -79,25 +88,36 @@ await refreshTasksList(false)
 const indexUids = computed(() => indexes.value.map((index) => index.uid))
 
 const currentTask = ref<Task | null>(null)
-const taskDetailsDrawerOpen = ref(false)
+const taskDetailsSlideoverOpen = ref(false)
 const deleteTasksModalOpen = ref(false)
 
 function showTask(task: Task) {
     currentTask.value = task
-    taskDetailsDrawerOpen.value = true
+    taskDetailsSlideoverOpen.value = true
+}
+
+function handleTaskUpdated(task: Task) {
+    const existingTask = tasks.value.find(existing => existing.uid === task.uid)
+    const isTerminalStatus = (status: Task['status']) => status === 'succeeded' || status === 'failed' || status === 'canceled'
+    if (existingTask && isTerminalStatus(existingTask.status) && !isTerminalStatus(task.status)) return
+
+    if (currentTask.value?.uid === task.uid && isTerminalStatus(currentTask.value.status) && !isTerminalStatus(task.status)) return
+    currentTask.value = task
+    tasks.value = tasks.value.map(existingTask => existingTask.uid === task.uid ? task : existingTask)
 }
 
 async function handleDeleteTasks() {
     try {
         const result = await deleteTasks()
-        if (result) {
+        if (result?.status === 'succeeded') {
             await refreshTasksList()
         }
     } catch {
         // Error already handled by useTasks composable via toast
     }
 }
-watch(taskDetailsDrawerOpen, (isOpen) => {
+
+watch(taskDetailsSlideoverOpen, (isOpen) => {
     if (!isOpen) {
         setTimeout(() => {
             currentTask.value = null
@@ -121,215 +141,257 @@ watch(tasksPollingEnabled, async (enabled) => {
 }, { immediate: true })
 
 onMounted(() => {
-    scrollTarget.value = window
+    scrollTarget.value = document.querySelector<HTMLElement>('.tasks-table-scroll')
     fetchAllIndexes() // for filtering options
 })
+
+const columns: TableColumn<Task>[] = [
+    {
+        accessorKey: 'uid',
+        header: 'UID',
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+    },
+    {
+        accessorKey: 'type',
+        header: 'Type',
+    },
+    {
+        accessorKey: 'indexUid',
+        header: 'Index',
+    },
+    {
+        accessorKey: 'enqueuedAt',
+        header: 'Enqueued',
+    },
+    {
+        accessorKey: 'finishedAt',
+        header: 'Finished',
+    },
+    {
+        id: 'actions',
+        enableHiding: false,
+        size: 96,
+        minSize: 96,
+        maxSize: 96,
+        meta: { class: { th: 'text-end', td: 'text-end' } },
+    },
+]
+
+const columnPinning = ref({ right: ['actions'] })
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <DeleteTasksModal
-            v-model:visible="deleteTasksModalOpen"
-            v-model:query="deleteTasksQuery"
-            @submit="handleDeleteTasks"
+    <AppDashboardPanel id="tasks">
+        <Teleport to="body">
+            <TaskDetailsSlideover
+                v-if="currentTask"
+                v-model:open="taskDetailsSlideoverOpen"
+                :task="currentTask"
+                @task-updated="handleTaskUpdated"
+            />
+            <DeleteTasksModal
+                v-model:open="deleteTasksModalOpen"
+                v-model:query="deleteTasksQuery"
+                @submit="handleDeleteTasks"
+            />
+        </Teleport>
+
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    aria-label="Refresh"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    color="neutral"
+                    variant="ghost"
+                    :loading="isFetchingTasks"
+                    @click="refreshTasksList()"
+                />
+                <UButton
+                    label="Delete"
+                    icon="i-lucide-trash-2"
+                    color="error"
+                    variant="outline"
+                    :loading="isDeletingTasks"
+                    @click="deleteTasksModalOpen = true"
+                />
+            </AppPageActions>
+        </template>
+
+        <UAlert
+            v-if="error"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-x"
+            title="Unable to load tasks"
+            :description="error"
+            :actions="[{ label: 'Retry', onClick: () => refreshTasksList() }]"
         />
 
-        <TaskDetailsDrawer
-            v-model:visible="taskDetailsDrawerOpen"
-            :task="currentTask"
-        />
-
-        <PageTitleSection>
-            <template #title>
-                Tasks
-            </template>
-            <template #end>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div
-                        v-tooltip.top="'Poll tasks every 5 seconds'"
-                        class="flex items-center gap-3"
+        <UCard
+            variant="outline"
+            :ui="{
+                header: 'shrink-0 p-4 py-3 sm:px-6',
+                body: 'flex min-h-0 flex-1 flex-col p-0 sm:p-0',
+            }"
+            class="flex min-h-0 flex-1 flex-col"
+        >
+            <template #header>
+                <div class="flex flex-wrap items-center gap-2">
+                    <AppFiltersPopover
+                        :count="activeFilterCount"
+                        @clear="clearFilters"
                     >
-                        <div
-                            v-if="tasksPollingEnabled"
-                            class="relative flex h-3 w-3 group"
-                        >
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-                            />
-                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
+                        <div class="flex flex-col gap-2">
+                            <span class="text-sm font-medium text-default">Status</span>
+                            <USelectMenu
+                                v-model="statusFilter"
+                                :items="[...TASK_STATUSES]"
+                                aria-label="Filter tasks by status"
+                                multiple
+                                clear
+                                placeholder="Any"
+                                class="w-full"
+                            >
+                                <template #item-label="{ item }">
+                                    <UBadge
+                                        :color="getTaskStatusColor(item)"
+                                        variant="subtle"
+                                        :label="String(item)"
+                                    />
+                                </template>
+                            </USelectMenu>
                         </div>
-                        <label for="tasks-polling-toggle">Poll</label>
-                        <ToggleSwitch
-                            v-model="tasksPollingEnabled"
-                            inputId="tasks-polling-toggle"
-                        />
-                    </div>
-                    <div>
-                        <InputGroup>
-                            <InputGroupAddon>
-                                Limit
-                            </InputGroupAddon>
-                            <Select
-                                v-model="tasksParams.limit"
-                                :options="[20, 50, 100, 500]"
+
+                        <div class="flex flex-col gap-2">
+                            <span class="text-sm font-medium text-default">Type</span>
+                            <USelectMenu
+                                v-model="typeFilter"
+                                :items="[...TASK_TYPES]"
+                                aria-label="Filter tasks by type"
+                                multiple
+                                placeholder="Any"
+                                filter
+                                clear
+                                class="w-full"
                             />
-                        </InputGroup>
-                    </div>
-                    <div>
-                        <RefreshButton
-                            :loading="isFetchingTasks"
-                            @click="refreshTasksList()"
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <span class="text-sm font-medium text-default">Index</span>
+                            <USelectMenu
+                                v-model="indexUidFilter"
+                                :items="indexUids"
+                                aria-label="Filter tasks by index"
+                                multiple
+                                placeholder="Any"
+                                filter
+                                clear
+                                :loading="isFetchingIndexes"
+                                class="w-full"
+                            />
+                        </div>
+                    </AppFiltersPopover>
+
+                    <div class="flex gap-4 ms-auto">
+                        <PollToggle
+                            v-model="tasksPollingEnabled"
+                            tooltip="Poll tasks every 5 seconds"
                         />
-                    </div>
-                    <div>
-                        <Button
-                            label="Delete"
-                            severity="danger"
-                            outlined
-                            :loading="isDeletingTasks"
-                            @click="deleteTasksModalOpen = true"
-                        >
-                            <template #icon>
-                                <Trash2 />
-                            </template>
-                        </Button>
+
+                        <UFieldGroup>
+                            <UButton
+                                as="label"
+                                for="tasks-limit"
+                                color="neutral"
+                                variant="subtle"
+                                label="Limit"
+                                class="cursor-pointer"
+                            />
+                            <USelect
+                                id="tasks-limit"
+                                :model-value="tasksLimit"
+                                :items="[20, 50, 100, 500]"
+                                @update:model-value="tasksLimit = Number($event)"
+                            />
+                        </UFieldGroup>
                     </div>
                 </div>
             </template>
-        </PageTitleSection>
 
-        <Card>
-            <template #content>
-                <DataTable
-                    :value="tasks"
-                    :loading="tableLoading"
-                    scrollable
-                    columnResizeMode="fit"
-                    filterDisplay="row"
-                >
-                    <template #empty>
-                        <NotFoundMessage subject="Task" />
-                    </template>
-                    <Column
-                        field="uid"
-                        header="UID"
+            <UTable
+                v-model:column-pinning="columnPinning"
+                :data="tasks"
+                :columns="columns"
+                :loading="isFetchingTasks"
+                sticky
+                :ui="{ root: 'h-full tasks-table-scroll' }"
+                class="min-h-0 flex-1"
+            >
+                <template #status-cell="{ row }">
+                    <UBadge
+                        :color="getTaskStatusColor(row.original.status)"
+                        variant="subtle"
+                        :label="row.original.status"
                     />
-                    <Column
-                        field="status"
-                        header="Status"
-                        :showFilterMenu="false"
-                    >
-                        <template #filter>
-                            <MultiSelect
-                                v-model="tasksParams.statuses"
-                                pt:label:class="flex flex-wrap"
-                                pt:overlay:class="z-1!"
-                                :options="[...TASK_STATUSES]"
-                                display="chip"
-                                placeholder="Any"
-                                :showToggleAll="false"
-                                showClear
-                                fluid
-                            >
-                                <template #option="{ option }">
-                                    <Tag
-                                        :value="option"
-                                        :severity="getStatusSeverity(option)"
-                                    />
-                                </template>
-                            </MultiSelect>
-                        </template>
-                        <template #body="{ data }">
-                            <Tag
-                                :value="data.status"
-                                :severity="getStatusSeverity(data.status)"
-                            />
-                        </template>
-                    </Column>
-                    <Column
-                        field="type"
-                        header="Type"
-                        :showFilterMenu="false"
-                        showClearButton
-                    >
-                        <template #filter>
-                            <MultiSelect
-                                v-model="tasksParams.types"
-                                pt:label:class="flex flex-wrap"
-                                pt:overlay:class="z-1!"
-                                :options="[...TASK_TYPES]"
-                                display="chip"
-                                placeholder="Any"
-                                :showToggleAll="false"
-                                showClear
-                                filter
-                                fluid
-                            />
-                        </template>
-                    </Column>
-                    <Column
-                        field="indexUid"
-                        header="Index"
-                        :showFilterMenu="false"
-                    >
-                        <template #filter>
-                            <MultiSelect
-                                v-model="tasksParams.indexUids"
-                                pt:label:class="flex flex-wrap"
-                                pt:overlay:class="z-1!"
-                                :options="indexUids"
-                                display="chip"
-                                placeholder="Any"
-                                :showToggleAll="false"
-                                :loading="isFetchingIndexes"
-                                showClear
-                                filter
-                                fluid
-                            />
-                        </template>
-                    </Column>
-                    <Column
-                        field="enqueuedAt"
-                        header="Enqueued"
-                    >
-                        <!-- TODO: DatePicker filtering -->
-                        <template #body="{ data }">
-                            {{ formatDate((data as Task).enqueuedAt as string) }}
-                        </template>
-                    </Column>
-                    <Column
-                        field="finishedAt"
-                        header="Finished"
-                    >
-                        <template #body="{ data }">
-                            {{ (data as Task).finishedAt ? formatDate((data as Task).finishedAt as string) : '' }}
-                        </template>
-                    </Column>
-                    <Column
-                        frozen
-                        alignFrozen="right"
-                    >
-                        <template #body="{ data }">
-                            <Button
-                                label="Details"
-                                outlined
-                                @click="showTask(data as Task)"
-                            >
-                                <template #icon>
-                                    <Info />
-                                </template>
-                            </Button>
-                        </template>
-                    </Column>
-                </DataTable>
-            </template>
-        </Card>
+                </template>
+
+                <template #indexUid-cell="{ row }">
+                    {{ row.original.indexUid ?? '' }}
+                </template>
+
+                <template #enqueuedAt-cell="{ row }">
+                    {{ formatDate(row.original.enqueuedAt) }}
+                </template>
+
+                <template #finishedAt-cell="{ row }">
+                    {{ row.original.finishedAt ? formatDate(row.original.finishedAt) : '' }}
+                </template>
+
+                <template #actions-cell="{ row }">
+                    <UButton
+                        label="View"
+                        trailing-icon="i-lucide-arrow-right"
+                        color="neutral"
+                        variant="subtle"
+                        @click="showTask(row.original)"
+                    />
+                </template>
+
+                <template #loading>
+                    <div class="flex justify-center py-4">
+                        <USkeleton class="h-5 w-48" />
+                    </div>
+                </template>
+
+                <template #empty>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-list-checks"
+                        title="No tasks found"
+                    />
+                </template>
+            </UTable>
+        </UCard>
 
         <div
+            v-if="isFetchingTasks && tasks.length"
+            class="flex justify-center py-2"
+        >
+            <UIcon
+                name="i-lucide-loader-circle"
+                class="size-4 text-muted motion-safe:animate-spin"
+            />
+        </div>
+
+        <p
             v-if="hasMore"
-            class="mt-4 text-center text-sm text-surface-500"
+            class="text-center text-sm text-muted"
         >
             Scroll to load more tasks
-        </div>
-    </div>
+        </p>
+    </AppDashboardPanel>
 </template>

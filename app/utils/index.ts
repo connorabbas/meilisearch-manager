@@ -1,22 +1,5 @@
 import type { TaskStatus } from 'meilisearch'
-import { twMerge } from 'tailwind-merge'
-
-export const ptViewMerge = (
-    globalPTProps = {} as any,
-    selfPTProps = {} as any,
-    datasets: any
-) => {
-    const { class: globalClass, ...globalRest } = globalPTProps
-    const { class: selfClass, ...selfRest } = selfPTProps
-
-    return {
-        ...globalRest,
-        ...selfRest,
-        ...datasets,
-        class: twMerge(globalClass, selfClass, datasets?.class),
-    }
-}
-
+import type { TaskStatusColor } from '@/types'
 export const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US')
 }
@@ -53,28 +36,28 @@ export function maskedApiKey(
     return `${start}****${end}`
 }
 
-export function getStatusSeverity(status: TaskStatus) {
+export function getTaskStatusColor(status: TaskStatus): TaskStatusColor {
     switch (status) {
     case 'succeeded':
         return 'success'
     case 'processing':
         return 'info'
     case 'enqueued':
-        return 'secondary'
+        return 'neutral'
     case 'failed':
-        return 'danger'
+        return 'error'
     case 'canceled':
-        return 'warn'
+        return 'warning'
     default:
-        return 'secondary'
+        return 'neutral'
     }
 }
 
-export function getRankingScoreSeverity(score: number): 'success' | 'warn' | 'danger' | 'secondary' {
+export function getRankingScoreColor(score: number): 'success' | 'warning' | 'error' | 'neutral' {
     if (score >= 0.7) return 'success'
-    if (score >= 0.5) return 'warn'
-    if (score > 0) return 'danger'
-    return 'secondary'
+    if (score >= 0.5) return 'warning'
+    if (score > 0) return 'error'
+    return 'neutral'
 }
 
 export function looksLikeAnImageUrl(value: any) {
@@ -125,13 +108,6 @@ export function looksLikeAnImageUrl(value: any) {
 
     return hasImageExtension || isImageHost
 };
-
-export function prefersDarkColorScheme() {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-    return false
-}
 
 export function readFileAsText(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -185,6 +161,3 @@ export function downloadFile(blob: Blob, filename: string) {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 }
-
-
-

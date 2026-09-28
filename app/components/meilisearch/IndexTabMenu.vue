@@ -1,54 +1,34 @@
 <script setup lang="ts">
-import { ChartPie, FileText, Pencil, Settings } from '@lucide/vue'
+import type { NavigationMenuItem } from '@nuxt/ui'
 
 const props = defineProps<{
-    currentPath: string,
     indexUid: string,
 }>()
 
-const items = computed(() => [
-    { to: `/indexes/${props.indexUid}`, value: 'details', label: 'Stats', icon: ChartPie },
-    { to: `/indexes/${props.indexUid}/documents`, value: 'documents', label: 'Documents', icon: FileText },
-    { to: `/indexes/${props.indexUid}/settings`, value: 'settings', label: 'Settings', icon: Settings },
-    { to: `/indexes/${props.indexUid}/edit`, value: 'edit', label: 'Edit', icon: Pencil },
-])
-
-const currentTab = computed(() => {
-    if (props.currentPath.endsWith('/documents')) return 'documents'
-    if (props.currentPath.endsWith('/settings')) return 'settings'
-    if (props.currentPath.endsWith('/edit')) return 'edit'
-
-    return 'details'
-})
+const items = computed<NavigationMenuItem[]>(() => [{
+    to: `/indexes/${props.indexUid}`,
+    label: 'Stats',
+    icon: 'i-lucide-chart-pie',
+    exact: true,
+}, {
+    to: `/indexes/${props.indexUid}/documents`,
+    label: 'Documents',
+    icon: 'i-lucide-file-text',
+}, {
+    to: `/indexes/${props.indexUid}/settings`,
+    label: 'Settings',
+    icon: 'i-lucide-settings',
+}, {
+    to: `/indexes/${props.indexUid}/edit`,
+    label: 'Edit',
+    icon: 'i-lucide-pencil',
+}])
 </script>
 
 <template>
-    <Tabs :value="currentTab">
-        <TabList class="[background:transparent]!">
-            <NuxtLink
-                v-for="tab in items"
-                v-slot="{ href, navigate }"
-                :key="tab.value"
-                :to="tab.to"
-                custom
-            >
-                <a
-                    :href="href ?? undefined"
-                    class="text-inherit no-underline"
-                    @click="navigate"
-                >
-                    <Tab
-                        :value="tab.value"
-                        class="flex items-center gap-2"
-                    >
-                        <component
-                            :is="tab.icon"
-                            v-if="tab.icon"
-                        />
-                        <span>{{ tab.label }}</span>
-                    </Tab>
-                </a>
-            </NuxtLink>
-        </TabList>
-    </Tabs>
+    <UNavigationMenu
+        :items="items"
+        highlight
+        class="min-w-max"
+    />
 </template>

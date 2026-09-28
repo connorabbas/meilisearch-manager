@@ -1,27 +1,28 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
+import type { IndexRow } from '@/types'
 import { useStats } from '@/composables/meilisearch/useStats'
-import { ArrowRight, Home, Plus } from '@lucide/vue'
-import PageTitleSection from '@/components/PageTitleSection.vue'
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
 import CreateIndexModal from '@/components/meilisearch/CreateIndexModal.vue'
-import NotFoundMessage from '@/components/NotFoundMessage.vue'
 import { formatNumber, formatDate } from '@/utils'
 
 definePageMeta({
     layout: 'app',
     title: 'Indexes',
-    breadcrumbs: [{ route: '/dashboard', lucideIcon: Home }, { label: 'Indexes' }]
+    breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Indexes' }]
 })
 
 const { instanceStats, isFetching: isFetchingStats, fetchStats } = useStats()
 const {
+    currentPage,
     perPage,
-    firstDatasetIndex,
     indexes,
-    indexesResults,
+    totalIndexes,
+    paginationSummary,
     isFetching: isFetchingIndexes,
+    error,
     fetchIndexesPaginated,
-    handlePageEvent,
+    paginate,
 } = useIndexes()
 
 async function fetchData() {
@@ -33,8 +34,9 @@ async function fetchData() {
 await fetchData()
 
 const createIndexModalOpen = ref(false)
+const columnPinning = ref({ right: ['actions'] })
 
-const indexesData = computed(() => {
+const indexesData = computed<IndexRow[]>(() => {
     return indexes.value.map((index) => {
         return {
             ...index,
@@ -42,134 +44,148 @@ const indexesData = computed(() => {
         }
     })
 })
+
+const columns: TableColumn<IndexRow>[] = [
+    { accessorKey: 'uid', header: 'UID' },
+    { accessorKey: 'primaryKey', header: 'Primary Key' },
+    {
+        accessorKey: 'numberOfDocuments',
+        header: 'Documents',
+        meta: { class: { th: 'text-end', td: 'text-end' } },
+    },
+    { accessorKey: 'createdAt', header: 'Created' },
+    { accessorKey: 'updatedAt', header: 'Updated' },
+    {
+        id: 'actions',
+        enableHiding: false,
+        size: 112,
+        minSize: 112,
+        maxSize: 112,
+        meta: { class: { th: 'text-end', td: 'text-end' } },
+    },
+]
+
+async function changePage(page: number) {
+    await paginate(page, perPage.value, fetchIndexesPaginated)
+}
+
+async function changePageSize(pageSize: number) {
+    await paginate(currentPage.value, pageSize, fetchIndexesPaginated)
+}
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
+    <AppDashboardPanel id="indexes">
         <CreateIndexModal
-            v-model:visible="createIndexModalOpen"
+            v-model:open="createIndexModalOpen"
             @index-created="fetchData"
         />
 
-        <PageTitleSection>
-            <template #title>
-                Indexes
-            </template>
-            <template #end>
-                <div class="flex gap-4">
-                    <RefreshButton
-                        :loading="isFetchingIndexes || isFetchingStats"
-                        @click="fetchData"
-                    />
-                    <Button
-                        label="New Index"
-                        @click="createIndexModalOpen = true"
-                    >
-                        <template #icon>
-                            <Plus />
-                        </template>
-                    </Button>
-                </div>
-            </template>
-        </PageTitleSection>
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    aria-label="Refresh"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    color="neutral"
+                    variant="ghost"
+                    :loading="isFetchingIndexes || isFetchingStats"
+                    @click="fetchData"
+                />
+                <UButton
+                    label="New Index"
+                    icon="i-lucide-plus"
+                    @click="createIndexModalOpen = true"
+                />
+            </AppPageActions>
+        </template>
 
-        <div>
-            <Card>
-                <template #content>
-                    <DataTable
-                        lazy
-                        paginator
-                        scrollable
-                        :loading="isFetchingIndexes"
-                        :value="indexesData"
-                        :rows="perPage"
-                        :first="firstDatasetIndex"
-                        :totalRecords="indexesResults?.total"
-                        :rowsPerPageOptions="[20, 50, 100]"
-                        :pt="{
-                            tableContainer: {
-                                id: 'indexes-data-table-container'
-                            },
-                            thead: {
-                                class: 'z-2'
-                            }
-                        }"
-                        scrollHeight="500px"
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-                        @page="handlePageEvent($event, () => fetchIndexesPaginated(), true, 'indexes-data-table-container')"
-                    >
-                        <template #empty>
-                            <NotFoundMessage subject="Index" />
-                        </template>
-                        <Column
-                            field="uid"
-                            header="UID"
-                        />
-                        <Column
-                            field="primaryKey"
-                            header="Primary Key"
-                        >
-                            <template #body="{ data }">
-                                <Tag
-                                    v-if="data.primaryKey"
-                                    :value="data.primaryKey"
-                                    severity="info"
-                                />
-                                <Tag
-                                    v-else
-                                    value="Not Set"
-                                    severity="secondary"
-                                />
-                            </template>
-                        </Column>
-                        <Column
-                            field="numberOfDocuments"
-                            header="Documents"
-                        >
-                            <template #body="{ data }">
-                                {{ formatNumber(data.numberOfDocuments) }}
-                            </template>
-                        </Column>
-                        <Column
-                            field="createdAt"
-                            header="Created"
-                        >
-                            <template #body="{ data }">
-                                {{ formatDate(data.createdAt) }}
-                            </template>
-                        </Column>
-                        <Column
-                            field="updatedAt"
-                            header="Updated"
-                        >
-                            <template #body="{ data }">
-                                {{ formatDate(data.updatedAt) }}
-                            </template>
-                        </Column>
-                        <Column
-                            frozen
-                            alignFrozen="right"
-                        >
-                            <template #body="{ data }">
-                                <Button
-                                    v-slot="slotProps"
-                                    asChild
-                                    outlined
-                                >
-                                    <NuxtLink
-                                        :to="`/indexes/${data.uid}`"
-                                        :class="[slotProps.class, 'no-underline']"
-                                    >
-                                        View
-                                        <ArrowRight />
-                                    </NuxtLink>
-                                </Button>
-                            </template>
-                        </Column>
-                    </DataTable>
+        <UAlert
+            v-if="error"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-x"
+            title="Unable to load indexes"
+            :description="error"
+            :actions="[{ label: 'Retry', onClick: fetchData }]"
+        />
+
+        <UCard
+            :ui="{ body: 'p-0 sm:p-0' }"
+            variant="outline"
+            class="shrink-0"
+        >
+            <UTable
+                v-model:column-pinning="columnPinning"
+                :data="indexesData"
+                :columns="columns"
+                :get-row-id="row => row.uid"
+                :loading="isFetchingIndexes"
+            >
+                <template #primaryKey-cell="{ row }">
+                    <UBadge
+                        v-if="row.original.primaryKey"
+                        color="info"
+                        variant="subtle"
+                        :label="row.original.primaryKey"
+                    />
+                    <UBadge
+                        v-else
+                        color="neutral"
+                        variant="subtle"
+                        label="Not set"
+                    />
                 </template>
-            </Card>
-        </div>
-    </div>
+
+                <template #numberOfDocuments-cell="{ row }">
+                    {{ formatNumber(row.original.numberOfDocuments) }}
+                </template>
+
+                <template #createdAt-cell="{ row }">
+                    {{ formatDate(row.original.createdAt) }}
+                </template>
+
+                <template #updatedAt-cell="{ row }">
+                    {{ formatDate(row.original.updatedAt) }}
+                </template>
+
+                <template #actions-cell="{ row }">
+                    <UButton
+                        :to="`/indexes/${encodeURIComponent(row.original.uid)}`"
+                        label="View"
+                        trailing-icon="i-lucide-arrow-right"
+                        color="neutral"
+                        variant="subtle"
+                    />
+                </template>
+
+                <template #loading>
+                    <div class="flex justify-center py-4">
+                        <USkeleton class="h-5 w-48" />
+                    </div>
+                </template>
+
+                <template #empty>
+                    <UEmpty
+                        variant="naked"
+                        icon="i-lucide-database"
+                        title="No indexes found"
+                    />
+                </template>
+            </UTable>
+
+            <template #footer>
+                <AppPagination
+                    :page="currentPage"
+                    :per-page="perPage"
+                    :total="totalIndexes"
+                    :summary="paginationSummary"
+                    :disabled="isFetchingIndexes"
+                    show-edges
+                    @page="changePage"
+                    @per-page="changePageSize"
+                />
+            </template>
+        </UCard>
+    </AppDashboardPanel>
 </template>

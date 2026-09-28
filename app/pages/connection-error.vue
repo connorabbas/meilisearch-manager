@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useMeilisearchStore } from '@/stores/meilisearch'
-import { CircleX } from '@lucide/vue'
 
 definePageMeta({
     layout: 'app',
     title: 'Connection Error',
+    breadcrumbs: [{ label: 'Connection Error' }],
 })
 
 const meilisearchStore = useMeilisearchStore()
@@ -28,36 +28,48 @@ async function retryConnection() {
 </script>
 
 <template>
-    <Card pt:body:class="p-6 sm:p-8 md:p-12">
-        <template #content>
-            <div class="flex min-h-[50svh] items-center justify-center">
-                <section class="flex flex-col items-center gap-6 text-center md:gap-8">
-                    <div class="space-y-6">
-                        <h1 class="font-extrabold text-4xl sm:text-5xl">
-                            Connection Error
-                        </h1>
-                        <p class="text-muted-color">
-                            {{ meilisearchStore.currentInstance?.name || 'Current instance' }} is unavailable.
+    <AppDashboardPanel id="connection-error">
+        <template #actions>
+            <AppPageActions>
+                <UButton
+                    label="Retry Connection"
+                    icon="i-lucide-refresh-cw"
+                    loading-icon="i-lucide-refresh-cw"
+                    :loading="meilisearchStore.isConnecting"
+                    @click="retryConnection"
+                />
+            </AppPageActions>
+        </template>
+
+        <div class="flex min-h-[50svh] items-center justify-center">
+            <UCard class="w-full max-w-2xl">
+                <section class="flex flex-col items-center gap-6 py-6 text-center sm:py-10">
+                    <div class="flex size-14 items-center justify-center rounded-full bg-error/10 text-error">
+                        <UIcon
+                            name="i-lucide-circle-x"
+                            class="size-7"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold text-highlighted">
+                            Instance unavailable
+                        </h2>
+                        <p class="text-muted">
+                            {{ meilisearchStore.currentInstance?.name || 'Current instance' }} could not be reached.
                             Choose another saved instance or retry the current connection.
                         </p>
                     </div>
 
-                    <Message severity="error">
-                        <template #icon>
-                            <CircleX />
-                        </template>
-                        {{ errorMessage }}
-                    </Message>
-
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <RefreshButton
-                            label="Retry Connection"
-                            :loading="meilisearchStore.isConnecting"
-                            @click="retryConnection"
-                        />
-                    </div>
+                    <UAlert
+                        color="error"
+                        variant="subtle"
+                        icon="i-lucide-circle-x"
+                        title="Connection failed"
+                        :description="errorMessage"
+                        class="w-full text-start"
+                    />
                 </section>
-            </div>
-        </template>
-    </Card>
+            </UCard>
+        </div>
+    </AppDashboardPanel>
 </template>

@@ -1,32 +1,50 @@
 <script setup lang="ts">
+import type { BreadcrumbItem } from '@nuxt/ui'
 import IndexTabMenu from '@/components/meilisearch/IndexTabMenu.vue'
-import PageTitleSection from '@/components/PageTitleSection.vue'
 
 const route = useRoute()
 const indexUid = computed(() => String(route.params.uid ?? ''))
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const items: BreadcrumbItem[] = [
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Indexes', to: '/indexes' },
+        { label: indexUid.value, to: `/indexes/${encodeURIComponent(indexUid.value)}` },
+    ]
+
+    if (route.path.endsWith('/documents')) items.push({ label: 'Documents' })
+    else if (route.path.endsWith('/settings')) items.push({ label: 'Settings' })
+    else if (route.path.endsWith('edit')) items.push({ label: 'Edit' })
+
+    return items
+})
+
+definePageMeta({
+    layout: 'app',
+})
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 md:gap-8">
-        <PageTitleSection>
-            <template #title>
-                Index: {{ indexUid }}
-            </template>
-            <template #end>
-                <div
-                    id="index-page-actions"
-                    class="empty:hidden flex gap-4"
-                >
-                    <!-- Child views will teleport action buttons here -->
-                </div>
-            </template>
-        </PageTitleSection>
+    <AppDashboardPanel
+        id="index"
+        :breadcrumbs="breadcrumbs"
+    >
+        <template #actions>
+            <div
+                id="sub-page-actions"
+                class="contents"
+            />
+        </template>
 
-        <IndexTabMenu
-            :index-uid="indexUid"
-            :current-path="route.path"
-        />
+        <template #toolbar>
+            <UDashboardToolbar>
+                <IndexTabMenu :index-uid="indexUid" />
+            </UDashboardToolbar>
+            <div
+                id="sub-page-toolbar"
+                class="contents"
+            />
+        </template>
 
         <NuxtPage />
-    </div>
+    </AppDashboardPanel>
 </template>

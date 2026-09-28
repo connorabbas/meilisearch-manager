@@ -1,5 +1,4 @@
-import type { Embedders, FilterableAttributes, SortableAttributes, EnqueuedTask, Settings, Task } from 'meilisearch'
-import { useToast } from 'primevue/usetoast'
+import type { Embedders, FilterableAttributes, SortableAttributes, EnqueuedTask, PaginationSettings, Settings, Task } from 'meilisearch'
 import { useMeilisearchStore } from '@/stores/meilisearch'
 import { useTasks } from './useTasks'
 
@@ -12,11 +11,13 @@ export function useSettings() {
     const filterableAttributes = ref<FilterableAttributes | null>(null)
     const sortableAttributes = ref<SortableAttributes | null>(null)
     const embedders = ref<Embedders | null>(null)
+    const pagination = ref<PaginationSettings>({ maxTotalHits: 1000 })
     const isFetching = reactive({
         allSettings: false,
         filterableAttributes: false,
         sortableAttributes: false,
         embedders: false,
+        pagination: false,
     })
     const isSendingTask = ref(false)
     const isPollingTask = ref(false)
@@ -112,6 +113,27 @@ export function useSettings() {
         }
     }
 
+    async function fetchPagination(uid: string): Promise<PaginationSettings | undefined> {
+        const client = meilisearchStore.getClient()
+        if (!client) {
+            error.value = 'Meilisearch client not connected'
+            return
+        }
+
+        isFetching.pagination = true
+        error.value = null
+
+        try {
+            const result = await client.index(uid).getPagination()
+            pagination.value = result
+            return result
+        } catch (err) {
+            error.value = (err as Error).message
+        } finally {
+            isFetching.pagination = false
+        }
+    }
+
     async function updateSettings(
         uid: string,
         settings: Settings,
@@ -151,10 +173,11 @@ export function useSettings() {
     watch(error, (newError) => {
         if (newError) {
             toast.add({
-                severity: 'error',
-                summary: 'Meilisearch Settings Error',
-                detail: newError,
-                life: 7500,
+                color: 'error',
+                icon: 'i-lucide-circle-x',
+                title: 'Meilisearch Settings Error',
+                description: newError,
+                duration: 7500,
             })
         }
     })
@@ -164,6 +187,7 @@ export function useSettings() {
         filterableAttributes,
         sortableAttributes,
         embedders,
+        pagination,
         isFetching,
         isSendingTask,
         isPollingTask,
@@ -173,6 +197,7 @@ export function useSettings() {
         fetchFilterableAttributes,
         fetchSortableAttributes,
         fetchEmbedders,
+        fetchPagination,
         updateSettings,
     }
 }

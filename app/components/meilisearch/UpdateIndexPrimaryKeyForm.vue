@@ -1,60 +1,59 @@
 <script setup lang="ts">
 import { useIndexes } from '@/composables/meilisearch/useIndexes'
-import type { Index } from 'meilisearch'
-import InputErrors from '@/components/InputErrors.vue'
 
 const props = defineProps<{
+    formId: string,
     indexUid: string,
-    index: Index,
+    index: { primaryKey?: string | null },
 }>()
 
-const emit = defineEmits(['refetch-index'])
+const emit = defineEmits<{
+    'refetch-index': [],
+    'update:loading': [value: boolean],
+}>()
 
-const { error, isSendingTask, updateIndex } = useIndexes()
+const { error, isLoadingTask, updateIndex } = useIndexes()
+const state = reactive({ primaryKey: props.index.primaryKey ?? '' })
 
-const primaryKey = ref(props.index.primaryKey ?? '')
-const inputErrors = computed(() => error.value ? [error.value] : [])
+watch(() => props.index.primaryKey, primaryKey => {
+    state.primaryKey = primaryKey ?? ''
+})
 
-function handleUpdatePrimaryKey() {
-    updateIndex(props.indexUid, primaryKey.value).then(() => {
-        emit('refetch-index')
-    })
+watch(isLoadingTask, loading => emit('update:loading', loading), { immediate: true })
+
+async function handleUpdatePrimaryKey() {
+    if (!state.primaryKey) return
+
+    try {
+        const task = await updateIndex(props.indexUid, state.primaryKey)
+        if (task?.status === 'succeeded') emit('refetch-index')
+    } catch {
+        // The composable exposes failures inline and through a toast.
+    }
 }
-
 </script>
 
 <template>
     <form
+        :id="formId"
         class="space-y-6"
         @submit.prevent="handleUpdatePrimaryKey"
     >
-        <div class="flex flex-col gap-2">
-            <InputText
-                id="name"
-                v-model="primaryKey"
+        <UFormField
+            name="primaryKey"
+            label="Primary Key"
+            description="You can freely update the primary key of an index as long as it contains no documents. To change the
+            primary key of an index that already contains documents, first delete all documents in that index."
+            required
+            :error="error ?? undefined"
+        >
+            <UInput
+                v-model="state.primaryKey"
                 type="text"
-                :invalid="Boolean(error)"
                 autofocus
                 required
-                fluid
+                class="w-full"
             />
-            <InputErrors
-                v-if="Boolean(error)"
-                :errors="inputErrors"
-            />
-        </div>
-        <div class="text-xs text-muted-color">
-            You can freely update the primary key of an index as long as it contains no documents. To change
-            the primary key of an index that already contains documents, you must first delete all documents
-            in that index. You may then change the primary key and index your dataset again.
-        </div>
-        <div class="flex items-center gap-3">
-            <Button
-                type="submit"
-                label="Save"
-                :disabled="!primaryKey"
-                :loading="isSendingTask"
-            />
-        </div>
+        </UFormField>
     </form>
 </template>

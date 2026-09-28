@@ -1,231 +1,187 @@
 <script setup lang="ts">
-import { useMeilisearchStore } from '@/stores/meilisearch'
-import LogoLink from '@/components/LogoLink.vue'
-import Container from '@/components/Container.vue'
-import { Form, type FormSubmitEvent } from '@primevue/forms'
-import { zodResolver } from '@primevue/forms/resolvers/zod'
+import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
-import { useToast } from 'primevue/usetoast'
-import { BookText, FolderGit2, LayoutDashboard } from '@lucide/vue'
+import Container from '@/components/Container.vue'
+import LogoLink from '@/components/LogoLink.vue'
+import { useMeilisearchStore } from '@/stores/meilisearch'
+import type { NewInstanceForm } from '@/types'
+
+definePageMeta({
+    title: 'Add Instance',
+})
+
+const schema = z.object({
+    name: z.string().min(1, { message: 'Please provide a name for your instance' }),
+    host: z.string().min(1, { message: 'Please provide a host url/ip for your instance' }),
+    apiKey: z.string().min(1, { message: 'Please provide a valid API key' }),
+})
 
 const meilisearchStore = useMeilisearchStore()
 const toast = useToast()
+const form = useTemplateRef('form')
 const isSubmitting = ref(false)
-
-type NewInstanceForm = {
-    name: string,
-    host: string,
-    apiKey: string,
-};
-const formValues = reactive<NewInstanceForm>({
+const showApiKey = ref(false)
+const submitError = ref<string | null>(null)
+const formState = reactive<NewInstanceForm>({
     name: '',
     host: '',
     apiKey: '',
 })
 
-const resolver = zodResolver(
-    z.object({
-        name: z.string().min(1, { message: 'Please provide a name for your instance' }),
-        host: z.string().min(1, { message: 'Please provide a host url/ip for your instance' }),
-        apiKey: z.string().min(1, { message: 'Please provide a valid API key' }),
-    })
-)
+async function submitNewInstance(event: FormSubmitEvent<NewInstanceForm>) {
+    if (isSubmitting.value) return
 
-async function submitNewInstance(event: FormSubmitEvent) {
-    if (!event.valid || isSubmitting.value) {
-        return
-    }
-
-    const formData = event.values as NewInstanceForm
     isSubmitting.value = true
+    submitError.value = null
 
     try {
-        await meilisearchStore.addInstance(formData)
+        await meilisearchStore.addInstance(event.data)
         await navigateTo('/dashboard')
         toast.add({
-            severity: 'success',
-            summary: 'Instance Added',
-            detail: `Successfully added MeiliSearch instance: ${formData.name}`,
-            life: 5000,
+            color: 'success',
+            icon: 'i-lucide-circle-check',
+            title: 'Instance Added',
+            description: `Successfully added MeiliSearch instance: ${event.data.name}`,
+            duration: 5000,
         })
-    } catch (err) {
-        console.error('Failed to add new Meilisearch instance...', err)
+    } catch (error) {
+        submitError.value = (error as Error).message
     } finally {
         isSubmitting.value = false
     }
 }
+
+function focusFirstInvalidField(event: FormErrorEvent) {
+    const firstErrorName = event.errors[0]?.name
+    if (!firstErrorName) return
+
+    setTimeout(() => {
+        const element = document.querySelector<HTMLElement>(`[name="${CSS.escape(firstErrorName)}"]`)
+        element?.focus()
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 0)
+}
 </script>
 
 <template>
-    <Container class="min-h-svh flex flex-col justify-center items-center">
+    <Container class="flex min-h-svh flex-col items-center justify-center py-8">
         <div class="mb-6">
             <LogoLink img-classes="h-8! lg:h-10!" />
         </div>
+
         <div class="w-full sm:max-w-xl">
-            <Card
-                pt:caption:class="space-y-2"
-                pt:body:class="space-y-6"
+            <UCard
+                title="Meilisearch Manager"
+                variant="subtle"
+                description="Add a new Meilisearch instance connection"
+                :ui="{ header: 'text-center' }"
             >
-                <template #title>
-                    <div class="text-center">
-                        Meilisearch Manager
-                    </div>
-                </template>
-                <template #subtitle>
-                    <div class="text-center">
-                        Add a new Meilisearch instance connection
-                    </div>
-                </template>
-                <template #content>
-                    <Form
-                        v-slot="$form"
-                        class="space-y-6 sm:space-y-8"
-                        :initialValues="formValues"
-                        :resolver
-                        @submit="submitNewInstance"
+                <UForm
+                    ref="form"
+                    :schema="schema"
+                    :state="formState"
+                    :loading-auto="false"
+                    novalidate
+                    class="space-y-6"
+                    @submit="submitNewInstance"
+                    @error="focusFirstInvalidField"
+                >
+                    <UAlert
+                        v-if="submitError"
+                        color="error"
+                        variant="subtle"
+                        icon="i-lucide-circle-x"
+                        title="Unable to add instance"
+                        :description="submitError"
+                    />
+
+                    <UFormField
+                        name="name"
+                        label="Name"
+                        required
                     >
-                        <div class="flex flex-col gap-2">
-                            <label for="name">Name</label>
-                            <InputText
-                                id="name"
-                                name="name"
-                                placeholder="name your instance"
-                                type="text"
-                                autocomplete="off"
-                                autofocus
-                                fluid
-                            />
-                            <Message
-                                v-if="$form.name?.invalid"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                            >
-                                {{ $form.name.error.message }}
-                            </Message>
-                        </div>
+                        <UInput
+                            v-model="formState.name"
+                            placeholder="Name your instance"
+                            autocomplete="off"
+                            autofocus
+                            class="w-full"
+                        />
+                    </UFormField>
 
-                        <div class="flex flex-col gap-2">
-                            <label for="host">Host URL</label>
-                            <Message
-                                severity="secondary"
-                                size="small"
-                                variant="simple"
-                                class="sm:hidden"
-                            >
-                                Note: Your instance server might need CORS setup for this UI domain
-                            </Message>
-                            <InputText
-                                id="host"
-                                v-tooltip.bottom="{
-                                    value: 'Note: Your instance server might need CORS setup for this UI domain',
-                                    pt: {
-                                        root: { class: 'max-w-[20rem] sm:max-w-[100%]' },
-                                        text: { class: 'w-full' },
-                                    },
-                                }"
-                                name="host"
-                                placeholder="https://example.com"
-                                type="text"
-                                autocomplete="off"
-                                fluid
-                            />
-                            <Message
-                                v-if="$form.host?.invalid"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                            >
-                                {{ $form.host.error.message }}
-                            </Message>
-                        </div>
-
-                        <div class="flex flex-col gap-2">
-                            <label for="apiKey">API Key</label>
-                            <Message
-                                severity="secondary"
-                                size="small"
-                                variant="simple"
-                                class="sm:hidden"
-                            >
-                                Note: Will only be saved in your browser's local storage
-                            </Message>
-                            <Password
-                                v-tooltip.bottom="{
-                                    value: `Note: Will only be saved in your browser's local storage`,
-                                    pt: {
-                                        root: { class: 'max-w-[20rem] sm:max-w-[100%]' },
-                                        text: { class: 'w-full' },
-                                    },
-                                }"
-                                :feedback="false"
-                                inputId="apiKey"
-                                name="apiKey"
-                                placeholder="masterKey"
-                                toggleMask
-                                fluid
-                            />
-                            <Message
-                                v-if="$form.apiKey?.invalid"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                            >
-                                {{ $form.apiKey.error.message }}
-                            </Message>
-                        </div>
-
-                        <div>
-                            <Button
-                                type="submit"
-                                :loading="isSubmitting"
-                                :disabled="isSubmitting"
-                                label="Connect"
-                                fluid
-                            />
-                        </div>
-                    </Form>
-                </template>
-            </Card>
-            <div class="flex justify-center items-center gap-6 mt-4">
-                <NuxtLink to="/dashboard">
-                    <Button
-                        class="p-0 rounded-none!"
-                        variant="link"
-                        label="Dashboard"
+                    <UFormField
+                        name="host"
+                        label="Host URL"
+                        description="Your instance server may require CORS access for this UI domain."
+                        required
                     >
-                        <template #icon>
-                            <LayoutDashboard />
-                        </template>
-                    </Button>
-                </NuxtLink>
-                <Button
-                    as="a"
-                    label="Docs"
+                        <UInput
+                            v-model="formState.host"
+                            type="url"
+                            placeholder="https://example.com"
+                            autocomplete="off"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField
+                        name="apiKey"
+                        label="API Key"
+                        description="Saved only in your browser's local storage."
+                        required
+                    >
+                        <UInput
+                            v-model="formState.apiKey"
+                            :type="showApiKey ? 'text' : 'password'"
+                            placeholder="masterKey"
+                            autocomplete="off"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    :aria-label="showApiKey ? 'Hide credential' : 'Show credential'"
+                                    :icon="showApiKey ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    @click="showApiKey = !showApiKey"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
+
+                    <UButton
+                        type="submit"
+                        label="Connect"
+                        icon="i-lucide-plug"
+                        :loading="isSubmitting"
+                        :disabled="isSubmitting"
+                        block
+                        @click.prevent="form?.submit()"
+                    />
+                </UForm>
+            </UCard>
+
+            <nav
+                aria-label="Resources"
+                class="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4"
+            >
+                <UButton
+                    to="/dashboard"
+                    label="Dashboard"
+                    icon="i-lucide-layout-dashboard"
+                    color="neutral"
                     variant="link"
+                />
+                <AppExternalLink
                     href="https://www.meilisearch.com/docs/home"
-                    target="_blank"
-                    rel="noopener"
-                    class="no-underline rounded-none!"
-                >
-                    <template #icon>
-                        <BookText />
-                    </template>
-                </Button>
-                <Button
-                    as="a"
-                    label="Repository"
-                    variant="link"
+                    label="Docs"
+                />
+                <AppExternalLink
                     href="https://github.com/connorabbas/meilisearch-manager"
-                    target="_blank"
-                    rel="noopener"
-                    class="no-underline rounded-none!"
-                >
-                    <template #icon>
-                        <FolderGit2 />
-                    </template>
-                </Button>
-            </div>
+                    label="Repository"
+                />
+            </nav>
         </div>
     </Container>
 </template>

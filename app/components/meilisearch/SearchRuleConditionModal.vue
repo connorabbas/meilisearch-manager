@@ -1,205 +1,210 @@
 <script setup lang="ts">
-import type { SearchRuleCondition, SearchRuleQueryCondition, SearchRuleTimeCondition } from 'meilisearch'
+import type { SearchRuleQueryCondition, SearchRuleTimeCondition, SearchRuleFilterCondition } from 'meilisearch'
 
-const visible = defineModel<boolean>('visible', { default: false })
-const condition = defineModel<SearchRuleCondition>('condition', { required: true })
+const open = defineModel<boolean>('open', { default: false })
+const scope = defineModel<'query' | 'time' | 'filter'>('scope', { required: true })
+const condition = defineModel<SearchRuleQueryCondition | SearchRuleTimeCondition | SearchRuleFilterCondition>('condition', { required: true })
+const props = defineProps<{ unavailableScopes?: Array<'query' | 'time' | 'filter'> }>()
+const emit = defineEmits<{ save: [] }>()
 
-const emit = defineEmits<{
-    save: []
-}>()
-
-const scopeOptions = [
-    { label: 'Query', value: 'query' },
-    { label: 'Time', value: 'time' },
-]
-
-const queryMatchOptions = [
-    { label: 'Is Empty', value: 'isEmpty' },
-    { label: 'Contains', value: 'contains' },
-]
-
-const internalScope = ref<'query' | 'time'>('query')
-const queryMatchType = ref<'isEmpty' | 'contains'>('isEmpty')
-const queryContainsValue = ref('')
-const timeStart = ref<Date | null>(null)
-const timeEnd = ref<Date | null>(null)
-
-const isTimeEmpty = computed(() => {
-    if (internalScope.value !== 'time') return false
-    return !timeStart.value && !timeEnd.value
+const matchType = ref<'isEmpty' | 'contains'>('isEmpty')
+const contains = ref('')
+const start = ref('')
+const end = ref('')
+const values = ref<Array<{ attribute: string; value: string }>>([])
+const scopeItems = computed(() => (['query', 'time', 'filter'] as const)
+    .filter(item => item === scope.value || !props.unavailableScopes?.includes(item))
+    .map(item => ({ label: item.charAt(0).toUpperCase() + item.slice(1), value: item })))
+const filterValid = computed(() => values.value.length > 0
+    && values.value.every(row => row.attribute.trim() && row.value.trim())
+    && new Set(values.value.map(row => row.attribute.trim())).size === values.value.length)
+const timeEmpty = computed(() => scope.value === 'time' && !start.value && !end.value)
+const timeInverted = computed(() => {
+    return scope.value === 'time'
+        && !!start.value
+        && !!end.value
+        && new Date(start.value).getTime() > new Date(end.value).getTime()
 })
-
-const isTimeRangeInverted = computed(() => {
-    if (internalScope.value !== 'time') return false
-    if (!timeStart.value || !timeEnd.value) return false
-    return timeStart.value.getTime() > timeEnd.value.getTime()
-})
-
 const canSave = computed(() => {
-    if (internalScope.value === 'query') {
-        return queryMatchType.value !== 'contains' || queryContainsValue.value.trim().length > 0
-    }
-    return !isTimeEmpty.value && !isTimeRangeInverted.value
+    if (scope.value === 'query') return matchType.value === 'isEmpty' || contains.value.trim().length > 0
+    if (scope.value === 'filter') return filterValid.value
+    return !timeEmpty.value && !timeInverted.value
 })
+
+function toLocalInput(value?: string) {
+    if (!value) return ''
+    const date = new Date(value)
+    const offset = date.getTimezoneOffset() * 60_000
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
 
 function resetForm() {
-    const c = condition.value
-
-    if (c.scope === 'query') {
-        internalScope.value = 'query'
-        const qc = c as SearchRuleQueryCondition
-        if (qc.contains !== undefined && qc.contains !== null) {
-            queryMatchType.value = 'contains'
-            queryContainsValue.value = qc.contains
-        } else {
-            queryMatchType.value = 'isEmpty'
-            queryContainsValue.value = ''
-        }
-        timeStart.value = null
-        timeEnd.value = null
+    const value = condition.value
+    matchType.value = 'isEmpty'
+    contains.value = ''
+    start.value = ''
+    end.value = ''
+    values.value = []
+    if (scope.value === 'query') {
+        const query = value as SearchRuleQueryCondition
+        matchType.value = query.words != null ? 'contains' : 'isEmpty'
+        contains.value = query.words ?? ''
+    } else if (scope.value === 'time') {
+        const time = value as SearchRuleTimeCondition
+        start.value = toLocalInput(time.start ?? undefined)
+        end.value = toLocalInput(time.end ?? undefined)
     } else {
-        internalScope.value = 'time'
-        const tc = c as SearchRuleTimeCondition
-        timeStart.value = tc.start ? new Date(tc.start) : null
-        timeEnd.value = tc.end ? new Date(tc.end) : null
-        queryMatchType.value = 'isEmpty'
-        queryContainsValue.value = ''
+        values.value = Object.entries((value as SearchRuleFilterCondition).values ?? {}).map(([attribute, value]) => ({ attribute, value }))
     }
 }
 
-function handleSave() {
-    if (internalScope.value === 'query') {
-        const base: SearchRuleQueryCondition = { scope: 'query' }
-        if (queryMatchType.value === 'isEmpty') {
-            base.isEmpty = true
-        } else {
-            base.contains = queryContainsValue.value
-        }
-        condition.value = base
+function save() {
+    if (!canSave.value) return
+    if (scope.value === 'query') {
+        condition.value = matchType.value === 'isEmpty'
+            ? { isEmpty: true }
+            : { words: contains.value.trim() }
+    } else if (scope.value === 'time') {
+        const value: SearchRuleTimeCondition = {}
+        if (start.value) value.start = new Date(start.value).toISOString()
+        if (end.value) value.end = new Date(end.value).toISOString()
+        condition.value = value
     } else {
-        const base: SearchRuleTimeCondition = { scope: 'time' }
-        if (timeStart.value) {
-            base.start = timeStart.value.toISOString()
-        }
-        if (timeEnd.value) {
-            base.end = timeEnd.value.toISOString()
-        }
-        condition.value = base
+        condition.value = { values: Object.fromEntries(values.value.map(row => [row.attribute.trim(), row.value.trim()])) }
     }
-
-    visible.value = false
+    open.value = false
     emit('save')
 }
 
-function handleCancel() {
-    visible.value = false
-}
-
-watch(visible, (isVisible) => {
-    if (isVisible) {
-        resetForm()
-    }
+watch(open, value => {
+    if (value) resetForm()
 })
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="visible"
-        class="w-full sm:w-[30rem]"
-        position="center"
-        header="Condition"
-        :draggable="false"
-        dismissable-mask
-        modal
+    <UModal
+        v-model:open="open"
+        title="Condition"
+        :ui="{ content: 'sm:max-w-lg' }"
     >
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-2">
-                <label for="condition-scope">Scope</label>
-                <Select
-                    id="condition-scope"
-                    v-model="internalScope"
-                    :options="scopeOptions"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Select a scope"
-                    fluid
-                />
+        <template #body>
+            <div class="flex flex-col gap-6">
+                <UFormField label="Scope">
+                    <USelect
+                        v-model="scope"
+                        :items="scopeItems"
+                        value-key="value"
+                        class="w-full"
+                    />
+                </UFormField>
+                <template v-if="scope === 'query'">
+                    <UFormField label="Match type">
+                        <USelect
+                            v-model="matchType"
+                            :items="[{ label: 'Is Empty', value: 'isEmpty' }, { label: 'Contains', value: 'contains' }]"
+                            value-key="value"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <UFormField
+                        v-if="matchType === 'contains'"
+                        label="Query term"
+                    >
+                        <UInput
+                            v-model="contains"
+                            placeholder="e.g. invoice"
+                            class="w-full"
+                        />
+                    </UFormField>
+                </template>
+                <template v-else-if="scope === 'time'">
+                    <UAlert
+                        v-if="timeEmpty || timeInverted"
+                        color="error"
+                        variant="subtle"
+                        icon="i-lucide-circle-x"
+                        :title="timeEmpty ? 'A time condition requires at least a start or end date.' : 'Start date must be before end date.'"
+                    />
+                    <UFormField label="Start date and time">
+                        <UInput
+                            v-model="start"
+                            type="datetime-local"
+                            class="w-full"
+                            :highlight="timeEmpty || timeInverted"
+                            color="error"
+                        />
+                    </UFormField>
+                    <UFormField label="End date and time">
+                        <UInput
+                            v-model="end"
+                            type="datetime-local"
+                            class="w-full"
+                            :highlight="timeEmpty || timeInverted"
+                            color="error"
+                        />
+                    </UFormField>
+                </template>
+                <template v-else>
+                    <p class="text-sm text-muted">Activate when the search request filter matches an attribute value.
+                    </p>
+                    <UAlert
+                        v-if="values.length && !filterValid"
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-triangle-alert"
+                        title="Enter distinct attributes and nonempty values."
+                    />
+                    <div
+                        v-for="(row, index) in values"
+                        :key="index"
+                        class="flex gap-2"
+                    >
+                        <UInput
+                            v-model="row.attribute"
+                            :aria-label="`Filter attribute ${index + 1}`"
+                            placeholder="Attribute"
+                            class="flex-1"
+                        />
+                        <UInput
+                            v-model="row.value"
+                            :aria-label="`Filter value ${index + 1}`"
+                            placeholder="Value"
+                            class="flex-1"
+                        />
+                        <UButton
+                            icon="i-lucide-trash-2"
+                            :aria-label="`Remove filter value ${index + 1}`"
+                            color="error"
+                            variant="outline"
+                            @click="values.splice(index, 1)"
+                        />
+                    </div>
+                    <UButton
+                        label="Add value"
+                        icon="i-lucide-plus"
+                        variant="outline"
+                        color="neutral"
+                        size="sm"
+                        class="w-auto self-center"
+                        @click="values.push({ attribute: '', value: '' })"
+                    />
+                </template>
             </div>
-
-            <template v-if="internalScope === 'query'">
-                <div class="flex flex-col gap-2">
-                    <label for="condition-query-match">Match Type</label>
-                    <Select
-                        id="condition-query-match"
-                        v-model="queryMatchType"
-                        :options="queryMatchOptions"
-                        option-label="label"
-                        option-value="value"
-                        placeholder="Select match type"
-                        fluid
-                    />
-                </div>
-                <div
-                    v-if="queryMatchType === 'contains'"
-                    class="flex flex-col gap-2"
-                >
-                    <label for="condition-query-value">Query Term</label>
-                    <InputText
-                        id="condition-query-value"
-                        v-model="queryContainsValue"
-                        placeholder="e.g. invoice"
-                        type="text"
-                        fluid
-                    />
-                </div>
-            </template>
-
-            <template v-else-if="internalScope === 'time'">
-                <div class="flex flex-col gap-2">
-                    <label for="condition-time-start">Start Date</label>
-                    <DatePicker
-                        id="condition-time-start"
-                        v-model="timeStart"
-                        placeholder="Select start date"
-                        show-time
-                        hour-format="24"
-                        fluid
-                        :invalid="isTimeEmpty || isTimeRangeInverted"
-                    />
-                </div>
-                <div class="flex flex-col gap-2">
-                    <label for="condition-time-end">End Date</label>
-                    <DatePicker
-                        id="condition-time-end"
-                        v-model="timeEnd"
-                        placeholder="Select end date"
-                        show-time
-                        hour-format="24"
-                        fluid
-                        :invalid="isTimeEmpty || isTimeRangeInverted"
-                    />
-                </div>
-                <Message v-if="isTimeEmpty || isTimeRangeInverted" severity="error">
-                    <span v-if="isTimeEmpty">A time condition requires at least a start or end date.</span>
-                    <span v-else-if="isTimeRangeInverted">Start date must be before end date.</span>
-                </Message>
-            </template>
-        </div>
-
+        </template>
         <template #footer>
-            <div class="flex gap-4">
-                <Button
+            <div class="flex w-full justify-end gap-2">
+                <UButton
                     label="Cancel"
-                    severity="secondary"
-                    text
-                    @click="handleCancel"
+                    color="neutral"
+                    variant="outline"
+                    @click="open = false"
                 />
-                <Button
+                <UButton
                     label="Save"
                     :disabled="!canSave"
-                    @click="handleSave"
+                    @click="save"
                 />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>

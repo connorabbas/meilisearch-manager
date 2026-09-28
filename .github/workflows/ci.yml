@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "stage/**" ]
   pull_request:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "stage/**" ]
 
 jobs:
-  lint-and-typecheck:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,3 +26,12 @@ jobs:
 
       - name: Run Typecheck
         run: npm run typecheck
+
+      - name: Build application
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Chromium smoke tests
+        run: npx playwright test --project=chromium

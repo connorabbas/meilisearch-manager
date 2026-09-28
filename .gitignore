@@ -5,6 +5,9 @@
 .nitro
 .cache
 dist
+playwright-report
+test-results
+blob-report
 
 # Node dependencies
 node_modules
@@ -23,3 +26,6 @@ meili_data
 .env
 .env.*
 !.env.example
+
+# AI
+.agents

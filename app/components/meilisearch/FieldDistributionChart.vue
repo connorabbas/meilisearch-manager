@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import Chart from 'primevue/chart'
+import Chart from 'chart.js/auto'
+import type { ChartConfiguration } from 'chart.js'
 
 const props = defineProps<{
     fieldDistribution: Record<string, number> | null | undefined
 }>()
 
-const { isDark } = useAppColorMode()
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
+const canvas = useTemplateRef('canvas')
+const chart = shallowRef<Chart | null>(null)
 
 const chartColors = [
     '--color-cyan-500',
@@ -54,86 +58,92 @@ function resolveVars(vars: string[]): string[] {
     return vars.map(v => style.getPropertyValue(v).trim() || '#000000')
 }
 
-const chartData = ref<any>(null)
+const fields = computed(() => Object.keys(props.fieldDistribution ?? {}))
+const hasData = computed(() => fields.value.length > 0)
 
-function buildChartData() {
-    if (!props.fieldDistribution) {
-        chartData.value = null
-        return
-    }
+async function renderChart() {
+    chart.value?.destroy()
+    chart.value = null
 
-    const fields = Object.keys(props.fieldDistribution)
-    if (fields.length === 0) {
-        chartData.value = null
-        return
-    }
+    if (!hasData.value) return
 
-    const counts = Object.values(props.fieldDistribution)
+    await nextTick()
+    if (!canvas.value) return
+
+    const counts = fields.value.map(field => props.fieldDistribution?.[field] ?? 0)
     const bg = resolveVars(chartColors)
     const hover = resolveVars(chartHoverColors)
-
-    chartData.value = {
-        labels: fields,
-        datasets: [
-            {
-                data: counts,
-                backgroundColor: fields.map((_, i) => bg[i % bg.length]),
-                hoverBackgroundColor: fields.map((_, i) => hover[i % hover.length]),
-                borderColor: isDark.value ? '#374151' : '#e5e7eb',
-                borderWidth: 2,
-            },
-        ],
-    }
-}
-
-const chartOptions = computed(() => {
-    const textColor = isDark.value ? '#e5e7eb' : '#374151'
-
-    return {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    color: textColor,
-                    boxWidth: 10,
-                    padding: 15,
+    const style = getComputedStyle(document.documentElement)
+    const textColor = style.getPropertyValue('--ui-text-muted').trim() || (isDark.value ? '#e5e7eb' : '#374151')
+    const borderColor = style.getPropertyValue('--ui-border').trim() || (isDark.value ? '#374151' : '#e5e7eb')
+    const config: ChartConfiguration<'doughnut'> = {
+        type: 'doughnut',
+        data: {
+            labels: fields.value,
+            datasets: [
+                {
+                    data: counts,
+                    backgroundColor: fields.value.map((_, i) => bg[i % bg.length]),
+                    hoverBackgroundColor: fields.value.map((_, i) => hover[i % hover.length]),
+                    borderColor,
+                    borderWidth: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        color: textColor,
+                        boxWidth: 10,
+                        padding: 15,
+                    },
                 },
             },
+            cutout: '60%',
         },
-        cutout: '60%',
     }
-})
 
-watch(() => props.fieldDistribution, buildChartData, { immediate: false })
+    chart.value = new Chart(canvas.value, config)
+}
 
-watch(isDark, buildChartData, { flush: 'sync' })
+watch([() => props.fieldDistribution, isDark], () => {
+    void renderChart()
+}, { deep: true })
 
 onMounted(() => {
-    buildChartData()
+    void renderChart()
+})
+
+onBeforeUnmount(() => {
+    chart.value?.destroy()
 })
 </script>
 
 <template>
     <div
-        v-if="chartData"
+        v-if="hasData"
         class="flex justify-center"
     >
-        <Chart
-            :key="isDark ? 'dark' : 'light'"
-            type="doughnut"
-            :data="chartData"
-            :options="chartOptions"
-            class="w-full h-96"
+        <canvas
+            ref="canvas"
+            aria-label="Field distribution chart"
+            role="img"
+            class="h-96 w-full"
         />
     </div>
     <div
         v-else
-        class="flex flex-col items-center justify-center h-64 text-muted-color"
+        class="flex h-64 flex-col items-center justify-center text-muted"
     >
-        <i class="pi pi-chart-pie size-12 mb-2 opacity-50" />
+        <UIcon
+            name="i-lucide-chart-pie"
+            class="mb-2 size-12 opacity-50"
+        />
         <p>No field distribution data available</p>
     </div>
 </template>
