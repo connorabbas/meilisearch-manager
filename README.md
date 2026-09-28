@@ -19,12 +19,10 @@ An easy to use web UI for managing self-hosted Meilisearch instances. Free and o
 - :iphone: **Responsive** layout
 - :waning_crescent_moon: **Dark mode** support
 
-> [!IMPORTANT]
-> Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but Search Rules are unavailable due to breaking changes to their API.
-
 ## Getting Started
 
-Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but the Search Rules pages are unavailable. Scale weights above 1 boost, between 0 and 1 demote, and 0 hides documents (unless pinned). Scale filters require filterable attributes in the target index.
+> [!IMPORTANT]
+> Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but Search Rules are unavailable due to breaking changes to their API.
 
 ### Demo
 
