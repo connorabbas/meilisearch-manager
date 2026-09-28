@@ -17,6 +17,9 @@ import { joinURL, withoutBase } from 'ufo'
  */
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig(event)
+    if (String(config.meilisearchSingleInstanceProxyMode).toLowerCase() === 'false') {
+        throw createError({ status: 403, statusText: 'Proxy Disabled' })
+    }
     const host = config.meilisearchHost
     const apiKey = config.meilisearchApiKey
 

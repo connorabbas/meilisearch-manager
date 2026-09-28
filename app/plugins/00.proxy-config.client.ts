@@ -11,7 +11,7 @@ export default defineNuxtPlugin(async () => {
     // Server deployment: fetch config to determine single-instance proxy vs. multi-instance mode
     let config: { singleInstanceProxyMode: boolean }
     try {
-        config = await $fetch<{ singleInstanceProxyMode: boolean }>('/api/config')
+        config = await $fetch<{ singleInstanceProxyMode: boolean }>(new URL('api/config', window.location.origin + runtimeConfig.app.baseURL).toString())
     } catch (err: any) {
         // 404 likely static hosting without the flag set -> graceful fallback
         if (err?.statusCode === 404 || err?.status === 404) {
