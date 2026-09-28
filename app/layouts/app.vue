@@ -54,6 +54,13 @@ const {
                         tooltip
                         popover
                     />
+                    <UNavigationMenu
+                        :collapsed="collapsed"
+                        :items="[{ label: 'Open Source', icon: 'i-simple-icons-github', to: 'https://github.com/connorabbas/meilisearch-manager', target: '_blank', rel: 'noopener noreferrer' }]"
+                        orientation="vertical"
+                        tooltip
+                        class="mt-auto"
+                    />
                     <UTooltip
                         v-if="collapsed"
                         :content="{ side: 'right' }"
@@ -64,7 +71,6 @@ const {
                             color="neutral"
                             variant="ghost"
                             square
-                            class="mt-auto"
                         />
                     </UTooltip>
                     <UColorModeSelect
@@ -73,7 +79,7 @@ const {
                         color="neutral"
                         variant="outline"
                         :search-input="false"
-                        class="mt-auto w-full"
+                        class="w-full"
                     />
                 </div>
             </template>

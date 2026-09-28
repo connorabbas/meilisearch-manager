@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import type { Hit } from 'meilisearch'
+import { MglMap, MglMarker, MglNavigationControl, MglScaleControl } from '@indoorequal/vue-maplibre-gl'
+import { setWorkerUrl } from 'maplibre-gl'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import type { GeoPoint, MappedGeoHit } from '@/types'
 import { joinURL } from 'ufo'
 import ThemedJsonViewer from '@/components/ThemedJsonViewer.vue'
+
+setWorkerUrl(workerUrl)
 
 const props = defineProps<{ hits: Hit[], primaryKey?: string }>()
 const runtimeConfig = useRuntimeConfig()
