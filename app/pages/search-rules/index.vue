@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { SearchRule } from 'meilisearch'
+import { supportsSearchRules, type Rule } from '@/types/search-rules'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicSearchRules } from '@/composables/meilisearch/useDynamicSearchRules'
 import { useExperimentalFeatures } from '@/composables/meilisearch/useExperimentalFeatures'
 import { useStats } from '@/composables/meilisearch/useStats'
-import { isVersionAtLeast } from '@/utils'
 
 definePageMeta({
     layout: 'app',
@@ -39,7 +38,7 @@ await Promise.all([
 ])
 
 const isSupportedVersion = computed(() => {
-    return !!version.value && isVersionAtLeast(version.value.pkgVersion, '1.41.0')
+    return supportsSearchRules(version.value?.pkgVersion)
 })
 const isFeatureEnabled = computed(() => features.value?.dynamicSearchRules === true)
 const isFeatureAvailable = computed(() => isSupportedVersion.value && isFeatureEnabled.value)
@@ -56,7 +55,7 @@ const activeFilterItems = [
 const activeFilterCount = computed(() => activeFilter.value === null ? 0 : 1)
 const sorting = ref<Array<{ id: string, desc: boolean }>>([])
 
-const columns: TableColumn<SearchRule>[] = [
+const columns: TableColumn<Rule>[] = [
     {
         accessorKey: 'uid',
         header: 'UID',
@@ -136,7 +135,7 @@ function clearFilters() {
     activeFilter.value = null
 }
 
-function ruleActions(rule: SearchRule) {
+function ruleActions(rule: Rule) {
     return [
         {
             label: 'Edit',
@@ -286,7 +285,7 @@ async function changePageSize(size: number) {
                     </template>
 
                     <template #ruleActions-cell="{ row }">
-                        {{ row.original.actions?.length ?? 0 }}
+                        {{ (row.original.actions?.pin?.length ?? 0) + (row.original.actions?.scale?.length ?? 0) }}
                     </template>
 
                     <template #actions-cell="{ row }">

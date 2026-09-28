@@ -15,7 +15,7 @@ This project is the refactored Nuxt version of the original Vue SPA project: [co
 - :key: **API keys** create, view, edit, copy, and delete flows
 - :ballot_box_with_check: **Tasks** history with filtering, infinite scroll, and optional polling
 - :hourglass: **Data backups** with dump and snapshot exports
-- :pushpin: **Search Rules** with query, time, and filter conditions to pin, boost, demote, or hide documents
+- :dart: **Search Rules** with query, time, and filter conditions - pin, boost, demote, and hide documents with scale actions
 - :test_tube: **Experimental features** toggling
 - :whale2: **Docker** images
 - :iphone: **Responsive** layout
@@ -25,6 +25,8 @@ This project is the refactored Nuxt version of the original Vue SPA project: [co
 > Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but Search Rules are unavailable due to breaking changes to their API.
 
 ## Getting Started
+
+Search Rules require **Meilisearch 1.54.0 or later** with the `dynamicSearchRules` experimental feature enabled. Older instances can still be managed, but the Search Rules pages are unavailable. Scale weights above 1 boost, between 0 and 1 demote, and 0 hides documents (unless pinned). Scale filters require filterable attributes in the target index.
 
 ### Demo
 

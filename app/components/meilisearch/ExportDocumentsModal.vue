@@ -49,7 +49,7 @@ watch(open, (isVisible) => {
                     v-if="error"
                     variant="subtle"
                     color="error"
-                    icon="i-lucide-circle-alert"
+                    icon="i-lucide-circle-x"
                     title="Export error"
                     :description="error"
                 />

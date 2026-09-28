@@ -49,6 +49,7 @@ watch(open, (isOpen) => {
             <UButton
                 :label="props.confirmLabel"
                 color="error"
+                icon="i-lucide-trash-2"
                 @click="resolve(true)"
             />
         </template>

@@ -136,6 +136,7 @@ watch(open, (isVisible) => {
                 <UButton
                     label="Delete"
                     color="error"
+                    icon="i-lucide-trash-2"
                     :disabled="!canSubmit"
                     @click="submitDelete"
                 />

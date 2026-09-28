@@ -204,7 +204,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
         precedence: 1,
         active: true,
         conditions: { query: { words: 'movie' } },
-        actions: [{ selector: { indexUid: 'movies', id: '1' }, action: { type: 'pin', position: 0 } }],
+        actions: { pin: [{ indexUid: 'movies', id: '1', position: 0 }], scale: [] },
     }]
     if (options.indexSettings) movieSettings = structuredClone(options.indexSettings)
     if (options.paginationMaxTotalHits !== undefined) movieSettings.pagination.maxTotalHits = options.paginationMaxTotalHits
@@ -262,7 +262,7 @@ export async function installMeilisearchMock(page: Page, options: MeilisearchMoc
             await json(route, {
                 commitSha: 'playwright',
                 commitDate: '2026-01-01',
-                pkgVersion: options.version ?? '1.41.0',
+                pkgVersion: options.version ?? '1.54.0',
             })
         } else if (path === '/indexes' && request.method() === 'GET') {
             options.onIndexesRequest?.(request)
