@@ -3,6 +3,7 @@
 # Intended for local/development use
 # ==========================================
 FROM node:22-bookworm-slim AS dev
+ENV NODE_ENV=development
 ARG PLAYWRIGHT_VERSION=1.63.0
 USER root
 RUN apt-get update && apt-get install -y \
@@ -17,10 +18,6 @@ RUN npm_config_cache=/tmp/npm-cache \
     npx --yes playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium \
     && chown -R node:node /home/node/.cache \
     && rm -rf /tmp/npm-cache /var/lib/apt/lists/*
-
-USER node
-RUN curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path
-ENV PATH=/home/node/.opencode/bin:$PATH
 
 COPY --chown=node:node .devcontainer/.bashrc /home/node/.bashrc
 RUN git config --global --add safe.directory /workspace
