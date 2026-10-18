@@ -5,6 +5,28 @@ test.beforeEach(async ({ page }) => {
     await seedInstance(page)
 })
 
+test('an index opens and documents can be searched and paginated', async ({ page }) => {
+    const searchRequests: Array<{ q?: string, offset?: number, limit?: number }> = []
+    await installMeilisearchMock(page, {
+        onSearchRequest: request => searchRequests.push(request.postDataJSON()),
+    })
+
+    await page.goto('/indexes')
+    await expect(page.getByRole('cell', { name: 'movies', exact: true })).toBeVisible()
+    await page.getByRole('row').filter({ hasText: 'movies' }).getByRole('link', { name: 'View' }).click()
+    await expect(page).toHaveURL(/\/indexes\/movies$/)
+
+    await page.getByRole('link', { name: 'Documents', exact: true }).click()
+    await page.getByRole('searchbox', { name: 'Search documents' }).fill('Playwright')
+    await expect.poll(() => searchRequests.some(request => request.q === 'Playwright')).toBe(true)
+    await expect(page.getByText('"Playwright Movie"', { exact: true })).toBeVisible()
+
+    await page.locator('.app-scroll-container').evaluate(element => element.scrollTo({ top: element.scrollHeight }))
+    await page.getByRole('button', { name: 'Next Page' }).last().click()
+    await expect.poll(() => searchRequests.some(request => request.offset === 20 && request.limit === 20)).toBe(true)
+    await expect(page.getByText('"Page Two Movie"', { exact: true })).toBeVisible()
+})
+
 async function openDocuments(page: import('@playwright/test').Page) {
     await page.goto('/indexes')
     await expect(page.getByRole('cell', { name: 'movies', exact: true })).toBeVisible()
@@ -444,11 +466,11 @@ test('document import and export keep file behavior', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Export Documents' }).click()
     const exportDialog = page.getByRole('dialog', { name: 'Export Documents' })
-    await exportDialog.getByRole('textbox', { name: 'Filename' }).fill('phase9-export')
+    await exportDialog.getByRole('textbox', { name: 'Filename' }).fill('documents-export')
     const downloadPromise = page.waitForEvent('download')
     await exportDialog.getByRole('button', { name: 'Export' }).click()
     const download = await downloadPromise
-    expect(download.suggestedFilename()).toBe('phase9-export.json')
+    expect(download.suggestedFilename()).toBe('documents-export.json')
     const stream = await download.createReadStream()
     const chunks: Buffer[] = []
     for await (const chunk of stream) chunks.push(Buffer.from(chunk))

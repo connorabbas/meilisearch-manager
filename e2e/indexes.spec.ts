@@ -1,6 +1,27 @@
 import { expect, test } from '@playwright/test'
 import { installMeilisearchMock, seedInstance } from './fixtures/meilisearch'
 
+test.beforeEach(async ({ page }) => {
+    await seedInstance(page)
+})
+
+test('index creation modal and document import drawer close with Escape', async ({ page }) => {
+    await installMeilisearchMock(page)
+    await page.goto('/indexes')
+    await page.getByRole('button', { name: 'New Index' }).click()
+    await expect(page.getByRole('dialog', { name: 'New Index' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: 'New Index' })).toBeHidden()
+
+    await page.goto('/indexes')
+    await page.getByRole('row').filter({ hasText: 'movies' }).getByRole('link', { name: 'View' }).click()
+    await page.getByRole('link', { name: 'Documents', exact: true }).click()
+    await page.getByRole('button', { name: 'Import Documents' }).click()
+    await expect(page.getByRole('button', { name: 'Choose file' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('button', { name: 'Choose file' })).toBeHidden()
+})
+
 function makeIndexes(count: number) {
     return Array.from({ length: count }, (_, itemIndex) => ({
         uid: `index-${itemIndex + 1}`,
@@ -9,10 +30,6 @@ function makeIndexes(count: number) {
         updatedAt: '2026-01-02T00:00:00.000Z',
     }))
 }
-
-test.beforeEach(async ({ page }) => {
-    await seedInstance(page)
-})
 
 test('indexes use remote offsets and reset to page one when page size changes', async ({ page }) => {
     const indexRequests: URL[] = []
