@@ -1,6 +1,15 @@
 import { spawn } from 'node:child_process'
 import { createServer } from 'node:net'
 import { expect, test } from '@playwright/test'
+import { installMeilisearchMock } from './fixtures/meilisearch'
+
+test('single-instance proxy mode bypasses instance setup', async ({ page }) => {
+    await installMeilisearchMock(page, { singleInstanceProxyMode: true })
+    await page.goto('/new-instance')
+
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByText('Database Size')).toBeVisible()
+})
 
 test('prefixed multi-instance mode disables the credentialed proxy even when configured', async ({ page }) => {
     const port = await new Promise<number>((resolve) => {

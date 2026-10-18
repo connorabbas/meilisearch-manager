@@ -5,6 +5,29 @@ test.beforeEach(async ({ page }) => {
     await seedInstance(page)
 })
 
+test('destructive confirmation cancels safely and awaits accepted work', async ({ page }) => {
+    let deleteRequests = 0
+    await installMeilisearchMock(page, {
+        onDeleteIndexRequest: () => deleteRequests++,
+    })
+
+    await page.goto('/indexes/movies/edit')
+    await page.getByRole('button', { name: 'Delete this index' }).click()
+
+    const confirmation = page.getByRole('dialog', { name: 'Danger Zone' })
+    await expect(confirmation).toBeVisible()
+    await confirmation.getByRole('button', { name: 'Cancel' }).click()
+    await expect(confirmation).toBeHidden()
+    expect(deleteRequests).toBe(0)
+
+    await page.getByRole('button', { name: 'Delete this index' }).click()
+    await confirmation.getByRole('button', { name: 'Delete' }).click()
+
+    await expect.poll(() => deleteRequests).toBe(1)
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByText('Task Succeeded', { exact: true })).toBeVisible()
+})
+
 test('index detail uses shareable route navigation and renders a theme-safe chart', async ({ page }) => {
     let indexRequests = 0
     let statsRequests = 0
@@ -17,10 +40,14 @@ test('index detail uses shareable route navigation and renders a theme-safe char
 
     await page.goto('/indexes/movies')
     await expect(page.getByRole('link', { name: 'Stats', exact: true })).toBeVisible()
-    await expect(page.getByRole('img', { name: 'Field distribution chart' })).toBeVisible()
+    const chart = page.getByRole('img', { name: 'Field distribution chart' })
+    await expect(chart).toBeVisible()
+    await expect(chart).toHaveJSProperty('tagName', 'svg')
+    await expect(chart.getByText('title', { exact: true })).toBeVisible()
+    await expect(chart.getByText('year', { exact: true })).toBeVisible()
     await expect(page.getByText('Total Documents')).toBeVisible()
     await expect(page.getByText('Primary Key')).toBeVisible()
-    await expect(page.getByText('id')).toBeVisible()
+    await expect(page.getByText('id', { exact: true }).and(page.locator('span'))).toBeVisible()
     await expect(page.getByText('Actively Indexing')).toBeVisible()
     await expect(page.getByText('No')).toBeVisible()
     await expect(page.getByText('Average Document Size')).toBeVisible()
@@ -40,6 +67,36 @@ test('index detail uses shareable route navigation and renders a theme-safe char
 
     await page.setViewportSize({ width: 375, height: 812 })
     expect(await page.locator('body').evaluate(body => body.scrollWidth <= body.clientWidth)).toBe(true)
+})
+
+test('field distribution chart reacts to refreshed data and preserves the empty state', async ({ page }) => {
+    const stats = {
+        numberOfDocuments: 21,
+        isIndexing: false,
+        fieldDistribution: {} as Record<string, number>,
+        numberOfEmbeddedDocuments: 0,
+        numberOfEmbeddings: 0,
+        rawDocumentDbSize: 2048,
+        avgDocumentSize: 100,
+    }
+    await installMeilisearchMock(page, { indexStats: stats })
+    await page.goto('/indexes/movies')
+
+    const chart = page.getByRole('img', { name: 'Field distribution chart' })
+    const emptyState = page.getByText('No field distribution data available')
+    await expect(emptyState).toBeVisible()
+    await expect(chart).toHaveCount(0)
+
+    stats.fieldDistribution = { title: 21 }
+    await page.getByRole('button', { name: 'Refresh' }).click()
+    await expect(chart).toBeVisible()
+    await expect(chart.getByText('title', { exact: true })).toBeVisible()
+    await expect(emptyState).toHaveCount(0)
+
+    stats.fieldDistribution = {}
+    await page.getByRole('button', { name: 'Refresh' }).click()
+    await expect(emptyState).toBeVisible()
+    await expect(chart).toHaveCount(0)
 })
 
 test('settings save the full JSON payload after task completion', async ({ page }) => {
