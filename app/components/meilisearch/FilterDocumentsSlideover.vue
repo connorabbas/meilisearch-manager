@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
     <USlideover
         v-model:open="open"
         title="Filter Documents"
-        :ui="{ content: 'max-w-none lg:max-w-3xl' }"
+        :ui="{ content: '!max-w-none lg:!max-w-3xl' }"
     >
         <template #body>
             <div class="mt-1 relative flex flex-col gap-4">

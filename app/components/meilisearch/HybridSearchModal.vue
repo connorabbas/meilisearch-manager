@@ -40,8 +40,8 @@ function handleCancel() {
     open.value = false
 }
 
-function updateSemanticRatio(value: number[] | undefined) {
-    hybridSearchState.semanticRatio = value?.[0] ?? 0.5
+function updateSemanticRatio(value: number | undefined) {
+    hybridSearchState.semanticRatio = value ?? 0.5
 }
 
 function handleHybridSearchConfig() {
@@ -106,7 +106,7 @@ watch(() => props.embedders, () => {
                         <span class="text-sm text-muted">{{ semanticRatioLabel }}</span>
                     </div>
                     <USlider
-                        :model-value="[hybridSearchState.semanticRatio]"
+                        :model-value="hybridSearchState.semanticRatio"
                         :min="0"
                         :max="1"
                         :step="0.05"

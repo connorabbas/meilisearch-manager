@@ -14,8 +14,8 @@ function resetForm() {
     rankingScoreState.enabled = enabled.value
     rankingScoreState.threshold = rankingScoreThreshold.value
 }
-function updateThreshold(value: number[] | undefined) {
-    rankingScoreState.threshold = value?.[0] ?? 0
+function updateThreshold(value: number | undefined) {
+    rankingScoreState.threshold = value ?? 0
 }
 function handleApply() {
     enabled.value = rankingScoreState.enabled
@@ -47,7 +47,7 @@ watch(open, (isVisible) => {
                         <span class="text-sm text-muted">{{ thresholdLabel }}</span>
                     </div>
                     <USlider
-                        :model-value="[rankingScoreState.threshold]"
+                        :model-value="rankingScoreState.threshold"
                         :min="0"
                         :max="1"
                         :step="0.05"
